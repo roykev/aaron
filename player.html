@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Audio</title>
+</head>
+<body>
+
+    <audio id="audioPlayer" controls>
+    <source src="/media/audio.mp3" type="audio/mp3">
+</audio>
+ <br>
+    <button onclick="jumpToStart()">Jump to Start</button>
+    <button onclick="playUntilOneMinute()">Play Until 01:00</button>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+                 var audioPlayer = document.getElementById('audioPlayer');
+
+            window.jumpToStart = function() {
+                audioPlayer.currentTime = 0;
+                audioPlayer.play();
+            };
+
+            window.playUntilOneMinute = function() {
+                audioPlayer.play();
+                setTimeout(function() {
+                    if (audioPlayer.currentTime >= 60) {
+                        audioPlayer.pause();
+                        audioPlayer.currentTime = 0;
+                    }
+                }, (60 - audioPlayer.currentTime) * 1000);
+            };
+       });
+    </script>
+</body>
+</html>

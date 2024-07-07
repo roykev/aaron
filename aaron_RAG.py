@@ -76,28 +76,28 @@ tasks = {
     "Additional":f" Suggest {num_q} additional reading, media, and sources about the topics of the interview. Add references authors and pointers where appropriate"
 }
 tasks1 = {
-# "short_Summary":
-#     "You will be provided a large transcript of a lecture"
-#     "Write short summary of the transcript. "
-#     "the summary should be 2-3 paragraph long "
-#     f"Your summary should be in {lan} language",
-# "Summary":
-#     "You will be provided a large transcript of a lecture"
-#           "Write a detailed, accurate summary of the transcript. "
-#           "The summary should include several chapters"
-#           "You should include chapter headers with timestamps for when that chapter begins. "
-#           "Each chapter should contain one or more paragraphs, not bullet points. "
-#           f"Your summary should be in {lan} language"
-#           "Do not leave out any important information. " ,
-# "keyword_extraction":
-#     "Extract the key phrases, persons names and concepts from the transcript."
-#     "the output format is: concept; start-end, start-end. e.g.,"
-#     "AAA; 00:15-01:40, 04:55-10:20"
-#     "BBB; 35:15-36:50"
-#     "and so on, when AAA, BBB are examples of concepts and 00:15-01:40 are start-end (from the beginning of the transcript) of when the concept is mentioned."
-#     "note that a concept can be mentioned more than once. In this examples AAA is mentioned twice: in 00:15-01:40 and 04:55-10:20 from the beginning of the transcript",
-# "Additional":
-#     f" Suggest {num_q} additional reading, media, and sources about the topics of the interview. Add references authors and pointers where appropriate",
+"Short_Summary":
+    "You will be provided a large transcript of a lecture"
+    "Write short summary of the transcript. "
+    "the summary should be 2-3 paragraph long "
+    f"Your summary should be in {lan} language",
+"Long_Summary":
+    "You will be provided a large transcript of a lecture"
+          "Write a detailed, accurate summary of the transcript. "
+          "The summary should include several chapters"
+          "You should include chapter headers with timestamps for when that chapter begins. "
+          "Each chapter should contain one or more paragraphs, not bullet points. "
+          f"Your summary should be in {lan} language"
+          "Do not leave out any important information. " ,
+"Concepts":
+    "Extract the key phrases, persons names and concepts from the transcript."
+    "the output format is: concept; start-end, start-end. e.g.,"
+    "AAA; 00:15-01:40, 04:55-10:20"
+    "BBB; 35:15-36:50"
+    "and so on, when AAA, BBB are examples of concepts and 00:15-01:40 are start-end (from the beginning of the transcript) of when the concept is mentioned."
+    "note that a concept can be mentioned more than once. In this examples AAA is mentioned twice: in 00:15-01:40 and 04:55-10:20 from the beginning of the transcript",
+"Additional":
+    f" Suggest {num_q} additional reading, media, and sources about the topics of the interview. Add references authors and pointers where appropriate",
 "Quiz":
     f"Compose a quiz in {lan} about the of the lecture. {num_q} questions (multiple choice, multiple answers are allowed). "
     f"write '*' before the correct answers of the questions in the following format:"
