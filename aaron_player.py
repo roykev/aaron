@@ -11,8 +11,8 @@ import streamlit as st
 import tkinter as tk
 from tkinter import filedialog
 from parse_AI_output import gpt_parser,range2start_end
-from streamlit_extras.stylable_container import stylable_container
-from utils import find_audio, find_txt, get_audio_file_content
+#from streamlit_extras.stylable_container import stylable_container
+from utils import find_audio, find_txt, get_audio_file_content, get_binary_file_downloader_html
 
 sections=["Short_Summary", "Quiz", "Long_Summary","Concepts","Additional"]
 
@@ -329,6 +329,7 @@ def load_AI(cont):
             expd.subheader("Short Summary")
             expd.markdown(f'<div style="text-align: right;">{short}</div>', unsafe_allow_html=True)
             st.session_state["short_summary"]=short
+            expd.markdown(get_binary_file_downloader_html('media/short.mp3', 'Audio'), unsafe_allow_html=True)
 
 
         concepts = find_body_of("Concepts")
