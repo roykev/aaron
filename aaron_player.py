@@ -12,9 +12,9 @@ import tkinter as tk
 from tkinter import filedialog
 from parse_AI_output import gpt_parser,range2start_end
 #from streamlit_extras.stylable_container import stylable_container
-from utils import find_audio, find_txt, get_audio_file_content, get_binary_file_downloader_html
+from utils.utils import find_audio, find_txt, get_audio_file_content, get_binary_file_downloader_html
 
-sections=["Short_Summary", "Quiz", "Long_Summary","Concepts","Additional"]
+sections=["Short_Summary", "MindMap","Quiz", "Long_Summary","Concepts","Additional"]
 
 
 # Function to extract tags from the audio file
@@ -66,7 +66,8 @@ def load_files(cont):
 
     # Folder picker button
     #cont.title('Folder Picker')
-    col1, col2 = cont.columns(2)
+    col1, col2,col3 = cont.columns(3)
+    col3.image("aaron.jpg")
     col1.write('Please select a folder:')
     clicked = col2.button('Folder Picker')
     if clicked:
@@ -74,6 +75,7 @@ def load_files(cont):
         st.session_state.dir=dir
       #  audio = find_audio(dir)
        # st.session_state.audio=audio
+    return col1
 
 # Function to render the HTML audio player with start and end times
 def audio_player(file_path, start_time, end_time):
@@ -228,10 +230,17 @@ def show_quiz(cont):
             correct_arr=[]
             for answer in choices:
                 choice_arr=answer.split(";")
-                choices_arr.append(choice_arr[1].strip())
-                if choice_arr[0].find("*")>= 0:
-                    correct_arr.append(choice_arr[1].strip())
+                if len(choice_arr)==1:
+                    choice = choice_arr[0].strip()
+                    if choice.find('*')==0:# correct
+                        choice= choice[1:]
+                        correct_arr.append(choice)
+                    choices_arr.append(choice)
 
+                elif len(choice_arr)>1:
+                    choices_arr.append(choice_arr[1].strip())
+                    if choice_arr[0].find("*")>= 0:
+                        correct_arr.append(choice_arr[1].strip())
             # Allow multiple answers using multiselect
             selected_answers = cont.multiselect("Select all that apply", choices_arr)
             valid += 1
@@ -304,7 +313,7 @@ def get_body(str):
         # Extract the substring from start_index to the end
         result_string = str[start_index:]
     else:
-        result_string = ""
+        result_string = str
 
     return(result_string)
 def find_body_of(task):
@@ -321,7 +330,6 @@ def find_body_of(task):
     
 def load_AI(cont):
     if 'dir' in st.session_state and st.session_state['dir'] != None:
-
         # short = find_short_summary()
         short= find_body_of("Short_Summary")
         if short is not None:
@@ -329,21 +337,27 @@ def load_AI(cont):
             expd.subheader("Short Summary")
             expd.markdown(f'<div style="text-align: right;">{short}</div>', unsafe_allow_html=True)
             st.session_state["short_summary"]=short
-            expd.markdown(get_binary_file_downloader_html('media/short.mp3', 'Audio'), unsafe_allow_html=True)
-
+            ttsmp3 = os.path.join (st.session_state['dir'],"ttsmp3.mp3")
+            if os.path.isfile(ttsmp3):
+                expd.markdown(get_binary_file_downloader_html('media/short.mp3', 'Audio'), unsafe_allow_html=True)
+        mindmap = os.path.join (st.session_state['dir'],"mind_map.svg")
+        if  os.path.isfile(mindmap):
+            expd = cont.expander("MindMap", expanded=False, icon="🦉")
+            expd.subheader("Mind Map")
+            st.session_state["mindmap"] = mindmap
+            expd.image(mindmap, caption='MindMap of the Lesson')
 
         concepts = find_body_of("Concepts")
         if concepts is not None:
             st.session_state["concepts"]=concepts
-           # if "concepts_expd" not in st.session_state or st.session_state["concepts_expd"] == None:
-            st.session_state["concepts_expd"] = cont.expander("Key Concepts", expanded=True, icon="🏹")
+            st.session_state["concepts_expd"] = cont.expander("Key Concepts", expanded=False, icon="🏹")
             tags = extract_tags()
             if tags is not None:
                 show_concepts(st.session_state["concepts_expd"], tags)
 
         long = find_body_of("Long_Summary")
         if long is not None:
-            expd = cont.expander("Long Summary", expanded=True, icon="🏫")
+            expd = cont.expander("Long Summary", expanded=False, icon="📜")
             expd.subheader("Long Summary")
             expd.markdown(f'<div style="text-align: right;">{long}</div>', unsafe_allow_html=True)
            # expd.markdown(long)
@@ -351,7 +365,7 @@ def load_AI(cont):
 
         quiz = find_body_of("Quiz")
         if quiz is not None:
-            expd = cont.expander("Quiz", expanded=True, icon="❓")
+            expd = cont.expander("Quiz", expanded=False, icon="❓")
             expd.subheader("Self Evaluation Quiz")
             st.session_state["quiz"] = quiz
             show_quiz(expd)
@@ -360,7 +374,7 @@ def load_AI(cont):
 
         additional = find_body_of("Additional")
         if additional is not None:
-            expd = cont.expander("Additional Reading", expanded=True, icon="📚")
+            expd = cont.expander("Additional Reading", expanded=False, icon="📚")
             expd.subheader("Additional Reading")
             expd.markdown(f'<div style="text-align: right;">{additional}</div>', unsafe_allow_html=True)
            # expd.markdown(long)
@@ -414,6 +428,8 @@ def init():
         st.session_state["long_summary"] = ""
     if 'concepts' not in st.session_state:
         st.session_state["concepts"] = None
+    if 'mindmap' not in st.session_state:
+            st.session_state["mindmap"] = None
     if 'quiz' not in st.session_state:
         st.session_state["quiz"] = None
     if 'audio' not in st.session_state:
@@ -432,7 +448,7 @@ def main():
 
     sb, m_container = st.columns([1,100])
 
-    m_container.title("Aaron")
+    m_container.title("Aaron The Owl")
     m_container.subheader("Lecture Recap")
 
     player_placeholder= m_container.empty()

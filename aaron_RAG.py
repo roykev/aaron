@@ -1,10 +1,15 @@
+import time
 import os
 import openai
-from aaron_GPT import source_key
+from anthropic import Anthropic
+
+from utils import source_key
 # Load your API key from an environment variable or secret management service
 openai.api_key = source_key()
-name = "economics"
-file_path = f"/home/roy/Downloads/{name}.txt"
+name = "insurance"
+course = "intro to Insurance"
+num=4
+file_path = f"/home/roy/Downloads/{name}/{num}/lesson{num}.txt"
 
 # Load the text file
 with open(file_path, 'r') as file:
@@ -19,13 +24,15 @@ def call_openai(messages, max_tokens=5000):
     )
     return response.choices[0].message.content.strip()
 
+
+
 def split_text_into_chunks(text, chunk_size=4500):
     words = text.split()
     for i in range(0, len(words), chunk_size):
         yield ' '.join(words[i:i + chunk_size])
 
 content_description="a transcript ((with timestamps of each section) of an interview with a researcher of the the middle east"
-content_description="a transcript ((with timestamps of each section) of a lecture on behavioral economics"
+content_description=f"a transcript (with timestamps of each section) of a lecture on intro to {name}"
 
 lan = "Hebrew"
 summary_len = 500
@@ -35,7 +42,7 @@ def process_long_text(text, task_prompt, max_tokens=1000):
     results = []
     for chunk in chunks:
         messages = [
-            {"role": "system", "content": f"You are a helpful assistant. I give you several tasks and provide {content_description}. the content is in {lan}, and so is the required output. pay attention to the requested output format."},
+            {"role": "system", "content": f"I am a student who learns for the exam. You are a helpful assistant. I give you several tasks and provide {content_description}. the content is in {lan}, and so is the required output. pay attention to the requested output format."},
             {"role": "user", "content": f"{task_prompt}\n\n{chunk}"}
         ]
         result = call_openai(messages, max_tokens=max_tokens)
@@ -78,12 +85,14 @@ tasks = {
 tasks1 = {
 "Short_Summary":
     "You will be provided a large transcript of a lecture"
-    "Write short summary of the transcript. "
+    "Write a short summary of the transcript. "
     "the summary should be 2-3 paragraph long "
+    "The summary should help me learn for the exam"
     f"Your summary should be in {lan} language",
 "Long_Summary":
     "You will be provided a large transcript of a lecture"
           "Write a detailed, accurate summary of the transcript. "
+          "The summary should help me learn for the exam"
           "The summary should include several chapters"
           "You should include chapter headers with timestamps for when that chapter begins. "
           "Each chapter should contain one or more paragraphs, not bullet points. "
@@ -97,7 +106,9 @@ tasks1 = {
     "and so on, when AAA, BBB are examples of concepts and 00:15-01:40 are start-end (from the beginning of the transcript) of when the concept is mentioned."
     "note that a concept can be mentioned more than once. In this examples AAA is mentioned twice: in 00:15-01:40 and 04:55-10:20 from the beginning of the transcript",
 "Additional":
-    f" Suggest {num_q} additional reading, media, and sources about the topics of the interview. Add references authors and pointers where appropriate",
+    f" Suggest {num_q} additional reading, media, and sources about the topics of the lecture. "
+    " the sources should help me getting prepared for the exam"
+    f"Add references authors and pointers where appropriate",
 "Quiz":
     f"Compose a quiz in {lan} about the of the lecture. {num_q} questions (multiple choice, multiple answers are allowed). "
     f"write '*' before the correct answers of the questions in the following format:"
@@ -130,6 +141,8 @@ tasks2 = {
 
 }
 # Execute tasks
+t0 = time.time()
+
 results = {}
 for task, task_prompt in tasks1.items():
     result = process_long_text(text, task_prompt)
@@ -140,5 +153,7 @@ for task, result in results.items():
     print(f"{task.capitalize()} Result:\n{result}\n")
 # Optionally, save results to a file
 for task, result in results.items():
-    with open(f'/home/roy/Downloads/RAG_{name}_{task}.txt', 'w') as file:
+    with open(f'/home/roy/Downloads/{name}/{num}/RAG_{name}_{task}.txt', 'w') as file:
         file.write(f"{task.capitalize()} Result:\n{result}\n\n")
+t1 = time.time()
+print(f'Done Open AI {len( tasks1.items())} tasks. ({ t1- t0:.3f}s).')

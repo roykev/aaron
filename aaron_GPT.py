@@ -161,29 +161,6 @@ def calc_cost(in_tokens, out_tokens,model):
     return cost
 
 
-
-def source_key():
-    # Load the contents of ~/.bashrc into environment variables
-    bashrc_path = os.path.expanduser("~/.bashrc")
-    with open(bashrc_path, "r") as f:
-        bashrc_contents = f.read()
-
-    # Split the contents into lines and process each line
-    for line in bashrc_contents.split("\n"):
-        # Skip empty lines and comments
-        if not line.strip() or line.strip().startswith("#"):
-            continue
-
-        # Parse lines in the format: export VARIABLE=value
-        if line.startswith("export "):
-            parts = line.split(" ", 1)[1].split("=", 1)
-            if len(parts) == 2:
-                variable, value = parts
-                os.environ[variable] = value.strip('"')
-
-    # Now you can access the environment variables as if they were set in the shell
-    print(os.environ["OPENAI_API_KEY"])
-    return  (os.environ["OPENAI_API_KEY"])
 def read_file(file_path):
 
     with open(file_path, 'r') as file:
