@@ -6,8 +6,8 @@ from utils.utils import source_key, split_transcript_into_chunks, remove_before_
 from utils.Anthropic_utils import clean_and_concat_chunks, process_transcript
 
 configs ={}
-configs['name'] = "insurance"
-configs['course'] = "intro to Insurance"
+configs['name'] = "philosophy_of_education"
+configs['course'] = "Intro to philosophy of education and art"
 configs['num']=4
 configs['lan'] = "Hebrew"
 configs['summary_len'] = 500
@@ -20,78 +20,78 @@ configs['engine']="claude-3-5-sonnet-20240620"
 configs['role']='a teaching assistant'
 # model="claude-3-opus-20240229",
 system_prompt=(f"You are {configs['role']}. Your mission is helping students understand the course and gets ready for the exam."
-               f"You will be provided a large transcript of a lecture in {configs['course']}.\n"
+               f"You will be provided a large transcript of a lecture in {configs['course']}. \n"
+               "The transcript is in a csv file format with columns: from, to, text where 'from' and 'to' are the seconds from the beginning where the 'text' starts and ends, respectively \n"
                "You will get several tasks based on the transcript. Here's how to proceed:"
                "1. If you receive an example transcript and outputs, use them as a guide for your style and analysis"
-               "2. For the new transcript, you'll receive it in parts. Process each part."
+               "2. For the new transcript, if you'll receive it in parts. Process each part."
                "3. When you receive the final part, combine all chunks into a cohesive final output."
-               "4. write just response. Don't write any preceding sentence or the task's name. e.g., Here is the short summary"
+               "4. write just response. Don't write any preceding sentence or the task's name"
                )
-
 # Define tasks
 tasks = [
-   # {
-   #      "name": "long_summary",
-   #      "prompt": "Write a detailed, accurate summary of the transcript. Do not leave out any important information. "
-   #               f"The summary should be in {configs['lan']}"
-   #              "Ensure correct phrasing and proper syntax, without grammatical and spelling errors."
-   #              "Summarize the main material learned in the lesson comprehensively, in a clear and organized manner."
-   #                "The summary should include several chapters"
-   #                "It should include chapter headers with timestamps for when that chapter begins. "
-   #                "Each chapter should start with a heading and contain one or more paragraphs to give the summary a clear structure. Add timestamps when each chapter begins in the lecture"
-   #              "Use appropriate words from the lesson, while maintaining accuracy of technical terms and original meaning"
-   #              "Avoid figurative language, slang, or informal expressions."
-   #              "Summarize the material relevant to the lesson topic in a factual and professional manner."
-   #      ,
-   #      "output_file": "long_summary.txt",
-   #  },
+   {
+        "name": "long_summary",
+        "prompt": "Write a detailed, accurate summary of the transcript. Do not leave out any important information. "
+                 f"The summary should be in {configs['lan']}"
+                "Ensure correct phrasing and proper syntax, without grammatical and spelling errors."
+                "Summarize the main material learned in the lesson comprehensively, in a clear and organized manner."
+                  "The summary should include several chapters"
+                  "It should include chapter headers with timestamps for when that chapter begins. "
+                  "Each chapter should start with a heading and contain one or more paragraphs to give the summary a clear structure. Add timestamps when each chapter begins in the lecture"
+                "Use appropriate words from the lesson, while maintaining accuracy of technical terms and original meaning"
+                "Avoid figurative language, slang, or informal expressions."
+                "Summarize the material relevant to the lesson topic in a factual and professional manner."
+        ,
+        "output_file": "long_summary.txt",
+    },
     {
         "name": "short_summary",
         "prompt": f"Write a short summary (2-3 paragraph long) of the lecture in {configs['lan']}.",
         "output_file": "short_summary.txt",
     },
-    #  {
-    #     "name": "main_concepts",
-    #     "prompt": f"Extract around {configs['num_q']} key phrases, persons names and concepts from the transcript in {configs['lan']}."
-    #     "the output format is: concept; start-end, start-end. e.g.,"
-    #     "AAA; 00:15-01:40, 04:55-10:20"
-    #     "BBB; 35:15-36:50"
-    #     "and so on, when AAA, BBB are examples of concepts and 00:15-01:40 are start-end (from the beginning of the transcript) of when the concept is mentioned."
-    #     "note that a concept can be mentioned more than once. In this examples AAA is mentioned twice: in 00:15-01:40 and 04:55-10:20 from the beginning of the transcript",
-    #     "output_file": "concepts.txt",
-    # },
-    # {
-    #     "name": "mind_map",
-    #     "prompt": f"Generate an SVG code that depicts the mind map of the lecture. Include only the SVG code in your response. The text in the SVG should be in {configs['lan']}.",
-    #     "output_file": "mind_map.svg",
-    # },
-    # {
-    #     "name": "additional",
-    # "prompt": f" Suggest {configs['num_q']} additional reading, media, and sources about the topics of the lecture in {configs['lan']}. "
-    # " the sources should help me getting prepared for the exam"
-    # f"Add references authors and pointers where appropriate",
-    #  "output_file": "additional.txt",
-    # },
-    # {
-    #     "name": "quiz",
-    #     "prompt":
-    #         f"Compose a quiz in {configs['lan']} about the of the lecture. {configs['num_q']} questions (multiple choice, multiple answers are allowed). "
-    #         f"write '*' before the correct answers of the questions in the following format:"
-    #         "question_number; question"
-    #         "new line"
-    #         "* choice A"
-    #         "new line"
-    #         "choice B"
-    #         "and so on"
-    #         "new line "
-    #         "e.g., "
-    #         "1; what is the color of an orange?"
-    #         "A; red"
-    #         "B; blue"
-    #         "* C; orange"
-    #         "D; green",
-    #     "output_file": "quiz.txt",
-    # },
+     {
+        "name": "main_concepts",
+        "prompt": f"Extract around {configs['num_q']} key phrases, persons names and concepts from the transcript in {configs['lan']}."
+        "the output format is: concept; start-end, start-end. e.g.,"
+        "AAA; 00:15-01:40, 04:55-10:20"
+        "BBB; 35:15-36:50"
+        "and so on, when AAA, BBB are examples of concepts and 00:15-01:40 are start-end (from the beginning of the transcript) of when the concept is mentioned."
+        "note that a concept can be mentioned more than once. In this examples AAA is mentioned twice: in 00:15-01:40 and 04:55-10:20 from the beginning of the transcript",
+        "output_file": "concepts.txt",
+    },
+    {
+        "name": "mind_map",
+        "prompt": f"Generate an SVG code that depicts the mind map of the lecture. Include only the SVG code in your response. The text in the SVG should be in {configs['lan']}.",
+        "output_file": "mind_map.svg",
+    },
+    {
+        "name": "additional",
+    "prompt": f" Suggest {configs['num_q']} additional reading, media, and sources about the topics of the lecture in {configs['lan']}. "
+    " the sources should help me getting prepared for the exam"
+    f"Add references authors and pointers where appropriate",
+     "output_file": "additional.txt",
+    },
+    {
+        "name": "quiz",
+        "prompt":
+            f"Compose a quiz in {configs['lan']} about the of the lecture. {configs['num_q']} questions (multiple choice, multiple answers are allowed). "
+            f"write '*' before the correct answers of the questions in the following format:"
+            "question_number; question"
+            "new line"
+            "* choice A"
+            "new line"
+            "choice B"
+            "and so on"
+            "new line "
+            "e.g., "
+            "1; what is the color of an orange?"
+            "A; red"
+            "B; blue"
+            "* C; orange"
+            "D; green",
+        "output_file": "quiz.txt",
+    },
 
 ]
 def call_anthropic(system_prompt, task, transcript, long=False):
@@ -186,9 +186,15 @@ t0 = time.time()
 # Load the text file
 
 file_path = f"/home/roy/OneDrive/WORK/ideas/aaron/{configs['name']}/{configs['num']}/lesson{configs['num']}.txt"
+file_path = f"/home/roy/OneDrive/WORK/ideas/aaron/{configs['name']}/transcript.srt"
+file_path = f"/home/roy/OneDrive/WORK/ideas/aaron/{configs['name']}/medium_transcript.csv"
+
+
 with open(file_path, "r") as transcript_raw_file:
     transcript = transcript_raw_file.read().strip()
 out_dir = f"/home/roy/OneDrive/WORK/ideas/aaron/{configs['name']}/{configs['num']}/Anthropic"
+out_dir = f"/home/roy/OneDrive/WORK/ideas/aaron/{configs['name']}"
+
 process_all_tasks(system_prompt,transcript,tasks,out_dir)
 
 #print (res)
