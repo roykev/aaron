@@ -57,7 +57,7 @@ def detect_silence_webrtcvad(audio_file, frame_duration=30, vad_mode=0, rms_thre
             # ✅ If quiet noise, classify as Silence
             try:
                 is_speech = vad.is_speech(frame, sample_rate)
-                state = "Noise" if is_speech else "Silence"
+                state = "Audio" if is_speech else "Silence"
 
                 if rms_energy < rms_threshold:
                     state = "Silence"  # Override for quiet noise
@@ -85,7 +85,7 @@ def detect_silence_webrtcvad(audio_file, frame_duration=30, vad_mode=0, rms_thre
             else:
                 # ✅ Ignore short silence (< min_silence_duration)
                 if prev_row["state"] == "Silence" and (prev_row["to"] - prev_row["from"] < min_silence_duration):
-                    prev_row["state"] = "Noise"  # Merge with noise
+                    prev_row["state"] = "Audio"  # Merge with noise
                 merged_segments.append(prev_row)
                 prev_row = row
 
@@ -291,7 +291,9 @@ if __name__ == '__main__':
 
 # Apply a fade-in effect (2 seconds)
 #faded_audio = audio.fade_in(2000)
-    audio_path = "/home/roy/FS/OneDrive/WORK/ideas/Moments/shani_dolev"
+    audio_path = "/home/roy/FS/OneDrive/WORK/ideas/aaron/philosophy_of_education"
+    audio_path = "/home/roy/OneDriver/WORK/ideas/aaron/Miller/AI for business/2024/6/2"
+
     audio_file=os.path.join(audio_path,"raw.mp3")
     silence_file = os.path.join(audio_path,"silence.csv")
     if False:

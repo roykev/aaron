@@ -4,7 +4,7 @@ import time
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import librosa
+#import librosa
 import tensorflow as tf
 import torchaudio
 import torchaudio.transforms as transforms
@@ -13,62 +13,41 @@ from scipy.io import wavfile
 from scipy.signal import find_peaks
 from console_progressbar import ProgressBar
 from silance_detect import analyze_silence, merge_audio_and_silence
+from utils.utils import execution_time
 # Constants
 FRAME_SIZE = 2048  # Window size for analysis
 HOP_SIZE = 512  # Step size for moving window
-SOUND_CLASSES = {
-    "Speech": ["Speech", "Singing", "Whispering", "Shouting", "Laughter", "Crying"],
-    "Music": ["Classical Music", "Acoustic Guitar", "Piano", "Electronic Dance Music", "Drum Roll", "Live Music", "Drumming", "Electronic Dance Music", "Chanting"],
-    "Crowd": ["Applause", "Chatter", "Booing","Clapping", "Cheering", "Shouting"],
-    "Ambient": ["Breathing", "Heartbeat", "Kiss"],
-    "Venue": ["Church Bells", "Fireworks", "Camera Click", "Glass Clink", "Doorbell", "Wind", "Rain"],
-    "Blessings": ["Brachot","Speech", "Singing", "Cheering"],
-    "Glass Breaking": ["Breaking Sound", "Impact Noise"],
-    "Rituals": ["Brachot", "Dinging Glasses", "Cutlery Clinking", "Hora Dance","Wine Glass Ringing"],
-}
 
-# Base categories (from general weddings)
+
 BASE_SOUND_CLASSES = {
-    "Speech": ["Speech","Narration", "Conversation", "Singing", "Whispering", "Laughter", "Crying"],
-    "Music": [
-        "Classical Music", "Acoustic Guitar", "Piano", "Choir Singing","Music","Musical Instrument",
-        "Electronic Dance Music", "House Music", "Trance Music", "Techno","Guitar",
-        "Dubstep", "Drum and Bass", "Hip Hop Music", "Disco","Bass Guitar",
-        "Oriental Music", "Mizrahi Music", "Middle Eastern Music","Singing",
-        "Arabic Music", "Oud", "Darbuka", "Greek Music", "Bouzouki", "Laïka", "Tsifteteli"],
-    "Crowd": ["Applause", "Cheering", "Chatter", "Booing"],
-    "Ambient": ["Breathing", "Heartbeat", "Kiss"],
-    "Objects": ["Cutlery Clinking", "Camera Click", "Wine Glass Ringing"],
+    "Speech": ["Speech", "Lecture", "Narration", "Explaining", "Discussion", "Q&A"],
+    "Audience": ["Applause", "Laughter", "Coughing", "Whispering", "Chatter"],
+    "Lecture Environment": ["Chalk Writing", "Whiteboard Marker", "Typing", "Page Turning", "Projector Fan"],
+    "Objects": ["Pen Click", "Book Drop", "Glass Clink", "Microphone Feedback", "Chair Moving"],
+    "Electronics": ["Keyboard Typing", "Mouse Click", "Phone Ringing", "Notification Sound", "Printer"],
+    "Ambient": ["Air Conditioning", "Room Noise", "Distant Traffic"],
+    "Music": ["Intro Music", "Outro Music", "Elevator Music", "Instrumental Background"],
 }
 
-# 🎉 **Israeli Wedding Specific Sounds**
-ISRAELI_SOUND_CLASSES = {
-    "Breaking Glass": ["Glass Breaking","Impact Noise"],
-    "Blessings": ["Blessing", "Chanting", "Amen"],
-    "Clapping & Cheering": ["Clapping", "Cheering","Shout","Shouting",],
-    "Glass Ding": ["Glass Ding"]
+LECTURE_SOUND_CLASSES = {
+    "Speech": ["Speech", "Narration", "Conversation", "Lecture", "Discussion", "Q&A", "Explaining"],
+    "Audience": ["Applause", "Laughter", "Coughing", "Whispering", "Murmuring", "Booing"],
+    "Lecture Environment": ["Chalk Writing", "Whiteboard Marker", "Typing", "Page Turning", "Projector Fan", "Door Opening"],
+    "Questions & Answers": ["Student Asking", "Teacher Answering", "Panel Discussion"],
+    "Objects": ["Pen Click", "Book Drop", "Glass Clink", "Microphone Feedback", "Chair Moving"],
+    "Electronics": ["Keyboard Typing", "Mouse Click", "Phone Ringing", "Notification Sound", "Printer"],
+    "Ambient": ["Air Conditioning", "Room Noise", "Distant Traffic"],
+    "Background Music": ["Intro Music", "Outro Music", "Elevator Music", "Instrumental Background"],
 }
-ALL_SOUND_CLASSES = {**BASE_SOUND_CLASSES, **ISRAELI_SOUND_CLASSES}
+
+ALL_SOUND_CLASSES = {**BASE_SOUND_CLASSES, **LECTURE_SOUND_CLASSES}
 @tf.function
 def run_yamnet(model, segment):
     return model(segment)
 device = '/CPU:0'
 #tf.config.set_visible_devices([], 'GPU')  # Disables GPU usage
-def execution_time(start_time, end_time):
-    """Returns the execution time in a human-readable format."""
-    duration = end_time - start_time
 
-    hours = int(duration // 3600)
-    minutes = int((duration % 3600) // 60)
-    seconds = duration % 60
-
-    if hours > 0:
-        return(f"{hours}h {minutes}m {seconds:.2f}s")
-    elif minutes > 0:
-        return(f"{minutes}m {seconds:.2f}s")
-    else:
-        return(f"{seconds:.2f}s")
-class WeddingAudioAnalyzer:
+class LectureAudioAnalyzer:
 
     def __init__(self, audio_path):
         self.audio_path = audio_path
@@ -97,7 +76,6 @@ class WeddingAudioAnalyzer:
             # ✅ Read file safely
             self.class_names = []
             with open(class_map_path, "r", encoding="utf-8") as f:
-                #self.class_names = [line.strip() for line in f.readlines() if line.strip()]  # ✅ Ensure non-empty lines
                 lines = f.readlines()  # Read all lines first
                 self.class_names = [line.strip() for line in lines[1:] if line.strip()]  # ✅ Skip first row
 
@@ -133,7 +111,6 @@ class WeddingAudioAnalyzer:
         # Load YAMNet model
         self.yamnet_model = tf.saved_model.load("/home/roy/FS/yamnet_model")
         self.class_names =self.load_yamnet_class_names()
-#        print(self.class_names[:10])  # ✅ Print first 10 class names for verification
         print("✅ YAMNet model loaded successfully.")
 
     def load_audio(self):
@@ -154,23 +131,24 @@ class WeddingAudioAnalyzer:
         print("Audio loaded successfully.")
 
     def classify_audio_segments(self):
-        """Classifies long-duration audio efficiently with chunking, larger hop size, and checkpointing."""
+        """Classifies long-duration audio efficiently with chunking, larger hop size, and event merging."""
         print("🔍 Classifying audio using YAMNet...")
 
         chunk_duration = 1800  # 30 minutes per chunk
         sample_rate = self.sample_rate
-        hop_size = 8192  # Increased from 2048 to reduce total segments
+        hop_size = int(sample_rate * .25)  # Ensure each row is at least 1 sec
+
         chunk_size = chunk_duration * sample_rate  # Total samples per chunk
         total_samples = len(self.audio_data)
         num_chunks = int(np.ceil(total_samples / chunk_size))
 
         print(f"🔄 Splitting audio into {num_chunks} chunks ({chunk_duration // 60} min each).")
 
-        if not hasattr(self, "chunk_files"):  # ✅ Ensure this attribute exists
+        if not hasattr(self, "chunk_files"):
             self.chunk_files = []
 
-        prev_rms_energy = None  # ✅ Keep track of energy across chunks
-        sudden_change_threshold = 0.1  # ✅ Adjust threshold
+        prev_rms_energy = None
+        sudden_change_threshold = 0.1
 
         for chunk_index in range(num_chunks):
             start_sample = chunk_index * chunk_size
@@ -183,6 +161,7 @@ class WeddingAudioAnalyzer:
             prev_event_class = None
             prev_sub_class = None
             prev_timestamp = None
+            merged_event = None  # Track merged event
 
             num_segments = int(np.floor(len(chunk_audio) / hop_size))
 
@@ -205,18 +184,17 @@ class WeddingAudioAnalyzer:
                     # ✅ Use GPU if available
                     with tf.device(device):
                         scores, embeddings, spectrogram = run_yamnet(self.yamnet_model, segment)
+
                     class_scores = np.mean(scores.numpy(), axis=0)
                     top_class_index = np.argmax(class_scores)
 
-                    # ✅ Ensure class index is valid
                     if top_class_index >= len(self.class_names):
                         print(f"⚠️ Warning: Invalid class index {top_class_index}. Skipping.")
                         event_class, sub_class = "Other", "General"
                     else:
                         detected_class = self.class_names[top_class_index].strip().lower()
-                        event_class, sub_class = self.map_to_wedding_category(detected_class)
+                        event_class, sub_class = self.map_to_category(detected_class)
 
-                    # ✅ Ensure it belongs to predefined categories
                     if event_class not in ALL_SOUND_CLASSES:
                         event_class = "Other"
 
@@ -228,25 +206,30 @@ class WeddingAudioAnalyzer:
                 timestamp = float(start_sample / sample_rate) + (i * hop_size / sample_rate)
                 rms_energy = np.sqrt(np.mean(np.square(segment)))
 
-                # ✅ Compare Sudden Change Across Chunks
+                # ✅ Detect Sudden Change
                 sudden_change = abs(rms_energy - (prev_rms_energy if prev_rms_energy is not None else rms_energy))
                 sudden_change_flag = 1 if sudden_change > sudden_change_threshold else 0
 
-                # ✅ Only store significant changes
+                # ✅ Merge Consecutive Events of the Same Type
                 if (
-                        i == 0 or
-                        (prev_timestamp is not None and round(timestamp, 2) != round(prev_timestamp, 2)) or
-                        event_class != prev_event_class or
-                        sudden_change_flag  # ✅ Store only when significant change happens
+                        merged_event
+                        and event_class == merged_event["event_class"]
+                        and sub_class == merged_event["sub_class"]
                 ):
-                    output_rows.append({
+                    merged_event["to_time"] = timestamp + (hop_size / sample_rate)
+                    merged_event["rms_energy"] = (merged_event["rms_energy"] + rms_energy) / 2  # Average RMS
+                    merged_event["sudden_change"] = max(merged_event["sudden_change"], sudden_change_flag)
+                else:
+                    if merged_event:
+                        output_rows.append(merged_event)
+                    merged_event = {
                         "from_time": timestamp,
                         "to_time": timestamp + (hop_size / sample_rate),
                         "rms_energy": rms_energy,
-                        "sudden_change": sudden_change_flag,  # ✅ Boolean flag
+                        "sudden_change": sudden_change_flag,
                         "event_class": event_class,
                         "sub_class": sub_class
-                    })
+                    }
 
                 # ✅ Update Previous Values for Next Iteration
                 prev_timestamp = timestamp
@@ -254,13 +237,16 @@ class WeddingAudioAnalyzer:
                 prev_sub_class = sub_class
                 prev_rms_energy = rms_energy
 
+            # ✅ Add last merged event
+            if merged_event:
+                output_rows.append(merged_event)
+
             # ✅ Save chunk results
             chunk_df = pd.DataFrame(output_rows)
             chunk_filename = f"audio_event_analysis_chunk_{chunk_index + 1}.csv"
             chunk_df.to_csv(chunk_filename, index=False, encoding="utf-8-sig")
-            self.chunk_files.append(chunk_filename)  # ✅ Track temp files
+            self.chunk_files.append(chunk_filename)
             print(f"✅ Chunk {chunk_index + 1} saved: {chunk_filename}")
-
     def merge_and_clean_files(self,output_csv = "audio_event_analysis_results.csv"):
         """Merges chunk files into a single CSV and deletes temporary files."""
         print("🔄 Merging all chunk files into final CSV...")
@@ -276,7 +262,7 @@ class WeddingAudioAnalyzer:
         final_df.to_csv(output_path, index=False, encoding="utf-8-sig")
         print(f"✅ Final results saved: {output_path}")
 
-    def map_to_wedding_category(self, class_index):
+    def map_to_category(self, class_index):
         """Maps YAMNet class index to a relevant wedding sound category."""
         try:
             if isinstance(class_index, str):
@@ -288,20 +274,10 @@ class WeddingAudioAnalyzer:
                 print(f"⚠️ Error: class_index {class_index} is out of range (0-{len(self.class_names) - 1})")
                 return "Other", "General"
 
-            # ✅ Get the class name from the YAMNet list
- #           class_name = self.class_names[class_index].lower().strip()  # Normalize to lowercase
-
-            # ✅ Check if the class belongs to BASE_SOUND_CLASSES
-            for category, keywords in BASE_SOUND_CLASSES.items():
+                   # ✅ Check if the class belongs to BASE_SOUND_CLASSES
+            for category, keywords in ALL_SOUND_CLASSES.items():
                 if class_name in (name.lower() for name in keywords):
                     return category, class_name# ✅ Found match in BASE_SOUND_CLASSES
-
-            # ✅ Check if the class belongs to ISRAELI_SOUND_CLASSES
-            for category, keywords in ISRAELI_SOUND_CLASSES.items():
-                if class_name in (name.lower() for name in keywords):
-                    return category, class_name  # ✅ Found match in ISRAELI_SOUND_CLASSES
-
-            #print(f"⚠️ Warning: class '{class_name}' (index {class_index}) not found in predefined categories.")
             return "Other", class_name  # ✅ Default to "Other" if no match is found
 
         except Exception as e:
@@ -340,22 +316,10 @@ class WeddingAudioAnalyzer:
         wav_path = os.path.join(self.audio_path,"processed_audio.wav")
         os.remove(wav_path)
 
-# 🎉 **Israeli Wedding Class (inherits and modifies classification)**
-class IsraeliWeddingAudioAnalyzer(WeddingAudioAnalyzer):
-    """Customized audio analysis for Israeli weddings, mapping sounds to relevant wedding events."""
-    def __init__(self, audio_path):
-        self.audio_path = audio_path
-        self.mp3 = os.path.join(audio_path,"raw.mp3")
-        self.sample_rate = None
-        self.audio_data = None
-        self.df = None
-        self.yamnet_model = None  # Will load YAMNet for classification
-        self.chunk_files = []  # ✅ Fix: Initialize chunk_files to track temp files
-
 def analyze_energy_events(audio_path):
     """Main function to run the audio event analysis."""
     start_time = time.time()  # Capture start time
-    analyzer = IsraeliWeddingAudioAnalyzer(audio_path)
+    analyzer = LectureAudioAnalyzer(audio_path)
     analyzer.load_audio()
     load_audio_time = time.time()
     print(f"load_audio: {execution_time(load_audio_time, start_time)}")
@@ -368,7 +332,7 @@ def analyze_energy_events(audio_path):
     print(f"total time: {execution_time(start_time, time.time())}")
     analyzer.finalize()
 def main(audio_path):
-  #  analyze_energy_events(audio_path)
+    #analyze_energy_events(audio_path)
     analyze_silence(audio_path)
     event_analysis_file = os.path.join(audio_path, "audio_event_analysis_results.csv")
     optimized_audio_analysis_file = os.path.join(audio_path, "optimized_audio_analysis.csv")
@@ -381,5 +345,8 @@ def main(audio_path):
 
 
 if __name__ == "__main__":
-    audio_path = "/home/roy/FS/OneDrive/WORK/ideas/Moments/omer_lior"
+    audio_path = "/home/roy/FS/OneDrive/WORK/ideas/aaron/philosophy_of_education"
+    audio_path="/home/roy/FS/OneDriver1/WORK/ideas/aaron/azrieli/intro to computational biology"
+    audio_path =                 "/home/roy/FS/OneDriver1/WORK/ideas/aaron/Miller/AI for business/2024/6/2"
+
     main(audio_path)

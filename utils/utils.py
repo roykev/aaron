@@ -125,3 +125,18 @@ def get_audio_file_content(file_path):
     base64_string = base64_bytes.decode('utf-8')
     # Assuming the file is an mp3; adjust the mime type if different
     return base64_string
+
+def execution_time(start_time, end_time):
+    """Returns the execution time in a human-readable format."""
+    duration = end_time - start_time
+
+    hours = int(duration // 3600)
+    minutes = int((duration % 3600) // 60)
+    seconds = duration % 60
+
+    if hours > 0:
+        return(f"{hours}h {minutes}m {seconds:.2f}s")
+    elif minutes > 0:
+        return(f"{minutes}m {seconds:.2f}s")
+    else:
+        return(f"{seconds:.2f}s")

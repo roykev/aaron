@@ -105,26 +105,6 @@ def clip_file(in_file, out_file, t_start,t_end):
     #result = CompositeVideoClip([video]) #  video
     video.write_videofile(out_file,verbose=False,logger=None,audio_codec="aac",) # Many options...
     return video
-# Utilities to open video files using CV2
-
-# def load_video(path, max_frames=0, resize=(224, 224)):
-#   cap = cv2.VideoCapture(path)
-#   frames = []
-#   try:
-#     while True:
-#       ret, frame = cap.read()
-#       if not ret:
-#         break
-#       frame = crop_center_square(frame)
-#       frame = cv2.resize(frame, resize)
-#       frame = frame[:, :, [2, 1, 0]]
-#       frames.append(frame)
-#
-#       if len(frames) == max_frames:
-#         break
-#   finally:
-#     cap.release()
-#   return np.array(frames) / 255.0
 
 def count_frames(video_path):
     cap = cv2.VideoCapture(str(video_path))
@@ -163,21 +143,21 @@ def wrap_text(text, max_width=30):
     return "\n".join(lines)
 
 def create_clips(df,movie_file,path,concat=False):
-    extract_dir= os.path.join(path,"clips1")
+    extract_dir= os.path.join(path,"clips")
     movie_path = os.path.join(path,movie_file)
     clips = []
     for i,row in enumerate(df.iterrows()):
         clipfile = os.path.join(extract_dir,f"{i+1}.mp4")
-        clip =clip_file(movie_path, clipfile, row[1]["start_tc"], row[1]["end_tc"])
+        clip =clip_file(movie_path, clipfile, row[1]["from"], row[1]["to"])
         clips.append(clip)
 
     if concat:
         final = concatenate_videoclips(clips)
         final.write_videofile(os.path.join(extract_dir,"trailer.mp4"))
-def make_trailer(df,clips_path):
+def make_trailer(df,clips_path,lesson_name):
     # Configuration
-    logo = "/home/roy/OneDrive/WORK/ideas/aaron/Picture1.jpg"
-    lesson_name = "Tekuma: independence"  # Lesson name to display below the logo
+    logo = "media/Picture1.jpg"
+   # lesson_name = "Intro to AI"  # Lesson name to display below the logo
     output = os.path.join(clips_path, "trailer.mp4")
     duration_slide = 4  # Duration for slides in seconds
     font ="/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
@@ -210,7 +190,7 @@ def make_trailer(df,clips_path):
                          audio_codec="aac",
                          audio_bitrate="192k")
     # Load the new audio
-    mp3 = "/home/roy/FS/OneDriver1/WORK/ideas/aaron/sports-intro-259888.mp3"
+    mp3 = "media/intro.mp3"
     new_audio= AudioFileClip(mp3)
 
     # If the audio is longer/shorter than the video, you might want to set the duration
@@ -313,7 +293,7 @@ if __name__ == '__main__':
     #create_clips(df,movie_file,dirpath)
     make_trailer(df,extract_dir)
     mp4 = os.path.join(dirpath,"clips/intro.mp4")
-    mp3="/home/roy/FS/OneDriver1/WORK/ideas/aaron/sports-intro-259888.mp3"
+    mp3="media/intro.mp3"
     mp4new = os.path.join(dirpath,"clips/intro_.mp4")
     override_audio(mp4, mp3, mp4new)
 
