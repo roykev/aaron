@@ -10,7 +10,7 @@ from anthropic import Anthropic,APIStatusError
 
 from utils.clips_utils import create_clips, make_trailer
 from utils.utils import source_key
-
+from audio.silance_detect import analyze_silence
 
 class ClipCreator:
     def __init__(self, dir_path, genre="educational"):
@@ -32,6 +32,8 @@ class ClipCreator:
         self.transcription = f.read()
         scenes_f = os.path.join(self.path, "scenes.csv")
         self.scenes = pd.read_csv(scenes_f)
+        silence_f = os.path.join(self.path, "silence.csv")
+        self.silence = pd.read_csv(silence_f)
     def make_system_prompt(self, from_1=35, to_1=45, from_2=3, to_2=5):
         system_prompt = {f"You are a professional video editor specializing in creating concise {self.genre} content. "
                          "Your task is to analyze lecture content and identify the most important sections that maintain the core message while fitting within time constraints."
@@ -39,12 +41,12 @@ class ClipCreator:
                          "Rules for section selection:"
                          f"- Each section should be {from_1}-{to_1} seconds (unless absolutely necessary to be longer)"
                          f"- Total video should be {from_2}-{to_2} minutes"
-                         f"- Never cut mid-sentence or mid-idea"
+                         f"- Never cut mid-sentence or mid-idea. Avoid long silence periods"
+                         f"- A section should not start a few seconds before a scene ends or during a long silence (in that case it would start after)"
+                         f"- A section should not end right after a scene start, in a middle of a sentance, or during a long silence (in that case it would end before)"
                          f"- Maintain logical flow from introduction through conclusion"
                          f"- Ensure sections align with key concepts (optional) from summary"
-                         #f"- Start with speaker introduction/context"
-                         #f"- End with concrete examples or results"
-                         "The data is provided in chunks. so process them all before providing the results"}
+                         "The data may be provided in chunks. so process them all before providing the results"}
         return system_prompt
     def make_user_prompt(self, from_1=35, to_1=45, from_2=3, to_2=5):
         user_prompt = {
@@ -56,6 +58,7 @@ class ClipCreator:
             "3. Include key demonstrations if relevant"
             f"4. Total around {from_2}-{to_2} minutes"
             f"5. Each section {from_1}-{to_1} seconds unless necessary"
+            f"6. each section should contain complete idea(s)"
 
             f"Here are the source materials:"
             f"<summary>"
@@ -70,6 +73,9 @@ class ClipCreator:
             f"<scenes>"
             f"{self.scenes}"
             f"</scenes>"
+            f"<silence>"
+            f"{self.silence}"
+            f"</silence>"
             f"Output the selections in this format:"
             f"from,to,duration,description"
             f"00:00:00,00:00:45,45,'Introduction and context'"
@@ -172,26 +178,39 @@ def process_prompt(client, system_prompt,user_prompt):
 
 
 if __name__ == '__main__':
-    dirpath = "/home/roy/OneDriver/WORK/ideas/aaron/Miller/AI for business/2024/6/2"
-    clip_creator=ClipCreator(dirpath)
-    clip_creator.load_artifacts()
-    #print(len(clip_creator.scenes))
-    system_prompt=clip_creator.make_system_prompt()
-    user_prompt =clip_creator.make_user_prompt()
-    api_key = source_key(param="ANTHROPIC_API_KEY")
-    client = Anthropic(
-        api_key=api_key
-    )
-    res = process_prompt(client, system_prompt, user_prompt)
-    print(res)
-    df = pd.read_csv(io.StringIO(res))
-    df.to_csv(os.path.join(dirpath,"clips.csv"))
+    dirpath = "/home/roy/FS/OneDriver1/WORK/ideas/aaron/Miller/AI for business/2024/6/2"
     movie_file = "6.2.mp4"
-    extract_dir= os.path.join(dirpath,"clips")
+    lesson_name= "Intro to AI"
+
+    extract_dir = os.path.join(dirpath, "clips")
+    detect_silence = False
+    rerun_prompt = True
+    if detect_silence:
+        analyze_silence(dirpath,a_file="raw.mp3")
+
+    if rerun_prompt:
+        clip_creator=ClipCreator(dirpath)
+        clip_creator.load_artifacts()
+        system_prompt=clip_creator.make_system_prompt()
+        user_prompt =clip_creator.make_user_prompt()
+        api_key = source_key(param="ANTHROPIC_API_KEY")
+        client = Anthropic(
+            api_key=api_key
+        )
+
+        res = process_prompt(client, system_prompt, user_prompt)
+        print(res)
+        df = pd.read_csv(io.StringIO(res))
+        df.to_csv(os.path.join(dirpath,"clips.csv"),index=False)
+    else:
+        df= pd.read_csv(os.path.join(dirpath,"clips.csv"))
+
+
     if not os.path.exists(extract_dir):
-        os.makedirs(extract_dir)
-    create_clips(df,movie_file,dirpath)
-    make_trailer(df,extract_dir)
+         os.makedirs(extract_dir)
+    if False:
+        create_clips(df,movie_file,dirpath)
+        make_trailer(df,extract_dir, lesson_name=lesson_name)
 
 
 
