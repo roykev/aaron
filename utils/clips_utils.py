@@ -54,7 +54,6 @@ def compress_video(input_path, output_path, target_size):
 
 
 
-
 def create_hebrew_text_image(text, fontsize=50, color="white", size=(1440, 600)):
     """Creates an image with Hebrew text to maintain correct RTL rendering and returns as a NumPy array."""
     font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"  # Change to a Hebrew-supporting font
@@ -142,13 +141,13 @@ def wrap_text(text, max_width=30):
 
     return "\n".join(lines)
 
-def create_clips(df,movie_file,path,concat=False):
+def create_clips(df,movie_file, path,from_field="from", to_field="to", concat=False):
     extract_dir= os.path.join(path,"clips")
     movie_path = os.path.join(path,movie_file)
     clips = []
     for i,row in enumerate(df.iterrows()):
         clipfile = os.path.join(extract_dir,f"{i+1}.mp4")
-        clip =clip_file(movie_path, clipfile, row[1]["from"], row[1]["to"])
+        clip =clip_file(movie_path, clipfile, row[1][from_field], row[1][to_field])
         clips.append(clip)
 
     if concat:

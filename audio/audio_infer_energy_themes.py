@@ -12,12 +12,15 @@ from pydub import AudioSegment
 from scipy.io import wavfile
 from scipy.signal import find_peaks
 from console_progressbar import ProgressBar
-from silance_detect import analyze_silence, merge_audio_and_silence
+from silance_detect import analyze_silence, merge_audio_and_silence, merge_speech_segments
 from utils.utils import execution_time
 # Constants
 FRAME_SIZE = 2048  # Window size for analysis
 HOP_SIZE = 512  # Step size for moving window
-
+GENRE = "DOCO"
+GENRE = "LECTURE"
+GENRE = "WEDDING"
+GENRE = "DRAMA"
 
 BASE_SOUND_CLASSES = {
     "Speech": ["Speech", "Lecture", "Narration", "Explaining", "Discussion", "Q&A"],
@@ -28,7 +31,6 @@ BASE_SOUND_CLASSES = {
     "Ambient": ["Air Conditioning", "Room Noise", "Distant Traffic"],
     "Music": ["Intro Music", "Outro Music", "Elevator Music", "Instrumental Background"],
 }
-
 LECTURE_SOUND_CLASSES = {
     "Speech": ["Speech", "Narration", "Conversation", "Lecture", "Discussion", "Q&A", "Explaining"],
     "Audience": ["Applause", "Laughter", "Coughing", "Whispering", "Murmuring", "Booing"],
@@ -39,13 +41,70 @@ LECTURE_SOUND_CLASSES = {
     "Ambient": ["Air Conditioning", "Room Noise", "Distant Traffic"],
     "Background Music": ["Intro Music", "Outro Music", "Elevator Music", "Instrumental Background"],
 }
+# ✅ Define Historical Documentary Sound Categories
+HISTORICAL_SOUND_CLASSES = {
+    "Speech": ["Speech", "Narration", "Conversation", "Public Speaking", "Shouting", "Whispering", "Laughter", "Crying"],
+    "Music": ["Orchestra", "Classical Music", "Piano", "Choir Singing", "Cinematic Music", "Drumming", "Singing"],
+    "Crowd": ["Applause", "Cheering", "Chatter", "Booing", "Protest", "Footsteps"],
+    "Ambient": ["Wind", "Rain", "Fire", "Clock Tick", "Church Bells", "Horse Gallop"],
+    "War & Conflict": ["Gunshot", "Explosion", "Marching", "Clinking Metal", "Sword Clashes", "Cannon Fire"],
+    "Archival & Media": ["Radio", "Static Noise", "Typewriter", "Camera Click", "Projector"],
+    "Effects": ["Train Horn", "Ship Sounds", "Ocean Waves", "Chains Clanking", "Clanging Metal"]
+}
 
-ALL_SOUND_CLASSES = {**BASE_SOUND_CLASSES, **LECTURE_SOUND_CLASSES}
+
+TV_DRAMA_SOUND_CLASSES = {
+    "Speech": [
+        "Speech", "Narration", "Conversation", "Whispering", "Laughter",
+        "Crying", "Shouting", "Screaming", "Mumbling", "Voice-over", "Monologue"
+    ],
+    "Music & Score": [
+        "Classical Music", "Piano", "Orchestral Music", "Choir Singing",
+        "Suspenseful Music", "Dramatic Score", "Melancholic Music",
+        "Electronic Music", "Jazz", "Hip Hop Music", "Rock Music",
+        "Guitar", "Violin", "Drum Roll", "Singing", "Opera"
+    ],
+    "Emotional Expressions": [
+        "Laughter", "Crying", "Screaming", "Sigh", "Gasp", "Breathing",
+        "Groan", "Giggling", "Humming", "Moaning"
+    ],
+    "Dramatic Effects": [
+        "Door Slamming", "Footsteps", "Heartbeat", "Thunderstorm",
+        "Wind", "Rain", "Gunshot", "Explosion", "Glass Breaking",
+        "Car Crash", "Siren", "Alarm", "Clock Ticking", "Bell Ringing"
+    ],
+    "Crowd & Environment": [
+        "Applause", "Cheering", "Chatter", "Crowd Murmur",
+        "Booing", "Restaurant Ambience", "Traffic Noise",
+        "City Sounds", "Nature Sounds", "Animal Sounds"
+    ],
+    "Objects & Movements": [
+        "Cutlery Clinking", "Camera Click", "Typing", "Phone Ringing",
+        "Door Opening", "Door Closing", "Paper Rustling", "Glass Clinking",
+        "Rustling Fabric", "Book Pages Turning", "Water Pouring"
+    ],
+    "Tension & Suspense": [
+        "Dramatic Music", "Suspenseful Music", "Tension Sound Effects",
+        "Heartbeat", "Breath Holding", "Clock Ticking", "Cinematic Hit",
+        "Low Rumble", "Horror Atmosphere", "Whispers"
+    ]
+}
+
+if GENRE=="DOCO":
+    # for history
+    # ✅ Merge with Base Classes
+    ALL_SOUND_CLASSES = {**HISTORICAL_SOUND_CLASSES}
+elif GENRE=="LECTURE":
+    # for lectures
+    ALL_SOUND_CLASSES = {**BASE_SOUND_CLASSES, **LECTURE_SOUND_CLASSES}
+elif GENRE == "DRAMA":
+    ALL_SOUND_CLASSES = {**TV_DRAMA_SOUND_CLASSES}
+
 @tf.function
 def run_yamnet(model, segment):
     return model(segment)
-device = '/CPU:0'
-#tf.config.set_visible_devices([], 'GPU')  # Disables GPU usage
+device = '/GPU:0'
+tf.config.set_visible_devices([], 'GPU')  # Disables GPU usage
 
 class LectureAudioAnalyzer:
 
@@ -95,9 +154,9 @@ class LectureAudioAnalyzer:
     def load_yamnet_model(self):
         """Loads the YAMNet model and forces it to use GPU if available."""
         print("Loading YAMNet model...")
-
+        gpus=None
         # Check if GPU is available and set execution mode
-        gpus = tf.config.experimental.list_physical_devices('GPU')
+        #gpus = tf.config.experimental.list_physical_devices('GPU')
         if gpus:
             try:
                 # Enable memory growth to avoid allocation issues
@@ -332,21 +391,26 @@ def analyze_energy_events(audio_path):
     print(f"total time: {execution_time(start_time, time.time())}")
     analyzer.finalize()
 def main(audio_path):
-    #analyze_energy_events(audio_path)
+    analyze_energy_events(audio_path)
     analyze_silence(audio_path)
-    event_analysis_file = os.path.join(audio_path, "audio_event_analysis_results.csv")
-    optimized_audio_analysis_file = os.path.join(audio_path, "optimized_audio_analysis.csv")
-    silence_file = os.path.join(audio_path, "silence.csv")
+    event_analysis_file = os.path.join(audio_path, "extract/audio_event_analysis_results.csv")
+    optimized_audio_analysis_file = os.path.join(audio_path, "extract/optimized_audio_analysis.csv")
+    silence_file = os.path.join(audio_path, "extract/silence.csv")
 
 # Usage Example
     merged_df = merge_audio_and_silence(silence_file, event_analysis_file)
-
     merged_df.to_csv(optimized_audio_analysis_file, index=False, encoding="utf-8-sig")
+    corrected_df = merge_speech_segments(merged_df,gap_threshold=4.0)
 
+
+    corrected_audio_analysis_file =  os.path.join(audio_path, "extract/corrected_audio_analysis.csv")
+
+    corrected_df.to_csv(corrected_audio_analysis_file, index=False, encoding="utf-8-sig")
 
 if __name__ == "__main__":
     audio_path = "/home/roy/FS/OneDrive/WORK/ideas/aaron/philosophy_of_education"
     audio_path="/home/roy/FS/OneDriver1/WORK/ideas/aaron/azrieli/intro to computational biology"
-    audio_path =                 "/home/roy/FS/OneDriver1/WORK/ideas/aaron/Miller/AI for business/2024/6/2"
+    audio_path =   "/home/roy/FS/OneDriver1/WORK/ideas/aaron/Miller/AI for business/2024/6/2"
+    audio_path = "/home/roy/FS/OneDriver1/WORK/ideas/Moments/kan11/tzvi/5"
 
     main(audio_path)

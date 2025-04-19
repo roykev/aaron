@@ -11,6 +11,7 @@ from pydub import AudioSegment
 from console_progressbar import ProgressBar
 m_size = "medium"
 #m_size = "tiny"
+m_size = "large"
 
 
 
@@ -129,7 +130,8 @@ if __name__ == '__main__':
     t0 = time.time()
     dir_name ="/home/roy/Downloads/"
     dir_name = "/home/roy/OneDrive/WORK/ideas/aaron/philosophy_of_education"
-    file_name = os.path.join(dir_name,"philosophy_of_education_0.mp3")
+    dir_name ="/home/roy/FS/OneDrive/WORK/ideas/aaron/hadasa/maoz/demo/"
+    file_name = os.path.join(dir_name,"raw.mp3")
     #file_name = os.path.join(dir_name,"lesson1-0.mp3")
     tmp_name= os.path.join(dir_name,"tmp_output.mp3")
     outfile = os.path.join(dir_name,f"{m_size}_out.txt")

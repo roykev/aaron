@@ -10,6 +10,14 @@ import wave
 import numpy as np
 import pandas as pd
 
+def sec2ts(sec):
+    """Converts seconds (including milliseconds) to HH:MM:SS.sss format."""
+    sec = float(sec)  # Ensure sec is a float
+    hours = int(sec // 3600)
+    minutes = int((sec % 3600) // 60)
+    seconds = int(sec % 60)
+    milliseconds = int((sec - int(sec)) * 1000)  # Extract milliseconds
+    return f"{hours:02d}:{minutes:02d}:{seconds:02d}.{milliseconds:03d}"
 
 
 def detect_silence_webrtcvad(audio_file, frame_duration=30, vad_mode=0, rms_threshold=0.01, min_silence_duration=1.0):
@@ -96,8 +104,6 @@ def detect_silence_webrtcvad(audio_file, frame_duration=30, vad_mode=0, rms_thre
     return final_df
 
 
-
-
 def convert_mp3_to_wav(mp3_file, wav_file):
     """Convert MP3 to WAV (16-bit PCM, mono) for WebRTC VAD."""
     audio = AudioSegment.from_mp3(mp3_file)
@@ -120,9 +126,6 @@ def detect_silence(audio_file, silence_threshold=-50, min_silence_len=1000):
         pb.print_progress_bar(len(df))
         #print("{}--{}".format(datetime.fromtimestamp(range[0]/1000.0),datetime.fromtimestamp(range[1]/1000.0)))
     return df
-
-
-import pandas as pd
 
 
 def clean_silence_detection(df):
@@ -170,7 +173,51 @@ def clean_silence_detection(df):
 
     return final_df
 
+def merge_speech_segments(df, gap_threshold=2.0):
+    """
+    Merges consecutive speech segments separated by short 'Other' gaps.
 
+    Parameters:
+    df (DataFrame): The audio event data with 'from_time', 'to_time', and 'event_class'.
+    gap_threshold (float): Maximum allowed gap (in seconds) to merge speech segments.
+
+    Returns:
+    DataFrame: Post-processed event data with merged speech segments.
+    """
+    merged_rows = []
+    prev_row = None
+
+    for _, row in df.iterrows():
+        if prev_row is None:
+            prev_row = row
+            continue
+
+        # Check if merging is needed
+        if prev_row["event_class"] == "Speech" and row["event_class"] == "Speech":
+            prev_row["to_time"] = row["to_time"]  # Extend previous speech segment
+            prev_row["rms_energy"] = (float(prev_row["rms_energy"]) + float(row["rms_energy"])) / 2  # Average energy
+            prev_row["sudden_change"] = max(prev_row["sudden_change"], row["sudden_change"])  # Max sudden change
+
+        elif prev_row["event_class"] == "Speech" and row["event_class"] == "Other":
+            # If short "Other" (gap) between speech, ignore and merge
+            if float(row["to_time"]) - float(prev_row["to_time"]) <= gap_threshold:
+                prev_row["to_time"] = row["to_time"]  # Extend speech to include short gap
+
+            else:
+                merged_rows.append(prev_row)  # Save previous segment before starting new
+                prev_row = row
+
+        else:
+            merged_rows.append(prev_row)
+            prev_row = row
+
+    if prev_row is not None:
+        merged_rows.append(prev_row)
+    df = pd.DataFrame(merged_rows)
+
+    df[ "start_tc"] = df["from_time"].apply(sec2ts)
+    df ["end_tc"]=  df["to_time"].apply(sec2ts)
+    return df
 
 
 def merge_audio_and_silence(silence_file, events_file):
@@ -269,12 +316,13 @@ def merge_audio_and_silence(silence_file, events_file):
     final_df["from_time"] = final_df["from_time"].apply(lambda x: f"{x:.3f}")
     final_df["to_time"] = final_df["to_time"].apply(lambda x: f"{x:.3f}")
     final_df["rms_energy"] = final_df["rms_energy"].apply(lambda x: f"{x:.3f}" if not pd.isna(x) else "")
-
+    final_df[ "start_tc"] = final_df["from_time"].apply(sec2ts)
+    final_df ["end_tc"]=  final_df["to_time"].apply(sec2ts)
     return final_df
 
 def analyze_silence(audio_path,a_file ="raw.mp3"):
     audio_file = os.path.join(audio_path, a_file)
-    silence_file = os.path.join(audio_path, "silence.csv")
+    silence_file = os.path.join(audio_path, "extract/silence.csv")
     audio_wav = os.path.join(audio_path, "audio.wav")
     convert_mp3_to_wav(audio_file, audio_wav)
     silence_df = detect_silence_webrtcvad(audio_wav, frame_duration=30, vad_mode=0, rms_threshold=0.02,
@@ -293,6 +341,7 @@ if __name__ == '__main__':
 #faded_audio = audio.fade_in(2000)
     audio_path = "/home/roy/FS/OneDrive/WORK/ideas/aaron/philosophy_of_education"
     audio_path = "/home/roy/OneDriver/WORK/ideas/aaron/Miller/AI for business/2024/6/2"
+    audio_path = "/home/roy/OneDriver1/WORK/ideas/Moments/kan11/tkuma/2"
 
     audio_file=os.path.join(audio_path,"raw.mp3")
     silence_file = os.path.join(audio_path,"silence.csv")

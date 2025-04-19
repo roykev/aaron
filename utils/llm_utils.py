@@ -74,7 +74,7 @@ def process_chunk(client, chunk, system_prompt,user_prompt,max_retries,initial_r
 def compose_user_prompt(lan,rules):
     user_prompt = (
         f"for each task generate a different output:"
-        "1. split each section(original line) to subsections (more lines) to have a better time resolution.this is important: when possible each subsection should be no longer than 30 seconds"
+        "1. split each section (original line) to subsections (more lines) to have a better time resolution.this is important: when possible each subsection should be no longer than 30 seconds"
         "2. classify each subsection to the stages of the wedding (preparation, ceremony, party or other) and to the sections"
         f"3. Give a score for each subsection, according to the importance of it in the ceremony and if should it be included in the clip.importance score from 0 to 10 (0 - 'must be skipped', 4- 'could be included in a long movie', 6 - 'should be included in a long clip', 9 - 'should be included in a short clip', 10 - 'must be included').A suggested importance rule is: <data> {rules} /<data>. Whenever the Groom or the Bride speak the score should be highest"
         "4. Provide a short description of the section and a longer description of the subsection."
@@ -123,10 +123,6 @@ def process_chuncks(role, lan, title, frmat, out_format, num, trans):
     client = Anthropic(
         api_key=api_key
     )
-
-
-    # Replace placeholders like {{role}} with real values,
-    # because the SDK does not support variables.
     message = client.messages.create(
         model="claude-3-5-sonnet-20241022",
         max_tokens=8192,
