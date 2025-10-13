@@ -1,4 +1,6 @@
 import os
+import re
+
 import pandas as pd
 import csv
 import base64
@@ -7,6 +9,10 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 import pdfkit
 import json
+import markdown
+
+from teacher_side.teacher_prompts import process_llm_teacher_report,  extract_teacher_report_results
+
 
 def time_to_seconds(t):
     h, m, s = map(int, t.split(':')) if t.count(':') == 2 else (0, *map(int, t.split(':')))
@@ -17,17 +23,23 @@ def is_hebrew(text):
 
 def load_csv_safe(path, expected_cols=None, has_headers=True):
     try:
-        try:
-            df = pd.read_csv(path, header=0 if has_headers else None, quotechar='"', quoting=csv.QUOTE_MINIMAL, skipinitialspace=True)
-        except pd.errors.ParserError:
-            df = pd.read_csv(path, header=0 if has_headers else None, quotechar='"', quoting=csv.QUOTE_MINIMAL, engine='python')
+        df = pd.read_csv(
+            path,
+            header=0 if has_headers else None,
+            quotechar='"',
+            quoting=csv.QUOTE_MINIMAL,
+            skipinitialspace=True,
+            engine='python',
+            on_bad_lines='warn'  # בפייתון 3.10+ במקום error_bad_lines
+        )
         if not has_headers and expected_cols:
             df.columns = expected_cols
         return df
     except Exception as e:
         with open(path, 'r', encoding='utf-8') as f:
-            sample = f.read().splitlines()[:3]
+            sample = f.read().splitlines()[:5]
         raise ValueError(f"Error reading {os.path.basename(path)}: {e}\nSample lines:\n" + "\n".join(sample))
+
 
 def load_open_questions_json(path):
     try:
@@ -54,33 +66,46 @@ def render_title(artifact_dir):
         except Exception as e:
             raise ValueError(f"Error parsing title.csv: {e}")
     return "Unknown Title"
-
+def clean_summary_text(text):
+    # Extract text between <summary> and </summary>
+    match = re.search(r"<summary>(.*?)</summary>", text, re.DOTALL)
+    if match:
+        summary_text = match.group(1).strip()
+        return(summary_text)
+    else:
+        return("No summary found.")
 def render_summary(artifact_dir):
-    path = os.path.join(artifact_dir, "short.txt")
-    if os.path.exists(path):
-        with open(path, "r", encoding="utf-8") as f:
-            text = f.read()
-            align = "right" if is_hebrew(text) else "left"
-            return f'<p style="text-align: {align};">' + "<br>".join(line.strip() for line in text.strip().split("\n")) + "</p>"
-    return "<em>No summary available</em>"
+    path = os.path.join(artifact_dir, "short_summary.txt")
+    if not os.path.exists(path):
+        return "<em>No summary available</em>"
+    with open(path, "r", encoding="utf-8") as f:
+        text = f.read().strip()
+        text = clean_summary_text(text)
+        return render_markdown(text)
+
+def render_markdown(text):
+    html_body = markdown.markdown(text, extensions=['extra'])
+    print("\n--- DEBUG: MARKDOWN HTML ---\n", html_body)
+    direction = "rtl" if is_hebrew(text) else "ltr"
+    return f'<div style="text-align: {direction}; direction: {direction}; font-size: 16px; line-height: 1.6;">{html_body}</div>'
 
 def render_sections(artifact_dir):
     path = os.path.join(artifact_dir, "sections.csv")
     if not os.path.exists(path): return "", ""
     try:
-        df = load_csv_safe(path, ['Section #', 'Start', 'End', 'Title', 'Duration'], has_headers=False)
-        df['Start_sec'] = df['Start'].apply(time_to_seconds)
-        df['End_sec'] = df['End'].apply(time_to_seconds)
+        df = load_csv_safe(path, ["chapter_num", "from", "to", "chapter_title", "duration"], has_headers=False)
+        df['Start_sec'] = df['from'].apply(time_to_seconds)
+        df['End_sec'] = df['to'].apply(time_to_seconds)
         df['Duration_sec'] = df['End_sec'] - df['Start_sec']
         rows = "".join(
-            f"<tr><td>{int(r['Section #'])}</td><td>{r['Start']}</td><td>{r['End']}</td><td>{r['Title']}</td><td>{r['Duration_sec']}</td></tr>"
+            f"<tr><td>{int(r['chapter_num'])}</td><td>{r['from']}</td><td>{r['to']}</td><td>{r['chapter_title']}</td><td>{r['Duration_sec']}</td></tr>"
             for _, r in df.iterrows())
         html = f"""
             <h2>⏱️ Class Sections Breakdown</h2>
             <table><tr><th>#</th><th>Start</th><th>End</th><th>Title</th><th>Duration (sec)</th></tr>{rows}</table>
         """
         fig, ax = plt.subplots(figsize=(8, 6))
-        labels = [f"{int(r['Section #'])}. {r['Title']}" for _, r in df.iterrows()]
+        labels = [f"{int(r['chapter_num'])}. {r['chapter_title']}" for _, r in df.iterrows()]
         ax.pie(df['Duration_sec'], labels=labels, autopct='%1.1f%%', startangle=140)
         ax.set_title("Class Time Distribution by Section")
         buf = BytesIO()
@@ -222,6 +247,26 @@ def export_report_to_pdf(html_string, output_pdf_path):
 if __name__ == '__main__':
     dir_name="/home/roy/FS/OneDrive/WORK/ideas/aaron/hadasa/maoz/demo/"
     dir_name="/home/roy/FS/OneDrive/WORK/ideas/aaron/hadasa/keren"
-    h_report = generate_teacher_report_html(dir_name, "25/03/2025")
+    dir_name="/home/roy/FS/Dropbox/WORK/Ideas/aaron/maoz/"
+    dir_name="/home/roy/FS/OneDrive/WORK/ideas/aaron/hadasa/Tal"
+    dir_name="/home/roy/FS/Dropbox/WORK/Ideas/aaron/Moshik/"
+    class config:
+        pass
+    config.date = "29/05/2025"
+    config.dir_name = dir_name
+    config.trans=  "transcript.vtt"
+    config.lan = "Hebrew"
+    # A: call LLM
+    # trans_file_name = os.path.join(config.dir_name, config.trans)
+    # with open(trans_file_name, "r") as vtt_file:
+    #     content_from_file = vtt_file.read().strip()
+    # ret = process_llm_teacher_report(content_from_file)
+    # extract_teacher_report_results(config.dir_name, ret)
+    # B : generate report
+    h_report = generate_teacher_report_html(config.dir_name, config.date)
+    h_name = os.path.join(dir_name,"teacher_report.html")
+
+    with open(h_name, "w", encoding="utf-8") as f:
+        f.write(h_report)
     pdf_name = os.path.join(dir_name,"teacher_report.pdf")
     export_report_to_pdf(h_report,pdf_name)

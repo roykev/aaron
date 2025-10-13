@@ -1,0 +1,19 @@
+#videos_dir: "/home/roy/FS/Dropbox/WORK/Ideas/Moments/asaf/guy_niv"
+videos_dir: "/home/roy/FS/Dropbox/WORK/Ideas/aaron/ono/יזמות עסקית/מבוא ליזמות עסקית - סרטון עבור שיעור מקוון  מתאריך 05 05 2025 ושעת התחלה 12 15 - 15149286/"
+#/home/roy/FS/Dropbox/WORK/Ideas/aaron/ono/יזמות עסקית/מבוא ליזמות עסקית - סרטון עבור שיעור מקוון  מתאריך 03 03 2025 ושעת התחלה 12 15 - 15123880/"
+#videos_dir: "/home/roy/FS/Dropbox/WORK/Ideas/aaron/matan/Pharma2-Matan-Lecture2/"
+logging:
+    format: '%(asctime)s - %(levelname)s - %(message)s'
+    level: INFO  # Changed from WARNING to INFO to see more details
+    suppress_model_logs: true
+    suppress_warnings: true
+    show_progress: true  # Enable progress bars
+    datefmt: "%Y-%m-%d %H:%M:%S"
+
+# LLM configuration for scene descriptions
+llm:
+  #model: "moonshotai/kimi-k2:free"  # LLM model for scene descriptions and analysis    "deepseek/deepseek-chat-v3.1:free", "meta-llama/llama-4-scout:free"
+ model: "moonshotai/kimi-k2:free" #"moonshotai/kimi-dev-72b:free"
+# Video summary configuration
+summary:
+  max_words: 300  # Maximum number of words in the summary

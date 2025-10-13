@@ -1,4 +1,5 @@
 import base64
+import logging
 import os
 import tiktoken
 
@@ -140,3 +141,25 @@ def execution_time(start_time, end_time):
         return(f"{minutes}m {seconds:.2f}s")
     else:
         return(f"{seconds:.2f}s")
+
+
+def get_logger(name, config):
+    """Get a logger instance with the specified name"""
+
+    # Configure logging
+    logging.basicConfig(
+        level=getattr(logging, config['logging']['level']),
+        format=config['logging']['format'],
+        datefmt=config['logging']['datefmt']
+    )
+
+    # Set httpx logger to ERROR level to completely suppress HTTP request logging
+    # This needs to be done before any httpx usage
+    httpx_logger = logging.getLogger("httpx")
+    httpx_logger.setLevel(logging.ERROR)
+
+    # Also set urllib3 logger to ERROR to catch any HTTP logging from there
+    urllib3_logger = logging.getLogger("urllib3")
+    urllib3_logger.setLevel(logging.ERROR)
+
+    return logging.getLogger(name)

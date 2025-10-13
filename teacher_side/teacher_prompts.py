@@ -6,6 +6,12 @@ from anthropic import Anthropic
 
 from utils.utils import source_key
 
+#from utils.utils import source_key
+
+max_retries = 5
+initial_retry_delay = 2
+# number of rows
+chunk_size = 130
 
 def task_title(format='JSON'):  # Task 1: title
     prompt = (
@@ -35,7 +41,7 @@ def task_sections(format='csv'):  # Task 3: chapters
         "Partition the lecture into chapters/sections. The principles of chapters:\n"
         "1. Each section/chapter should have a distinct theme.\n"
         "2. Ensure a coherent flow between chapters.\n\n"
-        "For a 60-minute lesson, try to aim for 3-7 chapters.\n"
+        "For a 60-minute lesson, try to aim for 3-7 chapters.(chapters don't have to be in an equal length)\n"
         "The output should be as follows:\n"
         "chapter_num, from, to, chapter_title, duration\n"
         "Example:\n"
@@ -49,14 +55,17 @@ def task_sections(format='csv'):  # Task 3: chapters
     return prompt
 
 
-# # Task 4: lecture title
-# def task_lecture_title(format='JSON'):
-#     prompt = (
-#         "Task name: <name>lecture_title/<name>\n"
-#         "Provide a concise and descriptive title for the lecture.\n"
-#         f"The format of the output should be {format}."
-#     )
-#     return prompt
+# # Task 4: real world examples
+def task_examples(lan='English',format='csv'):
+    prompt = (
+        "Task name: <name>examples/<name>\n"
+        "Provide the relevant realistic examples from the last year about the topics there were discussed in class . \n"
+        "Also provide up to three examples there were not mentioned in the class, so the teacher can use next time"       
+        "Provide any reference when available. Don't invent anything"
+        "If the example was mentioned in class the reference should be: class, otherwise write the reference"
+        f"Output should be in {lan} and in {format}. The format is:\n\n"
+        "Topic, Example, reference" )
+    return prompt
 
 # Task 5: interaction summary
 def task_interaction(lan='English', format='csv'):
@@ -98,7 +107,8 @@ def compose_long_system_prompt(trans,lan="English" ):
 tasks_dict = {
         "title":task_title,
         "sections": task_sections,
-        "open_questions": task_open_questions,
+        "examples": task_examples,
+       "open_questions": task_open_questions,
         "interaction": task_interaction,
         "difficult_topics": task_difficult_topics
     }
@@ -109,7 +119,7 @@ def get_tasks():
         unified_tasks+= task() + "\n"
     return unified_tasks
 
-def process(trans,lan="English"):
+def process_llm_teacher_report(trans,lan="English"):
     api_key = source_key("ANTHROPIC_API_KEY")
     client = Anthropic(
         api_key=api_key
@@ -134,33 +144,38 @@ def process(trans,lan="English"):
         ]
     )
     return (message.content)
-def extract_results(d_path,results):
-    arr = results[0].text.split("###")
+def extract_teacher_report_results(d_path,results):
+    if isinstance(results, str):
+        arr = [part.strip() for part in results.split("###") if part.strip()]
+    else:
+        arr = results[0].text.split("###")
     for i in np.arange(len(arr)):
         task = arr[i].strip()
         if task in tasks_dict.keys():
             content = arr[i+1].strip()
-            print(content)
-            out_file = os.path.join(d_path,f"{task}.csv")
+            #print(content)
+            suf="csv"
+            if task=="open_questions":
+                suf="json"
+            out_file = os.path.join(d_path,f"{task}.{suf}")
             with open(out_file, "w") as file:
                 file.write(content)
 if __name__ == '__main__':
 
-    max_retries = 5
-    initial_retry_delay = 2
-    # number of rows
-    chunk_size = 130
-    start_time = time.time()  # Capture start time
-    dir_name="/home/roy/FS/OneDrive/WORK/ideas/aaron/hadasa/maoz/demo/"
-    dir_name="/home/roy/FS/OneDrive/WORK/ideas/aaron/hadasa/keren"
+    if False:
+        start_time = time.time()  # Capture start time
+        dir_name="/home/roy/FS/OneDrive/WORK/ideas/aaron/hadasa/maoz/demo/"
+        dir_name="/home/roy/FS/OneDrive/WORK/ideas/aaron/hadasa/keren"
+        dir_name="/home/roy/FS/Dropbox/WORK/Ideas/aaron/maoz"
+        dir_name="/home/roy/FS/OneDrive/WORK/ideas/aaron/hadasa/Tal"
 
-    file_name = os.path.join(dir_name, "transcript.vtt")
-    with open(file_name, "r") as vtt_file:
-        content_from_file = vtt_file.read().strip()
-    ret = process(content_from_file)
-    extract_results(dir_name,ret)
+        file_name = os.path.join(dir_name, "transcript.vtt")
+        with open(file_name, "r") as vtt_file:
+            content_from_file = vtt_file.read().strip()
+        ret = process_llm_teacher_report(content_from_file)
+        extract_teacher_report_results(dir_name,ret)
 
-    end_time = time.time()  # Capture end time
+        end_time = time.time()  # Capture end time
 
-    elapsed_time_ms = (end_time - start_time)
-    print (elapsed_time_ms)
+        elapsed_time_ms = (end_time - start_time)
+        print (elapsed_time_ms)
