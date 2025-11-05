@@ -13,7 +13,7 @@ from pathlib import Path
 from teacher_side.teacher_report import TeacherReport
 from teacher_side.teacher_report_deep import TeacherReportDeep
 from teacher_side.teacher_report_storytelling import TeacherReportStoryTelling
-from teacher_side.teacher_minimal_snapshot_report import SnapshotGenerator
+from teacher_side.snapshot_generator import SnapshotGenerator
 from teacher_side.teacher_report_smart_insights import TeacherReportSmartInsights
 from teacher_side.teacher_utils import get_output_dir, generate_report, generate_story_report, generate_deep_report
 from teacher_side.generate_smart_insights import generate_smart_insights_markdown
@@ -114,7 +114,7 @@ def run_teacher_pipeline(config_path="./config.yaml"):
     else:
         logger.info("Step 3/5: Skipping storytelling analysis generation (generate_story=false)")
 
-    # Step 4: Generate LLM-based smart insights (most important findings)
+    # Step 4: Generate LLM-based smart insights JSON (most important findings)
     if generate_smart_insights:
         logger.info("Step 4/5: Generating AI-powered smart insights...")
         step_start = time.time()
@@ -129,16 +129,11 @@ def run_teacher_pipeline(config_path="./config.yaml"):
             llmproxy.prepare_content(output_dir, lan=language)
             output = llmproxy.call_api()
 
-            # Save JSON output
+            # Save JSON output only
             insights_json_path = os.path.join(output_dir, "smart_insights.json")
             with open(insights_json_path, "w", encoding="utf-8") as f:
                 f.write(output)
             logger.info(f"  ✅ Smart insights JSON saved to: {insights_json_path}")
-
-            # Generate markdown report
-            insights_md_path = os.path.join(output_dir, "smart_insights.md")
-            generate_smart_insights_markdown(output, insights_md_path)
-            logger.info(f"  ✅ Smart insights markdown saved to: {insights_md_path}")
 
             logger.info(f"✅ Smart insights generation completed ({time.time() - step_start:.2f}s)")
         else:
@@ -160,6 +155,7 @@ def run_teacher_pipeline(config_path="./config.yaml"):
         output_txt_path = os.path.join(output_dir, "output.txt")
         deep_txt_path = os.path.join(output_dir, "deep.txt")
         story_txt_path = os.path.join(output_dir, "story.txt")
+        insights_json_path = os.path.join(output_dir, "smart_insights.json")
 
         # Generate individual markdown reports if source files exist
         if os.path.exists(output_txt_path):
@@ -173,6 +169,15 @@ def run_teacher_pipeline(config_path="./config.yaml"):
         if os.path.exists(story_txt_path):
             logger.info("  Generating story.md from story.txt...")
             generate_story_report(output_dir)
+
+        # Generate smart insights markdown if JSON exists
+        if os.path.exists(insights_json_path):
+            logger.info("  Generating smart_insights.md from smart_insights.json...")
+            with open(insights_json_path, "r", encoding="utf-8") as f:
+                insights_json = f.read()
+            insights_md_path = os.path.join(output_dir, "smart_insights.md")
+            generate_smart_insights_markdown(insights_json, insights_md_path)
+            logger.info(f"  ✅ Smart insights markdown saved to: {insights_md_path}")
 
         # Generate smart snapshot report if we have deep.txt and story.txt
         if os.path.exists(deep_txt_path) and os.path.exists(story_txt_path) and os.path.exists(output_txt_path):

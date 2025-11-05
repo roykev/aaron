@@ -114,7 +114,6 @@ def generate_smart_insights_markdown(insights_json: str, output_path: str):
             md.append("</summary>")
             md.append("")
             md.append(f"<div style='padding: 15px; background: #f9fafb; border-radius: 5px; margin-top: 10px;'>")
-            md.append(f"<p><strong>✅ Success:</strong> {strength}</p>")
             if why:
                 md.append(f"<p><strong>💫 Impact:</strong> {why}</p>")
             if evidence:

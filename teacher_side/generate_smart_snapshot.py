@@ -16,7 +16,7 @@ import sys
 import yaml
 from pathlib import Path
 
-from teacher_side.teacher_minimal_snapshot_report import SnapshotGenerator
+from teacher_side.snapshot_generator import SnapshotGenerator
 from teacher_side.teacher_utils import get_output_dir
 
 

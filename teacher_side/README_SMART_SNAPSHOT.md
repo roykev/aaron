@@ -148,4 +148,4 @@ This will create:
 For details on the analysis dimensions:
 - See `teacher_report_storytelling.py` for storytelling dimensions
 - See `teacher_report_deep.py` for pedagogical dimensions
-- See `teacher_minimal_snapshot_report.py` for the snapshot generation logic
+- See `snapshot_generator.py` for the snapshot generation logic
