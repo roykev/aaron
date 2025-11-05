@@ -43,21 +43,21 @@ def generate_smart_insights_markdown(insights_json: str, output_path: str):
     md = []
     md.append("# 🦉 AaronOwl Smart Insights Report")
     md.append("")
-    md.append("*AI-powered analysis identifying the most important insights and recommendations*")
+    md.append("*AI-powered positive analysis celebrating strengths and identifying growth opportunities*")
     md.append("")
     md.append("---")
     md.append("")
 
     # Overall Assessment
     if "overall_assessment" in insights:
-        md.append("## 📊 Overall Assessment")
+        md.append("## 🌟 Overall Assessment")
         md.append("")
         md.append(insights["overall_assessment"])
         md.append("")
 
     # Key Message
     if "key_message" in insights:
-        md.append("## 💡 Key Takeaway")
+        md.append("## 💡 Key Message")
         md.append("")
         md.append(f"**{insights['key_message']}**")
         md.append("")
@@ -68,11 +68,11 @@ def generate_smart_insights_markdown(insights_json: str, output_path: str):
     # Top Strength
     if "top_strength" in insights:
         top = insights["top_strength"]
-        md.append("## ⭐ Top Strength")
+        md.append("## ⭐ Outstanding Strength")
         md.append("")
         md.append(f"### {top.get('dimension', 'Unknown')}")
         md.append("")
-        md.append(f"**What worked:** {top.get('description', '')}")
+        md.append(f"**What's exceptional:** {top.get('description', '')}")
         md.append("")
         if 'evidence' in top and top['evidence']:
             md.append(f"*Evidence:* {top['evidence']}")
@@ -83,9 +83,9 @@ def generate_smart_insights_markdown(insights_json: str, output_path: str):
 
     # Preserve (Strengths)
     if "preserve" in insights and insights["preserve"]:
-        md.append("## 🔒 Preserve - What's Working Well")
+        md.append("## 🎯 Continue These Successful Practices")
         md.append("")
-        md.append("*Keep doing these things that are driving student success:*")
+        md.append("*These strengths are making a real difference for students:*")
         md.append("")
 
         for i, item in enumerate(insights["preserve"], 1):
@@ -96,10 +96,10 @@ def generate_smart_insights_markdown(insights_json: str, output_path: str):
 
             md.append(f"### {i}. {dimension}")
             md.append("")
-            md.append(f"**Strength:** {strength}")
+            md.append(f"**Success:** {strength}")
             md.append("")
             if why:
-                md.append(f"**Why it matters:** {why}")
+                md.append(f"**Impact:** {why}")
                 md.append("")
             if evidence:
                 md.append(f"*Evidence:* {evidence}")
@@ -108,32 +108,36 @@ def generate_smart_insights_markdown(insights_json: str, output_path: str):
     md.append("---")
     md.append("")
 
-    # Improve (Weaknesses & Recommendations)
-    if "improve" in insights and insights["improve"]:
-        md.append("## 📈 Improve - Priority Areas")
+    # Growth Opportunities (formerly "Improve")
+    # Support both old "improve" field and new "growth_opportunities" field
+    growth_items = insights.get("growth_opportunities", insights.get("improve", []))
+    if growth_items:
+        md.append("## 🌱 Opportunities for Growth")
         md.append("")
-        md.append("*Focus on these areas for maximum impact:*")
+        md.append("*Areas where small enhancements can create meaningful impact:*")
         md.append("")
 
-        for i, item in enumerate(insights["improve"], 1):
+        for i, item in enumerate(growth_items, 1):
             dimension = item.get('dimension', 'Unknown')
-            weakness = item.get('weakness', '')
-            impact = item.get('impact', '')
-            recommendation = item.get('recommendation', '')
+
+            # Handle both old and new field names
+            opportunity = item.get('opportunity', item.get('weakness', ''))
+            benefit = item.get('potential_benefit', item.get('impact', ''))
+            suggestion = item.get('suggestion', item.get('recommendation', ''))
             evidence = item.get('evidence', '')
 
             md.append(f"### {i}. {dimension}")
             md.append("")
-            md.append(f"**Issue:** {weakness}")
+            md.append(f"**Opportunity:** {opportunity}")
             md.append("")
-            if impact:
-                md.append(f"**Student impact:** {impact}")
+            if benefit:
+                md.append(f"**Potential benefit:** {benefit}")
                 md.append("")
-            if recommendation:
-                md.append(f"**Solution:** {recommendation}")
+            if suggestion:
+                md.append(f"**How to build on this:** {suggestion}")
                 md.append("")
             if evidence:
-                md.append(f"*Evidence:* {evidence}")
+                md.append(f"*Context:* {evidence}")
                 md.append("")
 
     md.append("---")
@@ -141,9 +145,9 @@ def generate_smart_insights_markdown(insights_json: str, output_path: str):
 
     # Priority Actions
     if "priority_actions" in insights and insights["priority_actions"]:
-        md.append("## 📋 Action Plan for Next Class")
+        md.append("## 📋 Suggested Actions for Next Class")
         md.append("")
-        md.append("*Specific actions ranked by priority:*")
+        md.append("*Try these approaches in your next session:*")
         md.append("")
 
         for i, action in enumerate(insights["priority_actions"], 1):
@@ -161,17 +165,18 @@ def generate_smart_insights_markdown(insights_json: str, output_path: str):
             md.append(f"{i}. {diff_emoji} **{act}**")
             md.append("")
             if outcome:
-                md.append(f"   *Expected outcome:* {outcome}")
+                md.append(f"   *Potential outcome:* {outcome}")
                 md.append("")
 
     md.append("---")
     md.append("")
 
-    # Long-term Focus
-    if "long_term_focus" in insights:
-        md.append("## 🎯 Long-term Focus Area")
+    # Long-term Opportunity (support both old and new field names)
+    long_term = insights.get("long_term_opportunity", insights.get("long_term_focus"))
+    if long_term:
+        md.append("## 🚀 Long-term Growth Opportunity")
         md.append("")
-        md.append(insights["long_term_focus"])
+        md.append(long_term)
         md.append("")
 
     # Footer

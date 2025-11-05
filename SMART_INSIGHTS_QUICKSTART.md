@@ -28,13 +28,20 @@ This will:
 4. Generate `smart_insights.md` - Beautiful formatted report
 
 **Output includes:**
-- Overall assessment
-- Key takeaway message
-- Top strength (what worked best)
-- Top 3-4 strengths to preserve
-- Top 3-4 weaknesses to improve
-- 4-5 priority actions for next class
-- Long-term focus area
+- Overall positive assessment celebrating strengths
+- Key takeaway message with a path forward
+- Outstanding strength (what worked best)
+- Top 3-4 strengths to continue
+- Top 3-4 growth opportunities (framed positively)
+- 4-5 suggested actions for next class
+- Long-term growth opportunity
+
+**Language approach:**
+- ✅ Positive, encouraging, constructive tone
+- ✅ Celebrates strengths before discussing growth areas
+- ✅ Uses soft language like "opportunity to enhance" instead of "weakness"
+- ✅ No exact percentages or specific numbers in outcomes
+- ✅ Qualitative improvements (e.g., "better engagement" not "40% more questions")
 
 ### Approach 2: Mechanical Snapshot (No LLM)
 
@@ -108,33 +115,42 @@ python teacher_side/run_teacher_pipeline.py
 ```markdown
 # 🦉 AaronOwl Smart Insights Report
 
-## 📊 Overall Assessment
-The instructor demonstrates strong engagement techniques...
+## 🌟 Overall Assessment
+The instructor demonstrates wonderful engagement techniques and creates
+a warm learning environment. There are exciting opportunities to build
+on these strengths by enhancing the scaffolding of complex concepts...
 
-## 💡 Key Takeaway
-Focus on scaffolding complex concepts to improve student comprehension
+## 💡 Key Message
+Continue leveraging your excellent questioning skills while building
+more bridges between concepts to deepen student understanding
 
-## ⭐ Top Strength
+## ⭐ Outstanding Strength
 ### Curiosity
-**What worked:** Excellent use of provocative questions...
-*Evidence:* "Students asked 12 questions in first 15 minutes..."
+**What's exceptional:** Excellent use of provocative questions that
+spark genuine student interest...
+*Evidence:* "Students asked thoughtful questions throughout..."
 
-## 🔒 Preserve - What's Working Well
+## 🎯 Continue These Successful Practices
 ### 1. Emotional Engagement
-**Strength:** High enthusiasm and passion for material
-**Why it matters:** Creates positive learning environment
-**Evidence:** Multiple instances of "this is beautiful"...
+**Success:** High enthusiasm and authentic passion for material
+**Impact:** Creates a positive learning environment where students
+feel excited to participate
+**Evidence:** Multiple instances of excitement and wonder...
 
-## 📈 Improve - Priority Areas
+## 🌱 Opportunities for Growth
 ### 1. Scaffolding
-**Issue:** Large jumps between concepts
-**Student impact:** Students struggled with advanced topics
-**Solution:** Break complex ideas into smaller steps
-**Evidence:** 3 difficult topics identified...
+**Opportunity:** There's potential to create even more connections
+between concepts to support student learning
+**Potential benefit:** Students could build understanding more
+naturally as concepts flow into each other
+**How to build on this:** Consider adding brief transitions that
+explicitly link new topics to previous discussions
+**Context:** Students mentioned wanting more context...
 
-## 📋 Action Plan for Next Class
-1. 🟢 **Add 2 minute recap at start of each section**
-   *Expected outcome:* Better retention
+## 📋 Suggested Actions for Next Class
+1. 🟢 **Try adding a brief recap at the start of each section**
+   *Potential outcome:* Students will better connect new material
+   to what they already know, leading to deeper retention
 ```
 
 ### Mechanical Snapshot (`teaching_snapshot.md`):
@@ -160,6 +176,9 @@ Focus on scaffolding complex concepts to improve student comprehension
 
 **LLM-Based:**
 - Analyzes and prioritizes by impact
+- Positive, encouraging tone throughout
+- Celebrates strengths before discussing growth
+- Avoids harsh language and exact numbers
 - Provides context and reasoning
 - Evidence-based recommendations
 - Actionable next steps

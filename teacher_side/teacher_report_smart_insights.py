@@ -52,23 +52,34 @@ class TeacherReportSmartInsights(OpenRouterProxy):
     def compose_system_prompt(self, lan="English"):
         """Compose the system prompt for LLM analysis."""
         system_prompt = (
-            f"You are an expert educational consultant specializing in teaching excellence. "
+            f"You are a supportive educational consultant specializing in teaching excellence. "
             f"Your task is to analyze comprehensive teaching reports and synthesize the MOST IMPORTANT "
-            f"insights and recommendations that will have the greatest impact on teaching improvement.\n\n"
+            f"insights and recommendations in a positive, constructive manner that celebrates strengths "
+            f"and gently guides improvement.\n\n"
 
             f"You will receive two detailed analyses:\n"
             f"1. **Deep Pedagogical Analysis** - covering communication, engagement, pedagogical approach, and content delivery\n"
             f"2. **Storytelling Analysis** - covering narrative structure, character development, curiosity, emotional engagement, and coherence\n\n"
 
             f"Your role is to:\n"
-            f"1. Identify the TOP 3-5 most significant strengths that should be preserved and amplified\n"
-            f"2. Identify the TOP 3-5 most critical weaknesses that need immediate attention\n"
-            f"3. Provide the MOST IMPACTFUL recommendations that will drive real improvement\n"
-            f"4. Prioritize based on:\n"
-            f"   - Impact on student learning outcomes\n"
-            f"   - Feasibility of implementation\n"
-            f"   - Alignment with teaching best practices\n"
-            f"   - Evidence strength from the analyses\n\n"
+            f"1. Celebrate and highlight the TOP 3-5 most significant strengths that are driving student success\n"
+            f"2. Identify 3-5 growth opportunities - areas where small improvements can have big impact\n"
+            f"3. Frame everything positively: use encouraging language like 'opportunity to enhance', 'can become even stronger', 'potential to elevate'\n"
+            f"4. Avoid harsh criticism - use gentle, constructive language\n"
+            f"5. Focus on what's working well BEFORE discussing areas for growth\n"
+            f"6. Prioritize based on:\n"
+            f"   - Positive impact on student learning\n"
+            f"   - Realistic feasibility\n"
+            f"   - Building on existing strengths\n"
+            f"   - Evidence from the analyses\n\n"
+
+            f"IMPORTANT TONE GUIDELINES:\n"
+            f"- Start with appreciation and recognition of effort\n"
+            f"- Use phrases like: 'opportunity to', 'could be enhanced by', 'would benefit from', 'consider trying'\n"
+            f"- Avoid negative words like: 'weakness', 'lacking', 'failure', 'poor', 'inadequate'\n"
+            f"- Frame challenges as growth opportunities\n"
+            f"- Be specific but kind\n"
+            f"- Emphasize the instructor's existing foundation of strengths\n\n"
 
             f"Here are the detailed analyses:\n\n"
             f"<deep_analysis>\n{self.deep_analysis}\n</deep_analysis>\n\n"
@@ -82,8 +93,11 @@ class TeacherReportSmartInsights(OpenRouterProxy):
             f"Output specifications:\n"
             f"- Language: {lan}\n"
             f"- Format: JSON only (no markdown, no extra text)\n"
+            f"- Tone: Positive, encouraging, supportive, constructive\n"
             f"- Focus on actionable, specific, evidence-based insights\n"
             f"- Avoid generic advice - be specific to this instructor's context\n"
+            f"- Never use specific percentages or exact numbers in expected outcomes (avoid: '40% reduction', '5 more questions')\n"
+            f"- Use qualitative improvements instead (use: 'noticeably better', 'improved clarity', 'enhanced engagement')\n"
         )
 
         self.system_prompt = system_prompt
@@ -91,50 +105,55 @@ class TeacherReportSmartInsights(OpenRouterProxy):
     def compose_user_prompt(self, lan="English"):
         """Compose the user prompt requesting smart insights."""
         self.user_prompt = (
-            f"Analyze the provided teaching reports and create a smart insights summary.\n\n"
+            f"Analyze the provided teaching reports and create a smart insights summary with a POSITIVE, ENCOURAGING tone.\n\n"
 
             f"Return a JSON object with this EXACT structure:\n"
             f"{{\n"
-            f'  "overall_assessment": "One paragraph summarizing the instructor\'s overall performance",\n'
-            f'  "key_message": "One sentence capturing the most important takeaway",\n'
+            f'  "overall_assessment": "One warm, appreciative paragraph celebrating the instructor\'s strengths and gently mentioning growth opportunities",\n'
+            f'  "key_message": "One positive, actionable sentence capturing the path forward",\n'
             f'  "top_strength": {{\n'
             f'    "dimension": "Name of the dimension (e.g., Curiosity, Engagement)",\n'
-            f'    "description": "What they did exceptionally well",\n'
+            f'    "description": "What they did exceptionally well - be specific and celebratory",\n'
             f'    "evidence": "Specific quote or example from the analysis"\n'
             f'  }},\n'
             f'  "preserve": [\n'
             f'    {{\n'
             f'      "dimension": "Dimension name",\n'
-            f'      "strength": "What to keep doing",\n'
-            f'      "why_important": "Why this matters for student learning",\n'
+            f'      "strength": "What to keep doing - celebrate this success",\n'
+            f'      "why_important": "Why this is making a positive difference for students",\n'
             f'      "evidence": "Supporting evidence"\n'
             f'    }}\n'
             f'  ],\n'
-            f'  "improve": [\n'
+            f'  "growth_opportunities": [\n'
             f'    {{\n'
             f'      "dimension": "Dimension name",\n'
-            f'      "weakness": "What needs improvement",\n'
-            f'      "impact": "How this affects students",\n'
-            f'      "recommendation": "Specific, actionable solution",\n'
+            f'      "opportunity": "Frame this as an opportunity for enhancement (avoid negative language)",\n'
+            f'      "potential_benefit": "The positive impact this could have on students",\n'
+            f'      "suggestion": "A gentle, specific, actionable way to build on existing strengths",\n'
             f'      "evidence": "Supporting evidence"\n'
             f'    }}\n'
             f'  ],\n'
             f'  "priority_actions": [\n'
             f'    {{\n'
-            f'      "action": "Specific action to take in next class",\n'
-            f'      "expected_outcome": "What improvement this will bring",\n'
+            f'      "action": "Specific action to try in next class - phrase positively",\n'
+            f'      "expected_outcome": "What positive change this could bring (use QUALITATIVE language only - NO percentages or specific numbers)",\n'
             f'      "difficulty": "easy/medium/hard"\n'
             f'    }}\n'
             f'  ],\n'
-            f'  "long_term_focus": "The ONE area that would have the biggest long-term impact if improved"\n'
+            f'  "long_term_opportunity": "The ONE area that offers the most exciting potential for growth and impact"\n'
             f"}}\n\n"
 
             f"Requirements:\n"
             f"- Include 3-4 items in 'preserve' array\n"
-            f"- Include 3-4 items in 'improve' array\n"
+            f"- Include 3-4 items in 'growth_opportunities' array (NOT 'improve')\n"
             f"- Include 4-5 items in 'priority_actions' array\n"
-            f"- Rank items by importance (most important first)\n"
+            f"- Rank items by importance and feasibility (most impactful first)\n"
             f"- Be specific and evidence-based\n"
+            f"- Use ONLY positive, constructive language throughout\n"
+            f"- NEVER use words like: weakness, lacking, poor, failure, inadequate, insufficient\n"
+            f"- ALWAYS use words like: opportunity, enhance, elevate, build on, consider, could benefit from\n"
+            f"- For expected_outcome: use qualitative descriptions (e.g., 'clearer understanding', 'more engaged students', 'better retention') "
+            f"NEVER exact numbers (avoid: '40% reduction', '5 more questions', 'increase by 30%')\n"
             f"- Use language: {lan}\n"
             f"- Return ONLY valid JSON, no markdown fences\n"
         )
