@@ -6,10 +6,11 @@ videos_dir: "/home/roy/FS/Dropbox/WORK/Ideas/aaron/ono/ella"
 
 # Teacher report generation flags
 teacher_reports:
-  generate_basic: false      # Generate basic report (sections, examples, interactions)
-  generate_deep: false     # Generate deep analysis report
-  generate_story: false     # Generate storytelling analysis report
-  generate_markdown: true   # Generate markdown reports from outputs
+  generate_basic: false          # Generate basic report (sections, examples, interactions)
+  generate_deep: false           # Generate deep analysis report
+  generate_story: false          # Generate storytelling analysis report
+  generate_smart_insights: true  # Generate AI-powered smart insights (requires deep.txt and story.txt)
+  generate_markdown: true        # Generate markdown reports from outputs
 
 # Language configuration for report generation
 language: "Hebrew"  # Options: "Hebrew", "English", etc.
