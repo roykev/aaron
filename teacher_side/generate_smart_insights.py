@@ -39,53 +39,64 @@ def generate_smart_insights_markdown(insights_json: str, output_path: str):
         Path(output_path).write_text(insights_json, encoding='utf-8')
         return
 
-    # Build markdown
+    # Build markdown with beautiful, expandable sections
     md = []
-    md.append("# 🦉 AaronOwl Smart Insights Report")
+
+    # Header with gradient-style decorative elements
+    md.append("# 🦉 AaronOwl Smart Insights")
     md.append("")
-    md.append("*AI-powered positive analysis celebrating strengths and identifying growth opportunities*")
-    md.append("")
-    md.append("---")
+    md.append("<div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px; color: white; margin-bottom: 20px;'>")
+    md.append("<h3 style='margin: 0; color: white;'>✨ AI-Powered Teaching Excellence Analysis</h3>")
+    md.append("<p style='margin: 10px 0 0 0; opacity: 0.9;'>Celebrating your strengths and identifying exciting growth opportunities</p>")
+    md.append("</div>")
     md.append("")
 
-    # Overall Assessment
-    if "overall_assessment" in insights:
-        md.append("## 🌟 Overall Assessment")
-        md.append("")
-        md.append(insights["overall_assessment"])
-        md.append("")
-
-    # Key Message
+    # Key Message Box (always visible - most important)
     if "key_message" in insights:
-        md.append("## 💡 Key Message")
+        md.append("<div style='background: #f0f9ff; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0; border-radius: 5px;'>")
+        md.append(f"<strong>💡 Key Message:</strong> {insights['key_message']}")
+        md.append("</div>")
         md.append("")
-        md.append(f"**{insights['key_message']}**")
+
+    # Overall Assessment (expandable)
+    if "overall_assessment" in insights:
+        md.append("<details>")
+        md.append("<summary><h2 style='display: inline;'>🌟 Overall Assessment</h2></summary>")
+        md.append("")
+        md.append(f"<div style='padding: 15px; background: #fefce8; border-radius: 5px; margin-top: 10px;'>")
+        md.append(insights["overall_assessment"])
+        md.append("</div>")
+        md.append("")
+        md.append("</details>")
         md.append("")
 
     md.append("---")
     md.append("")
 
-    # Top Strength
+    # Top Strength (prominent, always visible)
     if "top_strength" in insights:
         top = insights["top_strength"]
         md.append("## ⭐ Outstanding Strength")
         md.append("")
-        md.append(f"### {top.get('dimension', 'Unknown')}")
-        md.append("")
-        md.append(f"**What's exceptional:** {top.get('description', '')}")
-        md.append("")
+        md.append(f"<div style='background: #ecfdf5; border: 2px solid #10b981; padding: 20px; border-radius: 10px; margin: 15px 0;'>")
+        md.append(f"<h3 style='margin-top: 0; color: #059669;'>{top.get('dimension', 'Unknown')}</h3>")
+        md.append(f"<p><strong>What's exceptional:</strong> {top.get('description', '')}</p>")
         if 'evidence' in top and top['evidence']:
-            md.append(f"*Evidence:* {top['evidence']}")
-            md.append("")
+            md.append("<details>")
+            md.append("<summary><em>📝 View evidence</em></summary>")
+            md.append(f"<p style='margin-top: 10px; padding: 10px; background: white; border-radius: 5px;'>{top['evidence']}</p>")
+            md.append("</details>")
+        md.append("</div>")
+        md.append("")
 
     md.append("---")
     md.append("")
 
-    # Preserve (Strengths)
+    # Preserve (Strengths) - Minimal with expandable details
     if "preserve" in insights and insights["preserve"]:
         md.append("## 🎯 Continue These Successful Practices")
         md.append("")
-        md.append("*These strengths are making a real difference for students:*")
+        md.append("<p style='color: #059669; font-style: italic;'>These strengths are making a real difference for students</p>")
         md.append("")
 
         for i, item in enumerate(insights["preserve"], 1):
@@ -94,27 +105,34 @@ def generate_smart_insights_markdown(insights_json: str, output_path: str):
             why = item.get('why_important', '')
             evidence = item.get('evidence', '')
 
-            md.append(f"### {i}. {dimension}")
+            # Create short summary (first 100 chars)
+            summary = strength[:100] + '...' if len(strength) > 100 else strength
+
+            md.append(f"<details style='margin: 10px 0;'>")
+            md.append(f"<summary style='cursor: pointer; padding: 12px; background: #f0fdf4; border-radius: 8px; border-left: 4px solid #22c55e;'>")
+            md.append(f"<strong>{i}. {dimension}:</strong> {summary}")
+            md.append("</summary>")
             md.append("")
-            md.append(f"**Success:** {strength}")
-            md.append("")
+            md.append(f"<div style='padding: 15px; background: #f9fafb; border-radius: 5px; margin-top: 10px;'>")
+            md.append(f"<p><strong>✅ Success:</strong> {strength}</p>")
             if why:
-                md.append(f"**Impact:** {why}")
-                md.append("")
+                md.append(f"<p><strong>💫 Impact:</strong> {why}</p>")
             if evidence:
-                md.append(f"*Evidence:* {evidence}")
-                md.append("")
+                md.append(f"<p style='font-style: italic; color: #6b7280;'><strong>📝 Evidence:</strong> {evidence}</p>")
+            md.append("</div>")
+            md.append("")
+            md.append("</details>")
+            md.append("")
 
     md.append("---")
     md.append("")
 
-    # Growth Opportunities (formerly "Improve")
-    # Support both old "improve" field and new "growth_opportunities" field
+    # Growth Opportunities - Minimal with expandable details
     growth_items = insights.get("growth_opportunities", insights.get("improve", []))
     if growth_items:
         md.append("## 🌱 Opportunities for Growth")
         md.append("")
-        md.append("*Areas where small enhancements can create meaningful impact:*")
+        md.append("<p style='color: #0891b2; font-style: italic;'>Areas where small enhancements can create meaningful impact</p>")
         md.append("")
 
         for i, item in enumerate(growth_items, 1):
@@ -126,28 +144,35 @@ def generate_smart_insights_markdown(insights_json: str, output_path: str):
             suggestion = item.get('suggestion', item.get('recommendation', ''))
             evidence = item.get('evidence', '')
 
-            md.append(f"### {i}. {dimension}")
+            # Create short summary (first 100 chars)
+            summary = opportunity[:100] + '...' if len(opportunity) > 100 else opportunity
+
+            md.append(f"<details style='margin: 10px 0;'>")
+            md.append(f"<summary style='cursor: pointer; padding: 12px; background: #f0f9ff; border-radius: 8px; border-left: 4px solid #0ea5e9;'>")
+            md.append(f"<strong>{i}. {dimension}:</strong> {summary}")
+            md.append("</summary>")
             md.append("")
-            md.append(f"**Opportunity:** {opportunity}")
-            md.append("")
+            md.append(f"<div style='padding: 15px; background: #f9fafb; border-radius: 5px; margin-top: 10px;'>")
+            md.append(f"<p><strong>🎯 Opportunity:</strong> {opportunity}</p>")
             if benefit:
-                md.append(f"**Potential benefit:** {benefit}")
-                md.append("")
+                md.append(f"<p><strong>✨ Potential benefit:</strong> {benefit}</p>")
             if suggestion:
-                md.append(f"**How to build on this:** {suggestion}")
-                md.append("")
+                md.append(f"<p><strong>💡 How to build on this:</strong> {suggestion}</p>")
             if evidence:
-                md.append(f"*Context:* {evidence}")
-                md.append("")
+                md.append(f"<p style='font-style: italic; color: #6b7280;'><strong>📋 Context:</strong> {evidence}</p>")
+            md.append("</div>")
+            md.append("")
+            md.append("</details>")
+            md.append("")
 
     md.append("---")
     md.append("")
 
-    # Priority Actions
+    # Priority Actions - Clean list with expandable outcomes
     if "priority_actions" in insights and insights["priority_actions"]:
         md.append("## 📋 Suggested Actions for Next Class")
         md.append("")
-        md.append("*Try these approaches in your next session:*")
+        md.append("<p style='color: #7c3aed; font-style: italic;'>Try these approaches in your next session</p>")
         md.append("")
 
         for i, action in enumerate(insights["priority_actions"], 1):
@@ -155,28 +180,39 @@ def generate_smart_insights_markdown(insights_json: str, output_path: str):
             outcome = action.get('expected_outcome', '')
             difficulty = action.get('difficulty', 'medium')
 
-            # Difficulty emoji
-            diff_emoji = {
-                'easy': '🟢',
-                'medium': '🟡',
-                'hard': '🔴'
-            }.get(difficulty.lower(), '⚪')
+            # Difficulty badge
+            diff_config = {
+                'easy': ('🟢', '#10b981', 'Easy'),
+                'medium': ('🟡', '#f59e0b', 'Medium'),
+                'hard': ('🔴', '#ef4444', 'Challenging')
+            }
+            emoji, color, label = diff_config.get(difficulty.lower(), ('⚪', '#6b7280', 'Unknown'))
 
-            md.append(f"{i}. {diff_emoji} **{act}**")
+            md.append(f"<details style='margin: 10px 0;'>")
+            md.append(f"<summary style='cursor: pointer; padding: 12px; background: #faf5ff; border-radius: 8px; border-left: 4px solid #a855f7;'>")
+            md.append(f"{emoji} <strong>{i}. {act}</strong> ")
+            md.append(f"<span style='font-size: 0.85em; color: {color}; background: white; padding: 2px 8px; border-radius: 12px; margin-left: 8px;'>{label}</span>")
+            md.append("</summary>")
             md.append("")
             if outcome:
-                md.append(f"   *Potential outcome:* {outcome}")
-                md.append("")
+                md.append(f"<div style='padding: 15px; background: #f9fafb; border-radius: 5px; margin-top: 10px;'>")
+                md.append(f"<p><strong>🎯 Potential outcome:</strong> {outcome}</p>")
+                md.append("</div>")
+            md.append("")
+            md.append("</details>")
+            md.append("")
 
     md.append("---")
     md.append("")
 
-    # Long-term Opportunity (support both old and new field names)
+    # Long-term Opportunity - Highlighted box
     long_term = insights.get("long_term_opportunity", insights.get("long_term_focus"))
     if long_term:
         md.append("## 🚀 Long-term Growth Opportunity")
         md.append("")
-        md.append(long_term)
+        md.append(f"<div style='background: #fef3c7; border: 2px solid #f59e0b; padding: 20px; border-radius: 10px; margin: 15px 0;'>")
+        md.append(f"<p style='margin: 0; font-size: 1.05em;'>{long_term}</p>")
+        md.append("</div>")
         md.append("")
 
     # Footer
