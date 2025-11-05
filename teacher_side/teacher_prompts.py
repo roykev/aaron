@@ -13,11 +13,11 @@ initial_retry_delay = 2
 # number of rows
 chunk_size = 130
 
-def task_title(format='JSON'):  # Task 1: title
+def task_title(format='JSON', lan="English"):  # Task 1: title
     prompt = (
         "Task name: <name>title/<name>\n"
         "Provide a concise and descriptive title for the lecture.\n"
-        f"The format of the output should be {format}."
+        f"The format of the output should be {format}. and in {lan}"
     )
     return prompt
 
@@ -35,7 +35,7 @@ def task_open_questions(k=3, lan="English",format='JSON'):  # Task 2: open quest
 
 
 # task 3: chapters
-def task_sections(format='csv'):  # Task 3: chapters
+def task_sections(format='csv', lan="English"):  # Task 3: chapters
     prompt = (
         "Task name: <name>sections/<name>\n"
         "Partition the lecture into chapters/sections. The principles of chapters:\n"
@@ -50,7 +50,7 @@ def task_sections(format='csv'):  # Task 3: chapters
         "3, 0:43:10, 1:07:54, \"Symbolic vs. Connectionist Approaches to AI\", 0:24:44\n"
         "4, 1:07:54, 1:27:22, \"AI Winter and Notable Projects: ELIZA, SHRDLU, and Cyc\", 0:19:28\n"
         "5, 1:27:22, 1:28:07, \"Conclusion and Preview of Next Lecture\", 0:00:45\n\n"
-        f"The format of the output should be {format}."
+        f"The format of the output should be {format} and in {lan}."
     )
     return prompt
 
@@ -113,10 +113,10 @@ tasks_dict = {
         "difficult_topics": task_difficult_topics
     }
 
-def get_tasks():
+def get_tasks(lan="English"):
     unified_tasks = ""
     for task in tasks_dict.values():
-        unified_tasks+= task() + "\n"
+        unified_tasks+= task(lan=lan) + "\n"
     return unified_tasks
 
 def process_llm_teacher_report(trans,lan="English"):

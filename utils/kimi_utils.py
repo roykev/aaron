@@ -58,7 +58,7 @@ class OpenRouterProxy:
                     },
 
                 ],
-                max_tokens=10000,
+                max_tokens=12000,
                 temperature=0.1,
                 top_p=0.8,
             )

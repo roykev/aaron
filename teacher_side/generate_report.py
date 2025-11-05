@@ -187,14 +187,102 @@ def render_open_questions(artifact_dir):
         raise ValueError(f"Error processing open_questions data: {e}")
     return ""
 
+def load_analysis_json(path):
+    """Load JSON analysis results from storytelling or deep analysis."""
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            text = f.read().strip()
+            # Remove markdown code fence if present
+            if text.startswith("```json"):
+                text = text[7:]  # Remove ```json
+            if text.endswith("```"):
+                text = text[:-3]  # Remove ```
+            data = json.loads(text.strip())
+            return data if isinstance(data, list) else []
+    except Exception as e:
+        print(f"Error reading {path}: {e}")
+        return []
+
+def render_analysis_module_table(module_data):
+    """Render a single module's analysis as a table with subsections."""
+    module_name = module_data.get('module', 'Unknown Module')
+    strengths = module_data.get('strengths', [])
+    weaknesses = module_data.get('weaknesses', [])
+    recommendations = module_data.get('recommendations', [])
+    evidence = module_data.get('evidence', [])
+
+    # Detect if content is Hebrew
+    all_text = ' '.join(strengths + weaknesses + recommendations + evidence)
+    alignment = "right" if is_hebrew(all_text) else "left"
+    direction = "rtl" if is_hebrew(all_text) else "ltr"
+
+    # Build table rows for each subsection
+    table_html = f"""
+    <h3>{module_name.title()}</h3>
+    <table style='text-align: {alignment}; direction: {direction};'>
+        <tr><th style='width: 20%;'>Aspect</th><th>Details</th></tr>
+    """
+
+    if strengths:
+        strengths_list = '<ul>' + ''.join(f'<li>{s}</li>' for s in strengths) + '</ul>'
+        table_html += f"<tr><td><strong>Strengths</strong></td><td>{strengths_list}</td></tr>"
+
+    if weaknesses:
+        weaknesses_list = '<ul>' + ''.join(f'<li>{w}</li>' for w in weaknesses) + '</ul>'
+        table_html += f"<tr><td><strong>Weaknesses</strong></td><td>{weaknesses_list}</td></tr>"
+
+    if recommendations:
+        recommendations_list = '<ul>' + ''.join(f'<li>{r}</li>' for r in recommendations) + '</ul>'
+        table_html += f"<tr><td><strong>Recommendations</strong></td><td>{recommendations_list}</td></tr>"
+
+    if evidence:
+        evidence_list = '<ul>' + ''.join(f'<li>{e}</li>' for e in evidence) + '</ul>'
+        table_html += f"<tr><td><strong>Evidence</strong></td><td>{evidence_list}</td></tr>"
+
+    table_html += "</table>"
+    return table_html
+
+def render_storytelling_analysis(artifact_dir):
+    """Render storytelling analysis from story.txt file."""
+    txt_path = os.path.join(artifact_dir, "story.txt")
+    if not os.path.exists(txt_path):
+        return ""
+
+    modules = load_analysis_json(txt_path)
+    if not modules:
+        return ""
+
+    html = "<h2>📖 Storytelling Analysis</h2>"
+    for module_data in modules:
+        html += render_analysis_module_table(module_data)
+
+    return html
+
+def render_deep_analysis(artifact_dir):
+    """Render deep pedagogical analysis from deep.txt file."""
+    txt_path = os.path.join(artifact_dir, "deep.txt")
+    if not os.path.exists(txt_path):
+        return ""
+
+    modules = load_analysis_json(txt_path)
+    if not modules:
+        return ""
+
+    html = "<h2>🔍 Deep Pedagogical Analysis</h2>"
+    for module_data in modules:
+        html += render_analysis_module_table(module_data)
+
+    return html
+
 def generate_teacher_report_html(artifact_dir, class_date_str):
     class_date = datetime.strptime(class_date_str, "%d/%m/%Y").strftime("%B %d, %Y")
     title = render_title(artifact_dir)
-    summary_html = render_summary(artifact_dir)
     sections_html, chart_img_base64 = render_sections(artifact_dir)
     interaction_html = render_interactions(artifact_dir)
     difficult_html = render_difficult_topics(artifact_dir)
     open_questions_html = render_open_questions(artifact_dir)
+    storytelling_html = render_storytelling_analysis(artifact_dir)
+    deep_analysis_html = render_deep_analysis(artifact_dir)
 
     html = f"""
     <!DOCTYPE html>
@@ -223,16 +311,14 @@ def generate_teacher_report_html(artifact_dir, class_date_str):
             <p style=\"font-size: 16px;\">📅 <strong>Date:</strong> {class_date}</p>
         </div>
         <div class=\"section\">
-            <h2>📝 Class Summary</h2>
-            {summary_html}
-        </div>
-        <div class=\"section\">
             {sections_html}
             {'<img src="data:image/png;base64,' + chart_img_base64 + '">' if chart_img_base64 else ''}
         </div>
         <div class=\"section\">{interaction_html}</div>
         <div class=\"section\">{difficult_html}</div>
         <div class=\"section\">{open_questions_html}</div>
+        <div class=\"section\">{storytelling_html}</div>
+        <div class=\"section\">{deep_analysis_html}</div>
     </body>
     </html>
     """

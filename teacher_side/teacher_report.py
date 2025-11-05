@@ -16,18 +16,27 @@ class TeacherReport(OpenRouterProxy):
     def read_transcript(self, suffix='.txt'):
         def find_transcript_file(videos_dir: str, suffix='.txt') -> str:
             """
-            Find the transcript file (.txt) in the videos directory.
+            Find the transcript file (.txt, .vtt, or .srt) in the videos directory.
 
             Args:
                 videos_dir: Path to the videos directory
+                suffix: File extension to search for (default: '.txt')
 
             Returns:
                 Path to the transcript file
             """
-            for file in os.listdir(videos_dir):
-                if file.endswith(suffix):
-                    return os.path.join(videos_dir, file)
-            raise FileNotFoundError(f"No .txt transcript file found in {videos_dir}")
+            # List of supported transcript formats
+            supported_formats = ['.txt', '.vtt', '.srt']
+
+            # If a specific suffix is provided, prioritize it
+            search_order = [suffix] + [fmt for fmt in supported_formats if fmt != suffix]
+
+            for fmt in search_order:
+                for file in os.listdir(videos_dir):
+                    if file.endswith(fmt):
+                        return os.path.join(videos_dir, file)
+
+            raise FileNotFoundError(f"No transcript file (.txt, .vtt, or .srt) found in {videos_dir}")
 
         def parse_transcript_txt(transcript_path: str) -> str:
             """
@@ -65,17 +74,17 @@ class TeacherReport(OpenRouterProxy):
             f"You are an teaching assistant. Your task is to analyze a university class based on its transcript, and then perform several specific tasks. "
             f"The analysis and output should be in the following language: {lan}"
             f"Here is the information about the video:"
-            f"<transcript>{self.transcript}</transcript>"
+            f"<transcript>{self.transcript}</transcript>\n\n"
             f"Output specifications"
-            f" <output_language>{lan}</output_language>"
+            f" <output_language>{lan}</output_language>\n"
             f"Don't write any system generated content. return only the output in the specified format. no more no less "
-            f"include the header of the column (column names) in the output"
+            f"include the header of the column (column names) in the output\n"
             f"separate each task with a new line and ### task name ###"
             )
         self.system_prompt= system_prompt
 
     def compose_user_prompt(self, lan = "English"):
-        self.user_prompt = get_tasks()
+        self.user_prompt = get_tasks(lan)
     def prepare_specific_content(self, lan):
         self.read_transcript()
 
@@ -85,14 +94,17 @@ if __name__ == '__main__':
     config = yaml.safe_load(open(config_path))
     logger = get_logger(__name__, config)
 
+    # Get language from config, default to English if not specified
+    language = config.get("language", "English")
+
     # Process video
     t0 = time.time()
     llmproxy = TeacherReport(config)
-    llmproxy.prepare_content()
+    llmproxy.prepare_content(lan=language)
     output = llmproxy.call_api()
     output_file=os.path.join(config["videos_dir"],"output.txt")
-    # with open(output_file, "w") as file:
-    #     file.write(output)
+    with open(output_file, "w") as file:
+         file.write(output)
     print (output)
     #extract_teacher_report_results(config["videos_dir"],output)
 
