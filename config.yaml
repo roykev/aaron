@@ -9,7 +9,7 @@ teacher_reports:
   generate_basic: false          # Generate basic report (sections, examples, interactions)
   generate_deep: false           # Generate deep analysis report
   generate_story: false          # Generate storytelling analysis report
-  generate_smart_insights: true  # Generate AI-powered smart insights (requires deep.txt and story.txt)
+  generate_smart_insights: false  # Generate AI-powered smart insights (requires deep.txt and story.txt)
   generate_markdown: true        # Generate markdown reports from outputs
 
 # Language configuration for report generation
@@ -27,7 +27,7 @@ logging:
 # LLM configuration for scene descriptions
 llm:
   #model: "moonshotai/kimi-k2:free"  # LLM model for scene descriptions and analysis    "deepseek/deepseek-chat-v3.1:free", "meta-llama/llama-4-scout:free"
- model: "microsoft/mai-ds-r1:free"#"google/gemini-2.0-flash-exp:free"#"qwen/qwen3-coder:free"#"meta-llama/llama-3.2-3b-instruct:free"# "qwen/qwen2.5-vl-32b-instruct:free"#"microsoft/mai-ds-r1:free"#"meta-llama/llama-3.2-3b-instruct:free"#"deepseek/deepseek-r1-0528:free" #"google/gemini-2.0-flash-exp:free"#"moonshotai/kimi-dev-72b:free"#"moonshotai/kimi-k2:free"
+ model: "anthropic/claude-sonnet-4.5"#"microsoft/mai-ds-r1:free"#"google/gemini-2.0-flash-exp:free"#"qwen/qwen3-coder:free"#"meta-llama/llama-3.2-3b-instruct:free"# "qwen/qwen2.5-vl-32b-instruct:free"#"microsoft/mai-ds-r1:free"#"meta-llama/llama-3.2-3b-instruct:free"#"deepseek/deepseek-r1-0528:free" #"google/gemini-2.0-flash-exp:free"#"moonshotai/kimi-dev-72b:free"#"moonshotai/kimi-k2:free"
 # Video summary configuration
 summary:
   max_words: 300  # Maximum number of words in the summary

@@ -307,23 +307,26 @@ class SnapshotGenerator:
         # Simple main message without fictional scoring
         main_msg = "שיעור עם נקודות חזקות ותחומים לשיפור"
 
-        md = f"""# 🦉 AaronOwl - תמונת מצב
+        md = f"""# Teaching Snapshot
 
 ## {title}
 
-**המסר המרכזי:** {main_msg}
-
-**משך השיעור:** {duration}
-
----
-
-## ✨ מה עבד מצוין
-
-**{top_module}:** {top_strength}
+<div style='border-left: 3px solid #6b7280; padding: 15px 20px; margin: 20px 0; background: #fafafa;'>
+<p style='margin: 0; color: #374151;'><strong>המסר המרכזי:</strong> {main_msg}</p>
+<p style='margin: 10px 0 0 0; color: #6b7280;'><strong>משך השיעור:</strong> {duration}</p>
+</div>
 
 ---
 
-## 🔒 לשמר (נקודות חזקות)
+## Outstanding Performance
+
+<div style='background: #f9fafb; border-left: 3px solid #6b7280; padding: 15px; margin: 15px 0;'>
+<p style='margin: 0; color: #374151;'><strong>{top_module}:</strong> {top_strength}</p>
+</div>
+
+---
+
+## Successful Practices
 
 """
 
@@ -332,29 +335,38 @@ class SnapshotGenerator:
         for i, (module, item) in enumerate(preserve_items, 1):
             # Create a short summary (first 80 chars of the item)
             summary = item[:80] + '...' if len(item) > 80 else item
-            md += f"<details>\n<summary><b>{i}. {module}:</b> {summary}</summary>\n\n"
-            md += f"**חוזקה עיקרית:** {item}\n\n"
+            md += f"<details style='margin: 10px 0;'>\n"
+            md += f"<summary style='cursor: pointer; padding: 12px; background: #fafafa; border-left: 3px solid #9ca3af;'>"
+            md += f"<strong style='color: #374151;'>{i}. {module}:</strong> <span style='color: #6b7280;'>{summary}</span>"
+            md += "</summary>\n\n"
+            md += f"<div style='padding: 15px; background: #f9fafb; margin-top: 10px;'>\n"
+            md += f"<p><strong>חוזקה עיקרית:</strong> {item}</p>\n\n"
 
             # Find the full module data
             module_data = next((m for m in self.story_data if m['module'] == module), None)
             if module_data and len(module_data['strengths']) > 1:
-                md += "**חוזקות נוספות:**\n"
+                md += "<p><strong>חוזקות נוספות:</strong></p>\n<ul>\n"
                 for strength in module_data['strengths'][1:]:  # Skip first one, already shown
-                    md += f"- {strength}\n"
+                    md += f"<li>{strength}</li>\n"
+                md += "</ul>\n"
 
-            md += "\n</details>\n\n"
+            md += "</div>\n</details>\n\n"
 
         md += "---\n\n"
 
         # Improve section - each item expandable with full details
-        md += "## 📈 לשפר (תחומים לשיפור)\n\n"
+        md += "## Areas for Enhancement\n\n"
         improve_items = self._get_improve_items()
         for i, (module, weakness, recommendation) in enumerate(improve_items, 1):
             # Create a short summary (first 80 chars of the weakness)
             summary = weakness[:80] + '...' if len(weakness) > 80 else weakness
-            md += f"<details>\n<summary><b>{i}. {module}:</b> {summary}</summary>\n\n"
-            md += f"**הבעיה:** {weakness}\n\n"
-            md += f"**הפתרון:** {recommendation}\n\n"
+            md += f"<details style='margin: 10px 0;'>\n"
+            md += f"<summary style='cursor: pointer; padding: 12px; background: #fafafa; border-left: 3px solid #9ca3af;'>"
+            md += f"<strong style='color: #374151;'>{i}. {module}:</strong> <span style='color: #6b7280;'>{summary}</span>"
+            md += "</summary>\n\n"
+            md += f"<div style='padding: 15px; background: #f9fafb; margin-top: 10px;'>\n"
+            md += f"<p><strong>הבעיה:</strong> {weakness}</p>\n\n"
+            md += f"<p><strong>הפתרון:</strong> {recommendation}</p>\n\n"
 
             # Find the full module data
             module_data = None
@@ -364,22 +376,27 @@ class SnapshotGenerator:
                     break
 
             if module_data and len(module_data['weaknesses']) > 1:
-                md += "**תחומים נוספים לשיפור:**\n"
+                md += "<p><strong>תחומים נוספים לשיפור:</strong></p>\n<ul>\n"
                 # Skip the first weakness as it's already shown
                 for weak in module_data['weaknesses'][1:]:
-                    md += f"- {weak}\n"
+                    md += f"<li>{weak}</li>\n"
+                md += "</ul>\n"
 
-            md += "\n</details>\n\n"
+            md += "</div>\n</details>\n\n"
 
         md += "---\n\n"
 
         # Action items - each item expandable
-        md += "## 📋 משימות מומלצות לשיעור הבא\n\n"
+        md += "## Recommended Actions for Next Session\n\n"
         action_items = self._get_action_items()
         for i, (module, action, tag) in enumerate(action_items, 1):
-            md += f"<details>\n<summary><b>{i}. {action[:80]}{'...' if len(action) > 80 else ''}</b></summary>\n\n"
-            md += f"**פעולה מלאה:** {action}\n\n"
-            md += f"*מתוך: {module}*\n\n"
+            md += f"<details style='margin: 10px 0;'>\n"
+            md += f"<summary style='cursor: pointer; padding: 12px; background: #fafafa; border-left: 3px solid #9ca3af;'>"
+            md += f"<strong style='color: #374151;'>{i}. {action[:80]}{'...' if len(action) > 80 else ''}</strong>"
+            md += "</summary>\n\n"
+            md += f"<div style='padding: 15px; background: #f9fafb; margin-top: 10px;'>\n"
+            md += f"<p><strong>פעולה מלאה:</strong> {action}</p>\n\n"
+            md += f"<p style='font-style: italic; color: #6b7280;'>מתוך: {module}</p>\n\n"
 
             # Show all recommendations from this module
             module_data = None
@@ -389,26 +406,27 @@ class SnapshotGenerator:
                     break
 
             if module_data and len(module_data['recommendations']) > 1:
-                md += "**המלצות נוספות:**\n"
+                md += "<p><strong>המלצות נוספות:</strong></p>\n<ul>\n"
                 for rec in module_data['recommendations'][1:]:
-                    md += f"- {rec}\n"
+                    md += f"<li>{rec}</li>\n"
+                md += "</ul>\n"
 
-            md += "\n</details>\n\n"
+            md += "</div>\n</details>\n\n"
 
         md += "---\n\n"
 
         # Side panel info
-        md += "## 🔥 נושאים חמים\n\n"
+        md += "## Key Topics\n\n"
         hot_topics = self._get_hot_topics()
         for i, topic in enumerate(hot_topics, 1):
             md += f"{i}. {topic}\n"
 
-        md += "\n## ❓ שאלות מובילות\n\n"
+        md += "\n## Leading Questions\n\n"
         questions = self._get_top_questions()
         for question, time in questions:
             md += f"- **{time}:** {question}\n"
 
-        md += "\n## ⚠️ נושאים מאתגרים\n\n"
+        md += "\n## Challenging Topics\n\n"
         if 'difficult_topics' in self.output_data:
             for topic_dict in self.output_data['difficult_topics'][:3]:
                 topic = topic_dict.get('Topic', '')

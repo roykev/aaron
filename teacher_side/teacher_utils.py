@@ -766,33 +766,33 @@ def generate_report(dir_path):
 
     md = []
 
-    # Beautiful header with styling
-    md.append("# 📘 Class Analysis Report")
+    # Clean, professional header
+    md.append("# Class Analysis Report")
     md.append("")
-    md.append(f"<div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 25px; border-radius: 12px; color: white; margin-bottom: 25px;'>")
-    md.append(f"<h2 style='margin: 0; color: white;'>{title}</h2>")
-    md.append(f"<p style='margin: 10px 0 0 0; opacity: 0.9; font-size: 0.95em;'>Comprehensive class analysis with examples, interactions, and insights</p>")
+    md.append(f"<div style='border-left: 3px solid #6b7280; padding: 20px; margin: 20px 0; background: #fafafa;'>")
+    md.append(f"<h2 style='margin: 0; color: #1f2937;'>{title}</h2>")
+    md.append(f"<p style='margin: 10px 0 0 0; color: #6b7280;'>Comprehensive class analysis with examples, interactions, and insights</p>")
     md.append("</div>")
     md.append("")
 
-    # Sections - with better styling
+    # Sections - subtle styling
     sections_rows = parse_csv_block(blocks.get("sections", ""))
     if sections_rows and len(sections_rows) > 1:
-        md.append("## 📚 Class Structure")
+        md.append("## Class Structure")
         md.append("")
-        md.append("<div style='background: #f8fafc; padding: 20px; border-radius: 10px; margin: 15px 0;'>")
+        md.append("<div style='background: #fafafa; padding: 15px; margin: 15px 0;'>")
 
         for row in sections_rows[1:]:
             if len(row) >= 4:
                 num, start, end, section_title = row[0], row[1], row[2], row[3]
                 duration = row[4] if len(row) > 4 else ""
                 md.append(f"<details style='margin: 8px 0;'>")
-                md.append(f"<summary style='cursor: pointer; padding: 10px; background: white; border-radius: 6px; border-left: 3px solid #3b82f6;'>")
-                md.append(f"<strong>{num}. {section_title}</strong> <span style='color: #6b7280; font-size: 0.9em;'>({start} - {end})</span>")
+                md.append(f"<summary style='cursor: pointer; padding: 10px; background: white; border-left: 3px solid #9ca3af;'>")
+                md.append(f"<strong style='color: #374151;'>{num}. {section_title}</strong> <span style='color: #6b7280; font-size: 0.9em;'>({start} - {end})</span>")
                 md.append("</summary>")
-                md.append(f"<div style='padding: 10px; margin-top: 5px;'>")
-                md.append(f"<p><strong>⏱️ Duration:</strong> {duration}</p>")
-                md.append(f"<p><strong>⏰ Time Range:</strong> {start} to {end}</p>")
+                md.append(f"<div style='padding: 10px; margin-top: 5px; background: #f9fafb;'>")
+                md.append(f"<p><strong>Duration:</strong> {duration}</p>")
+                md.append(f"<p><strong>Time Range:</strong> {start} to {end}</p>")
                 md.append("</div>")
                 md.append("</details>")
 
@@ -801,10 +801,10 @@ def generate_report(dir_path):
         md.append("---")
         md.append("")
 
-    # Examples with improved styling
+    # Examples with subtle styling
     examples_rows = parse_csv_block(blocks.get("examples", ""))
     if examples_rows and len(examples_rows) > 1:
-        md.append("## 💡 Examples from Class")
+        md.append("## Examples from Class")
         md.append("")
         md.append("<p style='color: #6b7280; font-style: italic;'>Real examples used during instruction</p>")
         md.append("")
@@ -818,33 +818,20 @@ def generate_report(dir_path):
                 example = example_dict.get('Example', '')
                 reference = example_dict.get('Reference', example_dict.get('reference', 'class'))
 
-                # Color based on reference
-                if 'external' in reference.lower():
-                    border_color = '#9333ea'
-                    bg_color = '#faf5ff'
-                else:
-                    border_color = '#22c55e'
-                    bg_color = '#f0fdf4'
-
                 md.append(f"<details style='margin: 10px 0;'>")
-                md.append(f"<summary style='cursor: pointer; padding: 12px; background: {bg_color}; border-radius: 8px; border-left: 4px solid {border_color};'>")
-                md.append(f"<strong>{i}. {topic}</strong> <span style='font-size: 0.85em; color: #6b7280;'>({reference})</span>")
+                md.append(f"<summary style='cursor: pointer; padding: 12px; background: #fafafa; border-left: 3px solid #9ca3af;'>")
+                md.append(f"<strong style='color: #374151;'>{i}. {topic}</strong> <span style='font-size: 0.85em; color: #6b7280;'>({reference})</span>")
                 md.append("</summary>")
-                md.append(f"<div style='padding: 15px; background: #f9fafb; border-radius: 5px; margin-top: 5px;'>")
+                md.append(f"<div style='padding: 15px; background: #f9fafb; margin-top: 5px;'>")
                 md.append(f"<p>{example}</p>")
                 md.append("</div>")
                 md.append("</details>")
 
         md.append("")
-        md.append("<p style='font-size: 0.85em; color: #6b7280; margin-top: 10px;'>")
-        md.append("<span style='color: #22c55e;'>●</span> Class examples  ")
-        md.append("<span style='color: #9333ea;'>●</span> External examples")
-        md.append("</p>")
-        md.append("")
         md.append("---")
         md.append("")
 
-    # Open questions with card layout
+    # Open questions with clean layout
     oq_text = blocks.get("open_questions", "{}")
     oq_text = strip_markdown_json_fence(oq_text)
     try:
@@ -853,7 +840,7 @@ def generate_report(dir_path):
         oq = {}
 
     if oq:
-        md.append("## ❓ Questions for Students")
+        md.append("## Questions for Students")
         md.append("")
         md.append("<p style='color: #6b7280; font-style: italic;'>Thought-provoking questions to assess understanding</p>")
         md.append("")
@@ -862,10 +849,10 @@ def generate_report(dir_path):
         simple = oq.get("simple", oq.get("simple_questions", []))
         if simple:
             md.append("<details open>")
-            md.append("<summary style='cursor: pointer; font-size: 1.1em; padding: 10px; background: #ecfdf5; border-radius: 8px; margin: 10px 0;'>")
-            md.append(f"<strong>🟢 Foundational Questions</strong> <span style='color: #6b7280; font-size: 0.9em;'>({len(simple)} questions)</span>")
+            md.append("<summary style='cursor: pointer; font-weight: 600; padding: 10px; background: #fafafa; margin: 10px 0;'>")
+            md.append(f"<span style='color: #374151;'>Foundational Questions</span> <span style='color: #6b7280; font-size: 0.9em; font-weight: normal;'>({len(simple)} questions)</span>")
             md.append("</summary>")
-            md.append("<div style='padding: 15px;'>")
+            md.append("<div style='padding: 15px; background: #f9fafb;'>")
             for i, q in enumerate(simple, 1):
                 md.append(f"<p><strong>{i}.</strong> {q}</p>")
             md.append("</div>")
@@ -876,10 +863,10 @@ def generate_report(dir_path):
         difficult = oq.get("difficult", oq.get("difficult_questions", []))
         if difficult:
             md.append("<details open>")
-            md.append("<summary style='cursor: pointer; font-size: 1.1em; padding: 10px; background: #fef3c7; border-radius: 8px; margin: 10px 0;'>")
-            md.append(f"<strong>🟡 Advanced Questions</strong> <span style='color: #6b7280; font-size: 0.9em;'>({len(difficult)} questions)</span>")
+            md.append("<summary style='cursor: pointer; font-weight: 600; padding: 10px; background: #fafafa; margin: 10px 0;'>")
+            md.append(f"<span style='color: #374151;'>Advanced Questions</span> <span style='color: #6b7280; font-size: 0.9em; font-weight: normal;'>({len(difficult)} questions)</span>")
             md.append("</summary>")
-            md.append("<div style='padding: 15px;'>")
+            md.append("<div style='padding: 15px; background: #f9fafb;'>")
             for i, q in enumerate(difficult, 1):
                 md.append(f"<p><strong>{i}.</strong> {q}</p>")
             md.append("</div>")
@@ -889,10 +876,10 @@ def generate_report(dir_path):
         md.append("---")
         md.append("")
 
-    # Interactions with timeline feel
+    # Interactions with subtle styling
     inter_rows = parse_csv_block(blocks.get("interaction", ""))
     if inter_rows and len(inter_rows) > 1:
-        md.append("## 💬 Class Interactions")
+        md.append("## Class Interactions")
         md.append("")
         md.append("<p style='color: #6b7280; font-style: italic;'>Student engagement and participation moments</p>")
         md.append("")
@@ -906,22 +893,8 @@ def generate_report(dir_path):
                 itype = inter_dict.get('Type', 'interaction')
                 description = inter_dict.get('Description', '')
 
-                # Style based on type
-                if 'question' in itype.lower():
-                    emoji = '❓'
-                    color = '#f59e0b'
-                    bg = '#fef3c7'
-                elif 'discussion' in itype.lower():
-                    emoji = '💭'
-                    color = '#3b82f6'
-                    bg = '#dbeafe'
-                else:
-                    emoji = '💬'
-                    color = '#8b5cf6'
-                    bg = '#f3e8ff'
-
-                md.append(f"<div style='margin: 12px 0; padding: 12px; background: {bg}; border-left: 4px solid {color}; border-radius: 6px;'>")
-                md.append(f"<p style='margin: 0;'><strong>{emoji} {time}</strong> - <em style='color: {color};'>{itype}</em></p>")
+                md.append(f"<div style='margin: 10px 0; padding: 12px; background: #fafafa; border-left: 3px solid #9ca3af;'>")
+                md.append(f"<p style='margin: 0; color: #374151;'><strong>{time}</strong> - <em style='color: #6b7280;'>{itype}</em></p>")
                 md.append(f"<p style='margin: 8px 0 0 0;'>{description}</p>")
                 md.append("</div>")
 
@@ -929,12 +902,12 @@ def generate_report(dir_path):
         md.append("---")
         md.append("")
 
-    # Difficult topics with solutions
+    # Difficult topics with clean styling
     diff_rows = parse_csv_block(blocks.get("difficult_topics", ""))
     if diff_rows and len(diff_rows) > 1:
-        md.append("## ⚠️ Challenging Topics")
+        md.append("## Challenging Topics")
         md.append("")
-        md.append("<p style='color: #dc2626; font-style: italic;'>Areas where students needed additional support</p>")
+        md.append("<p style='color: #6b7280; font-style: italic;'>Areas where students needed additional support</p>")
         md.append("")
 
         headers = [h.strip() for h in diff_rows[0]]
@@ -947,14 +920,14 @@ def generate_report(dir_path):
                 recommendation = diff_dict.get('Recommendation for improvement', diff_dict.get('Recommendation', ''))
 
                 md.append(f"<details style='margin: 10px 0;'>")
-                md.append(f"<summary style='cursor: pointer; padding: 12px; background: #fef2f2; border-radius: 8px; border-left: 4px solid #ef4444;'>")
-                md.append(f"<strong>{i}. {topic}</strong>")
+                md.append(f"<summary style='cursor: pointer; padding: 12px; background: #fafafa; border-left: 3px solid #9ca3af;'>")
+                md.append(f"<strong style='color: #374151;'>{i}. {topic}</strong>")
                 md.append("</summary>")
-                md.append(f"<div style='padding: 15px; background: #f9fafb; border-radius: 5px; margin-top: 5px;'>")
+                md.append(f"<div style='padding: 15px; background: #f9fafb; margin-top: 5px;'>")
                 if reason:
-                    md.append(f"<p><strong>🔍 Why it's challenging:</strong> {reason}</p>")
+                    md.append(f"<p><strong>Why it's challenging:</strong> {reason}</p>")
                 if recommendation:
-                    md.append(f"<p><strong>💡 Suggestion:</strong> {recommendation}</p>")
+                    md.append(f"<p><strong>Suggestion:</strong> {recommendation}</p>")
                 md.append("</div>")
                 md.append("</details>")
 
