@@ -2,14 +2,14 @@
 #videos_dir: "/home/roy/FS/Dropbox/WORK/Ideas/aaron/ono/יזמות עסקית/מבוא ליזמות עסקית - סרטון עבור שיעור מקוון  מתאריך 03 03 2025 ושעת התחלה 12 15 - 15123880/"
 #videos_dir: "/home/roy/FS/Dropbox/WORK/Ideas/aaron/matan/Pharma2-Matan-Lecture2/"
 #videos_dir: "/home/roy/FS/Dropbox/WORK/Ideas/aaron/tal/"
-videos_dir: "/home/roy/FS/Dropbox/WORK/Ideas/aaron/ono/ella"
+videos_dir: "/mnt/d/Documents/Work/AaronTheOwl/Courses/teacher_test/"
 
 # Teacher report generation flags
 teacher_reports:
-  generate_basic: false          # Generate basic report (sections, examples, interactions)
-  generate_deep: false           # Generate deep analysis report
-  generate_story: false          # Generate storytelling analysis report
-  generate_smart_insights: false  # Generate AI-powered smart insights (requires deep.txt and story.txt)
+  generate_basic: true          # Generate basic report (sections, examples, interactions)
+  generate_deep: true           # Generate deep analysis report
+  generate_story: true          # Generate storytelling analysis report
+  generate_smart_insights: true  # Generate AI-powered smart insights (requires deep.txt and story.txt)
   generate_markdown: true        # Generate markdown reports from outputs
 
 # Language configuration for report generation
@@ -24,10 +24,30 @@ logging:
     show_progress: true  # Enable progress bars
     datefmt: "%Y-%m-%d %H:%M:%S"
 
-# LLM configuration for scene descriptions
+# LLM configuration
 llm:
-  #model: "moonshotai/kimi-k2:free"  # LLM model for scene descriptions and analysis    "deepseek/deepseek-chat-v3.1:free", "meta-llama/llama-4-scout:free"
- model: "anthropic/claude-sonnet-4.5"#"microsoft/mai-ds-r1:free"#"google/gemini-2.0-flash-exp:free"#"qwen/qwen3-coder:free"#"meta-llama/llama-3.2-3b-instruct:free"# "qwen/qwen2.5-vl-32b-instruct:free"#"microsoft/mai-ds-r1:free"#"meta-llama/llama-3.2-3b-instruct:free"#"deepseek/deepseek-r1-0528:free" #"google/gemini-2.0-flash-exp:free"#"moonshotai/kimi-dev-72b:free"#"moonshotai/kimi-k2:free"
+  # Backend selection: false = Anthropic (default), true = OpenRouter
+  use_openrouter: false
+  
+  # Model configuration:
+  # - For Anthropic backend: use direct model names like "claude-sonnet-4" or "claude-sonnet-4.5"
+  # - For OpenRouter backend: use OpenRouter paths like "anthropic/claude-sonnet-4.5" or "moonshotai/kimi-k2:free"
+  # 
+  # When use_openrouter: false (Anthropic direct):
+  #   - Requires ANTHROPIC_API_KEY environment variable
+  #   - Model examples: "claude-sonnet-4", "claude-sonnet-4.5", "claude-opus-4"
+  #
+  # When use_openrouter: true (OpenRouter):
+  #   - Requires OPEN_ROUTER_API_KEY environment variable
+  #   - Model examples: "anthropic/claude-sonnet-4.5", "moonshotai/kimi-k2:free", "google/gemini-2.0-flash-exp:free"
+  #
+  model: "claude-sonnet-4-5-20250929"
+  
+  # Other OpenRouter models (uncomment and set use_openrouter: true to use):
+  #model: "moonshotai/kimi-k2:free"
+  #model: "google/gemini-2.0-flash-exp:free"
+  #model: "deepseek/deepseek-chat-v3.1:free"
+  #model: "anthropic/claude-sonnet-4.5"
 # Video summary configuration
 summary:
   max_words: 300  # Maximum number of words in the summary

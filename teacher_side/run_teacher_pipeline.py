@@ -6,15 +6,21 @@ based on flags in config.yaml
 """
 
 import os
+import sys
 import time
 import yaml
 from pathlib import Path
 
-from teacher_side.teacher_report import TeacherReport
-from teacher_side.teacher_report_deep import TeacherReportDeep
-from teacher_side.teacher_report_storytelling import TeacherReportStoryTelling
+# Add parent directory to Python path so imports work from anywhere
+script_dir = Path(__file__).resolve().parent.parent
+if str(script_dir) not in sys.path:
+    sys.path.insert(0, str(script_dir))
+
+from teacher_side.teacher_report import TeacherReport, TeacherReportOR
+from teacher_side.teacher_report_deep import TeacherReportDeep, TeacherReportDeepOR
+from teacher_side.teacher_report_storytelling import TeacherReportStoryTelling, TeacherReportStoryTellingOR
 from teacher_side.snapshot_generator import SnapshotGenerator
-from teacher_side.teacher_report_smart_insights import TeacherReportSmartInsights
+from teacher_side.teacher_report_smart_insights import TeacherReportSmartInsights, TeacherReportSmartInsightsOR
 from teacher_side.teacher_utils import get_output_dir, generate_report, generate_story_report, generate_deep_report
 from teacher_side.generate_smart_insights import generate_smart_insights_markdown
 from utils.utils import get_logger
@@ -43,6 +49,23 @@ def run_teacher_pipeline(config_path="./config.yaml"):
     language = config.get("language", "English")
     course_name = config.get("course_name", "Unknown Course")
     class_level = config.get("class_level", "Unknown Level")
+    
+    # Determine which LLM backend to use (Anthropic by default, OpenRouter as fallback)
+    use_openrouter = config.get("llm", {}).get("use_openrouter", False)
+    
+    # Select the appropriate classes based on configuration
+    if use_openrouter:
+        logger.info("Using OpenRouter backend")
+        TeacherReportClass = TeacherReportOR
+        TeacherDeepClass = TeacherReportDeepOR
+        TeacherStoryClass = TeacherReportStoryTellingOR
+        TeacherInsightsClass = TeacherReportSmartInsightsOR
+    else:
+        logger.info("Using Anthropic Claude backend")
+        TeacherReportClass = TeacherReport
+        TeacherDeepClass = TeacherReportDeep
+        TeacherStoryClass = TeacherReportStoryTelling
+        TeacherInsightsClass = TeacherReportSmartInsights
 
     # Get output directory
     output_dir = get_output_dir(config)
@@ -64,7 +87,7 @@ def run_teacher_pipeline(config_path="./config.yaml"):
         logger.info("Step 1/5: Generating basic teacher report (output.txt)...")
         step_start = time.time()
 
-        llmproxy = TeacherReport(config)
+        llmproxy = TeacherReportClass(config)
         llmproxy.prepare_content(lan=language)
         output = llmproxy.call_api()
 
@@ -81,7 +104,7 @@ def run_teacher_pipeline(config_path="./config.yaml"):
         logger.info("Step 2/5: Generating deep analysis report (deep.txt)...")
         step_start = time.time()
 
-        llmproxy = TeacherReportDeep(config)
+        llmproxy = TeacherDeepClass(config)
         llmproxy.course_name = course_name
         llmproxy.class_level = class_level
         llmproxy.prepare_content(lan=language)
@@ -100,7 +123,7 @@ def run_teacher_pipeline(config_path="./config.yaml"):
         logger.info("Step 3/5: Generating storytelling analysis report (story.txt)...")
         step_start = time.time()
 
-        llmproxy = TeacherReportStoryTelling(config)
+        llmproxy = TeacherStoryClass(config)
         llmproxy.course_name = course_name
         llmproxy.class_level = class_level
         llmproxy.prepare_content(lan=language)
@@ -125,7 +148,7 @@ def run_teacher_pipeline(config_path="./config.yaml"):
         if os.path.exists(deep_txt_path) and os.path.exists(story_txt_path):
             logger.info("  Calling LLM to analyze and synthesize most important insights...")
 
-            llmproxy = TeacherReportSmartInsights(config)
+            llmproxy = TeacherInsightsClass(config)
             llmproxy.prepare_content(output_dir, lan=language)
             output = llmproxy.call_api()
 

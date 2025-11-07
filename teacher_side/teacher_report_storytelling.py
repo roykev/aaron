@@ -188,8 +188,9 @@ def build_tasks_array(lan="English"):
 
 
 class TeacherReportStoryTelling(TeacherReport):
-    def __init__(self, config: Dict[str, Any], api_key: str = None, base_url: str = "https://openrouter.ai/api/v1"):
-        super().__init__(config, api_key, base_url)
+    """Storytelling analysis using Anthropic's Claude (default)."""
+    def __init__(self, config: Dict[str, Any], api_key: str = None):
+        super().__init__(config, api_key)
 
     def compose_system_prompt(self, lan="English"):      # System prompt - defines the analyzer's role and output format
             system_prompt= ("You are an expert educational content analyzer specializing in storytelling and pedagogical effectiveness. Your role is to analyze lecture transcriptions and assess the instructor's use of narrative techniques to enhance learning."
@@ -223,6 +224,19 @@ class TeacherReportStoryTelling(TeacherReport):
             self.system_prompt = system_prompt
     def compose_user_prompt(self, lan = "English"):
         self.user_prompt = build_tasks_array(lan=lan)
+
+
+class TeacherReportStoryTellingOR(TeacherReport):
+    """Storytelling analysis using OpenRouter (secondary option)."""
+    def __init__(self, config: Dict[str, Any], api_key: str = None, base_url: str = "https://openrouter.ai/api/v1"):
+        # Import the OR version
+        from teacher_side.teacher_report import TeacherReportOR
+        # Initialize with OpenRouter parent
+        TeacherReportOR.__init__(self, config, api_key, base_url)
+    
+    # Share the same methods with TeacherReportStoryTelling
+    compose_system_prompt = TeacherReportStoryTelling.compose_system_prompt
+    compose_user_prompt = TeacherReportStoryTelling.compose_user_prompt
 
 
 

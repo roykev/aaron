@@ -6,13 +6,15 @@ from typing import Dict, Any
 import yaml
 
 from teacher_side.teacher_prompts import get_tasks, extract_teacher_report_results
-from utils.kimi_utils import OpenRouterProxy
+from utils.kimi_utils import AnthropicProxy, OpenRouterProxy
 from utils.utils import get_logger
 
 
-class TeacherReport(OpenRouterProxy):
-    def __init__(self, config: Dict[str, Any], api_key: str = None, base_url: str = "https://openrouter.ai/api/v1"):
-        super().__init__(config, api_key, base_url)
+class TeacherReport(AnthropicProxy):
+    """Teacher report using Anthropic's Claude (default)."""
+    def __init__(self, config: Dict[str, Any], api_key: str = None):
+        super().__init__(config, api_key)
+    
     def read_transcript(self, suffix='.txt'):
         def find_transcript_file(videos_dir: str, suffix='.txt') -> str:
             """
@@ -87,6 +89,18 @@ class TeacherReport(OpenRouterProxy):
         self.user_prompt = get_tasks(lan)
     def prepare_specific_content(self, lan):
         self.read_transcript()
+
+
+class TeacherReportOR(OpenRouterProxy):
+    """Teacher report using OpenRouter (secondary option)."""
+    def __init__(self, config: Dict[str, Any], api_key: str = None, base_url: str = "https://openrouter.ai/api/v1"):
+        super().__init__(config, api_key, base_url)
+    
+    # Share the same methods with TeacherReport
+    read_transcript = TeacherReport.read_transcript
+    compose_system_prompt = TeacherReport.compose_system_prompt
+    compose_user_prompt = TeacherReport.compose_user_prompt
+    prepare_specific_content = TeacherReport.prepare_specific_content
 
 if __name__ == '__main__':
     # Configuration

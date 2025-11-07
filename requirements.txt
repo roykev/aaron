@@ -1,0 +1,21 @@
+# AaronOwl Teacher Report Pipeline Requirements
+# Python 3.8+ required
+
+# Core dependencies
+PyYAML>=6.0
+python-dotenv>=1.0.0
+
+# OpenAI and LLM
+openai>=1.0.0
+tiktoken>=0.5.0
+
+# Data processing
+pandas>=2.0.0
+
+# Visualization
+matplotlib>=3.7.0
+
+# HTTP and networking (for API calls and logging suppression)
+httpx>=0.24.0
+urllib3>=2.0.0
+

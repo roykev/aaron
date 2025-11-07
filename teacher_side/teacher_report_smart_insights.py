@@ -10,18 +10,19 @@ import time
 from typing import Dict, Any
 import yaml
 
-from utils.kimi_utils import OpenRouterProxy
+from utils.kimi_utils import AnthropicProxy, OpenRouterProxy
 from utils.utils import get_logger
 
 
-class TeacherReportSmartInsights(OpenRouterProxy):
+class TeacherReportSmartInsights(AnthropicProxy):
     """
     Analyzes existing teacher report outputs (deep.txt and story.txt) using an LLM
     to identify and synthesize the most important insights and recommendations.
+    Uses Anthropic's Claude (default).
     """
 
-    def __init__(self, config: Dict[str, Any], api_key: str = None, base_url: str = "https://openrouter.ai/api/v1"):
-        super().__init__(config, api_key, base_url)
+    def __init__(self, config: Dict[str, Any], api_key: str = None):
+        super().__init__(config, api_key)
         self.deep_analysis = None
         self.story_analysis = None
         self.output_analysis = None
@@ -169,6 +170,24 @@ class TeacherReportSmartInsights(OpenRouterProxy):
         self.load_analysis_files(output_dir)
         self.compose_system_prompt(lan)
         self.compose_user_prompt(lan)
+
+
+class TeacherReportSmartInsightsOR(OpenRouterProxy):
+    """
+    Smart insights analysis using OpenRouter (secondary option).
+    """
+
+    def __init__(self, config: Dict[str, Any], api_key: str = None, base_url: str = "https://openrouter.ai/api/v1"):
+        super().__init__(config, api_key, base_url)
+        self.deep_analysis = None
+        self.story_analysis = None
+        self.output_analysis = None
+    
+    # Share the same methods with TeacherReportSmartInsights
+    load_analysis_files = TeacherReportSmartInsights.load_analysis_files
+    compose_system_prompt = TeacherReportSmartInsights.compose_system_prompt
+    compose_user_prompt = TeacherReportSmartInsights.compose_user_prompt
+    prepare_content = TeacherReportSmartInsights.prepare_content
 
 
 def main():
