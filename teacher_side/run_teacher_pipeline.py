@@ -21,6 +21,7 @@ from teacher_side.teacher_report_deep import TeacherReportDeep, TeacherReportDee
 from teacher_side.teacher_report_storytelling import TeacherReportStoryTelling, TeacherReportStoryTellingOR
 from teacher_side.snapshot_generator import SnapshotGenerator
 from teacher_side.teacher_report_smart_insights import TeacherReportSmartInsights, TeacherReportSmartInsightsOR
+from teacher_side.teacher_report_unified import TeacherReportUnified, TeacherReportUnifiedOR, parse_and_save_unified_output
 from teacher_side.teacher_utils import get_output_dir, generate_report, generate_story_report, generate_deep_report
 from teacher_side.generate_smart_insights import generate_smart_insights_markdown
 from utils.utils import get_logger
@@ -44,6 +45,7 @@ def run_teacher_pipeline(config_path="./config.yaml"):
     generate_story = teacher_config.get("generate_story", False)
     generate_markdown = teacher_config.get("generate_markdown", False)
     generate_smart_insights = teacher_config.get("generate_smart_insights", False)
+    use_unified_mode = teacher_config.get("use_unified_mode", True)  # Default to True for efficiency
 
     # Get language and course settings
     language = config.get("language", "English")
@@ -77,10 +79,44 @@ def run_teacher_pipeline(config_path="./config.yaml"):
     logger.info(f"Language: {language}")
     logger.info(f"Course: {course_name}")
     logger.info(f"Level: {class_level}")
+    logger.info(f"Mode: {'Unified (1 LLM call)' if use_unified_mode else 'Separate (4 LLM calls)'}")
     logger.info(f"Flags: basic={generate_basic}, deep={generate_deep}, story={generate_story}, markdown={generate_markdown}, smart_insights={generate_smart_insights}")
     logger.info("=" * 80)
 
     total_start = time.time()
+
+    # UNIFIED MODE - Generate all analyses in ONE LLM call
+    if use_unified_mode and (generate_basic or generate_deep or generate_story):
+        logger.info("=" * 80)
+        logger.info("🚀 UNIFIED MODE: Generating all analyses in ONE LLM call")
+        logger.info("=" * 80)
+        step_start = time.time()
+
+        # Select unified class
+        UnifiedClass = TeacherReportUnifiedOR if use_openrouter else TeacherReportUnified
+
+        logger.info("Step 1/2: Calling LLM for unified analysis (basic + deep + story)...")
+        llmproxy = UnifiedClass(config)
+        llmproxy.course_name = course_name
+        llmproxy.class_level = class_level
+        llmproxy.prepare_content(lan=language)
+
+        logger.info("  Sending unified request to LLM...")
+        output = llmproxy.call_api()
+
+        logger.info("  Parsing and saving results...")
+        success = parse_and_save_unified_output(output, output_dir, logger)
+
+        if success:
+            logger.info(f"✅ Unified analysis completed in {time.time() - step_start:.2f}s")
+            logger.info(f"   Saved: output.txt, deep.txt, story.txt")
+            # Mark all as generated
+            generate_basic = False
+            generate_deep = False
+            generate_story = False
+        else:
+            logger.error("❌ Unified analysis failed - falling back to separate mode")
+            use_unified_mode = False
 
     # Step 1: Generate basic report (output.txt)
     if generate_basic:
