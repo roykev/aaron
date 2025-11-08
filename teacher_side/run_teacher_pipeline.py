@@ -79,29 +79,53 @@ def run_teacher_pipeline(config_path="./config.yaml"):
     logger.info(f"Language: {language}")
     logger.info(f"Course: {course_name}")
     logger.info(f"Level: {class_level}")
-    logger.info(f"Mode: {'Unified (1 LLM call)' if use_unified_mode else 'Separate (4 LLM calls)'}")
+    # Determine actual mode (unified only works with 2+ parts)
+    num_parts = sum([generate_basic, generate_deep, generate_story])
+    will_use_unified = use_unified_mode and num_parts >= 2
+    mode_str = f"Unified (1 call for {num_parts} parts)" if will_use_unified else "Separate calls"
+    logger.info(f"Mode: {mode_str}")
     logger.info(f"Flags: basic={generate_basic}, deep={generate_deep}, story={generate_story}, markdown={generate_markdown}, smart_insights={generate_smart_insights}")
     logger.info("=" * 80)
 
     total_start = time.time()
 
-    # UNIFIED MODE - Generate all analyses in ONE LLM call
-    if use_unified_mode and (generate_basic or generate_deep or generate_story):
+    # UNIFIED MODE - Generate selected analyses in ONE LLM call
+    # Only use unified mode if generating 2+ parts (efficiency gain)
+    num_parts = sum([generate_basic, generate_deep, generate_story])
+
+    if use_unified_mode and num_parts >= 2:
+        # Build list of parts being generated
+        parts = []
+        if generate_basic:
+            parts.append("basic")
+        if generate_deep:
+            parts.append("deep")
+        if generate_story:
+            parts.append("story")
+
+        parts_str = " + ".join(parts)
+
         logger.info("=" * 80)
-        logger.info("🚀 UNIFIED MODE: Generating all analyses in ONE LLM call")
+        logger.info(f"🚀 UNIFIED MODE: Generating {parts_str} in ONE LLM call")
         logger.info("=" * 80)
         step_start = time.time()
 
         # Select unified class
         UnifiedClass = TeacherReportUnifiedOR if use_openrouter else TeacherReportUnified
 
-        logger.info("Step 1/2: Calling LLM for unified analysis (basic + deep + story)...")
+        logger.info(f"Step 1/2: Calling LLM for unified analysis ({parts_str})...")
         llmproxy = UnifiedClass(config)
         llmproxy.course_name = course_name
         llmproxy.class_level = class_level
-        llmproxy.prepare_content(lan=language)
+        # Pass individual flags to control what gets generated
+        llmproxy.prepare_content(
+            lan=language,
+            include_basic=generate_basic,
+            include_deep=generate_deep,
+            include_story=generate_story
+        )
 
-        logger.info("  Sending unified request to LLM...")
+        logger.info(f"  Sending unified request to LLM (requesting: {parts_str})...")
         output = llmproxy.call_api()
 
         logger.info("  Parsing and saving results...")
@@ -109,11 +133,22 @@ def run_teacher_pipeline(config_path="./config.yaml"):
 
         if success:
             logger.info(f"✅ Unified analysis completed in {time.time() - step_start:.2f}s")
-            logger.info(f"   Saved: output.txt, deep.txt, story.txt")
-            # Mark all as generated
-            generate_basic = False
-            generate_deep = False
-            generate_story = False
+            saved_files = []
+            if generate_basic:
+                saved_files.append("output.txt")
+            if generate_deep:
+                saved_files.append("deep.txt")
+            if generate_story:
+                saved_files.append("story.txt")
+            logger.info(f"   Saved: {', '.join(saved_files)}")
+
+            # Mark generated parts as complete
+            if generate_basic:
+                generate_basic = False
+            if generate_deep:
+                generate_deep = False
+            if generate_story:
+                generate_story = False
         else:
             logger.error("❌ Unified analysis failed - falling back to separate mode")
             use_unified_mode = False

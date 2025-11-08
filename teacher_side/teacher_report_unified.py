@@ -25,17 +25,35 @@ class TeacherReportUnifiedBase:
     def __init__(self, config: Dict[str, Any]):
         self.course_name = config.get("course_name", "Unknown Course")
         self.class_level = config.get("class_level", "Unknown Level")
+        # Track which parts to generate
+        self.include_basic = True
+        self.include_deep = True
+        self.include_story = True
 
-    def compose_system_prompt(self, lan="English"):
-        """Compose unified system prompt combining all analyses."""
+    def compose_system_prompt(self, lan="English", include_basic=True, include_deep=True, include_story=True):
+        """Compose unified system prompt combining selected analyses."""
+        # Store which parts to include
+        self.include_basic = include_basic
+        self.include_deep = include_deep
+        self.include_story = include_story
+
+        # Build list of enabled analyses
+        enabled_analyses = []
+        if include_basic:
+            enabled_analyses.append("1. **Basic Analysis** - Class structure, examples, questions, interactions, difficult topics")
+        if include_deep:
+            enabled_analyses.append("2. **Deep Pedagogical Analysis** - Communication, engagement, pedagogical approach, content delivery")
+        if include_story:
+            enabled_analyses.append("3. **Storytelling Analysis** - Narrative structure, curiosity, emotional engagement, coherence")
+
+        analyses_text = "\n".join(enabled_analyses)
+
         system_prompt = (
             f"You are an expert teaching assistant and educational analyst. "
             f"Your task is to perform a comprehensive analysis of a university class based on its transcript.\n\n"
 
-            f"You will analyze the class across THREE major areas:\n"
-            f"1. **Basic Analysis** - Class structure, examples, questions, interactions, difficult topics\n"
-            f"2. **Deep Pedagogical Analysis** - Communication, engagement, pedagogical approach, content delivery\n"
-            f"3. **Storytelling Analysis** - Narrative structure, curiosity, emotional engagement, coherence\n\n"
+            f"You will analyze the class across the following area(s):\n"
+            f"{analyses_text}\n\n"
 
             f"Course Information:\n"
             f"- Course: {self.course_name}\n"
@@ -46,86 +64,97 @@ class TeacherReportUnifiedBase:
             f"<transcript>{self.transcript}</transcript>\n\n"
 
             f"IMPORTANT OUTPUT FORMAT:\n"
-            f"Return a JSON object with THREE main sections:\n"
+            f"Return a JSON object with the requested section(s):\n"
             f"{{\n"
-            f'  "basic": {{\n'
-            f'    "title": {{"title": "extracted title"}},\n'
-            f'    "sections": "CSV format with headers",\n'
-            f'    "examples": "CSV format with headers",\n'
-            f'    "open_questions": {{"simple": [...], "difficult": [...]}},\n'
-            f'    "interaction": "CSV format with headers",\n'
-            f'    "difficult_topics": "CSV format with headers"\n'
-            f'  }},\n'
-            f'  "deep": [\n'
-            f'    {{"module": "communication", "strengths": [...], "weaknesses": [...], "recommendations": [...], "evidence": [...]}},\n'
-            f'    {{"module": "engagement", ...}},\n'
-            f'    {{"module": "pedagogical", ...}},\n'
-            f'    {{"module": "content", ...}}\n'
-            f'  ],\n'
-            f'  "story": [\n'
-            f'    {{"module": "curiosity", "strengths": [...], "weaknesses": [...], "recommendations": [...], "evidence": [...]}},\n'
-            f'    {{"module": "coherence", ...}},\n'
-            f'    {{"module": "emotional", ...}},\n'
-            f'    {{"module": "narrative", ...}},\n'
-            f'    {{"module": "concrete2abstract", ...}},\n'
-            f'    {{"module": "characters", ...}}\n'
-            f'  ]\n'
-            f"}}\n\n"
+        )
 
+        # Add JSON structure for enabled parts only
+        sections = []
+        if include_basic:
+            sections.append(
+                '  "basic": {\n'
+                '    "title": {"title": "extracted title"},\n'
+                '    "sections": "CSV format with headers",\n'
+                '    "examples": "CSV format with headers",\n'
+                '    "open_questions": {"simple": [...], "difficult": [...]},\n'
+                '    "interaction": "CSV format with headers",\n'
+                '    "difficult_topics": "CSV format with headers"\n'
+                '  }'
+            )
+
+        if include_deep:
+            sections.append(
+                '  "deep": [\n'
+                '    {"module": "communication", "strengths": [...], "weaknesses": [...], "recommendations": [...], "evidence": [...]},\n'
+                '    {"module": "engagement", ...},\n'
+                '    {"module": "pedagogical", ...},\n'
+                '    {"module": "content", ...}\n'
+                '  ]'
+            )
+
+        if include_story:
+            sections.append(
+                '  "story": [\n'
+                '    {"module": "curiosity", "strengths": [...], "weaknesses": [...], "recommendations": [...], "evidence": [...]},\n'
+                '    {"module": "coherence", ...},\n'
+                '    {"module": "emotional", ...},\n'
+                '    {"module": "narrative", ...},\n'
+                '    {"module": "concrete2abstract", ...},\n'
+                '    {"module": "characters", ...}\n'
+                '  ]'
+            )
+
+        system_prompt += ",\n".join(sections)
+        system_prompt += (
+            f"\n}}\n\n"
             f"Return ONLY valid JSON. No markdown code fences, no extra text.\n"
             f"All output should be in: {lan}\n"
         )
 
         self.system_prompt = system_prompt
 
-    def compose_user_prompt(self, lan="English"):
-        """Compose unified user prompt with all tasks."""
+    def compose_user_prompt(self, lan="English", include_basic=True, include_deep=True, include_story=True):
+        """Compose unified user prompt with selected tasks."""
 
-        # Get basic tasks
-        basic_tasks = get_tasks(lan)
+        prompt_parts = []
+        prompt_parts.append("Perform the following analyses on the provided transcript:\n")
 
-        # Build deep analysis tasks
-        deep_tasks = "\n\n".join([
-            task(lan=lan, format='JSON')
-            for task in deep_tasks_dict.values()
-        ])
+        # Add basic tasks if enabled
+        if include_basic:
+            basic_tasks = get_tasks(lan)
+            prompt_parts.append(f"# PART 1: BASIC ANALYSIS\n{basic_tasks}\n\n---\n")
 
-        # Build storytelling tasks
-        story_tasks = "\n\n".join([
-            task(lan=lan, format='JSON')
-            for task in story_tasks_dict.values()
-        ])
+        # Add deep analysis tasks if enabled
+        if include_deep:
+            deep_tasks = "\n\n".join([
+                task(lan=lan, format='JSON')
+                for task in deep_tasks_dict.values()
+            ])
+            prompt_parts.append(f"# PART 2: DEEP PEDAGOGICAL ANALYSIS\n{deep_tasks}\n\n---\n")
 
-        self.user_prompt = (
-            f"Perform ALL of the following analyses on the provided transcript:\n\n"
+        # Add storytelling tasks if enabled
+        if include_story:
+            story_tasks = "\n\n".join([
+                task(lan=lan, format='JSON')
+                for task in story_tasks_dict.values()
+            ])
+            prompt_parts.append(f"# PART 3: STORYTELLING ANALYSIS\n{story_tasks}\n\n---\n")
 
-            f"# PART 1: BASIC ANALYSIS\n"
-            f"{basic_tasks}\n\n"
-
-            f"---\n\n"
-
-            f"# PART 2: DEEP PEDAGOGICAL ANALYSIS\n"
-            f"{deep_tasks}\n\n"
-
-            f"---\n\n"
-
-            f"# PART 3: STORYTELLING ANALYSIS\n"
-            f"{story_tasks}\n\n"
-
-            f"---\n\n"
-
-            f"FINAL INSTRUCTIONS:\n"
+        prompt_parts.append(
+            f"\nFINAL INSTRUCTIONS:\n"
             f"- Combine all results into a single JSON object as specified in the system prompt\n"
             f"- Ensure all CSV sections include column headers\n"
             f"- Use {lan} for all text output\n"
             f"- Return ONLY the JSON object, no markdown fences\n"
         )
 
-    def prepare_content(self, lan="English"):
-        """Prepare unified content for analysis."""
+        self.user_prompt = "\n".join(prompt_parts)
+
+    def prepare_content(self, lan="English", include_basic=True, include_deep=True, include_story=True):
+        """Prepare unified content for analysis with selected parts."""
         self.read_transcript()
-        self.compose_system_prompt(lan)
-        self.compose_user_prompt(lan)
+        self.compose_system_prompt(lan, include_basic, include_deep, include_story)
+        self.compose_user_prompt(lan, include_basic, include_deep, include_story)
 
 
 class TeacherReportUnified(TeacherReportUnifiedBase, AnthropicProxy):
