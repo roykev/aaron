@@ -9,6 +9,75 @@ import pandas as pd
 
 from pathlib import Path
 import re, json, csv, io, shutil, html
+from typing import Dict, Any
+
+
+def read_transcript(videos_dir: str, suffix='.txt') -> str:
+    """
+    Read transcript from videos directory.
+    
+    Args:
+        videos_dir: Path to the videos directory
+        suffix: File extension to search for (default: '.txt')
+    
+    Returns:
+        Full transcript text with speaker labels and timestamps removed
+    """
+    def find_transcript_file(videos_dir: str, suffix='.txt') -> str:
+        """
+        Find the transcript file (.txt, .vtt, or .srt) in the videos directory.
+
+        Args:
+            videos_dir: Path to the videos directory
+            suffix: File extension to search for (default: '.txt')
+
+        Returns:
+            Path to the transcript file
+        """
+        # List of supported transcript formats
+        supported_formats = ['.txt', '.vtt', '.srt']
+
+        # If a specific suffix is provided, prioritize it
+        search_order = [suffix] + [fmt for fmt in supported_formats if fmt != suffix]
+
+        for fmt in search_order:
+            for file in os.listdir(videos_dir):
+                if file.endswith(fmt):
+                    return os.path.join(videos_dir, file)
+
+        raise FileNotFoundError(f"No transcript file (.txt, .vtt, or .srt) found in {videos_dir}")
+
+    def parse_transcript_txt(transcript_path: str) -> str:
+        """
+        Read and extract the full transcript text from the file.
+
+        Args:
+            transcript_path: Path to the transcript file
+
+        Returns:
+            Full transcript text
+        """
+        with open(transcript_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        # Extract only the text content, removing speaker labels and timestamps
+        lines = content.split('\n')
+        transcript_lines = []
+
+        for line in lines:
+            line = line.strip()
+            if line and not line.startswith('[') and not line.startswith('('):
+                transcript_lines.append(line)
+
+        return ' '.join(transcript_lines)
+
+    trans_path = find_transcript_file(videos_dir, suffix)
+    if suffix == ".txt":
+        return parse_transcript_txt(trans_path)
+    else:
+        raise ValueError(f"{trans_path}, suffix not supported!")
+
+
 # ---- Color maps for font colors ----
 INTERACTION_COLORS = {
     "student question": "darkorange",

@@ -15,6 +15,7 @@ import yaml
 from teacher_side.teacher_prompts import get_tasks
 from teacher_side.teacher_report_deep import tasks_dict as deep_tasks_dict
 from teacher_side.teacher_report_storytelling import tasks_dict as story_tasks_dict
+from teacher_side.teacher_utils import read_transcript
 from utils.kimi_utils import OpenRouterProxy, AnthropicProxy
 from utils.utils import get_logger
 
@@ -23,6 +24,7 @@ class TeacherReportUnifiedBase:
     """Base class with shared logic for unified report generation."""
 
     def __init__(self, config: Dict[str, Any]):
+        self.config = config
         self.course_name = config.get("course_name", "Unknown Course")
         self.class_level = config.get("class_level", "Unknown Level")
         # Track which parts to generate
@@ -152,7 +154,7 @@ class TeacherReportUnifiedBase:
 
     def prepare_content(self, lan="English", include_basic=True, include_deep=True, include_story=True):
         """Prepare unified content for analysis with selected parts."""
-        self.read_transcript()
+        self.transcript = read_transcript(self.config["videos_dir"])
         self.compose_system_prompt(lan, include_basic, include_deep, include_story)
         self.compose_user_prompt(lan, include_basic, include_deep, include_story)
 
