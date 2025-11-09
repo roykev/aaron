@@ -11,6 +11,7 @@ import json
 from typing import Dict, Any
 
 import yaml
+import traceback
 
 from teacher_side.teacher_prompts import get_tasks
 from teacher_side.teacher_report_deep import tasks_dict as deep_tasks_dict
@@ -185,6 +186,18 @@ def parse_and_save_unified_output(output_json: str, output_dir: str, logger):
         logger: Logger instance
     """
     try:
+        # Strip markdown code fences if present
+        output_json = output_json.strip()
+        if output_json.startswith("```json"):
+            output_json = output_json[7:].lstrip()  # Remove ```json and any following whitespace
+        elif output_json.startswith("```"):
+            output_json = output_json[3:].lstrip()  # Remove ``` and any following whitespace
+        
+        if output_json.endswith("```"):
+            output_json = output_json[:-3].rstrip()  # Remove closing ``` and any preceding whitespace
+        
+        output_json = output_json.strip()
+        
         # Parse JSON
         data = json.loads(output_json)
 
@@ -251,7 +264,7 @@ def parse_and_save_unified_output(output_json: str, output_dir: str, logger):
         return True
 
     except json.JSONDecodeError as e:
-        logger.error(f"Failed to parse JSON output: {e}")
+        logger.error(f"Failed to parse JSON output: {e}\n{traceback.format_exc()}")
         # Save raw output for debugging
         raw_file = os.path.join(output_dir, "unified_output_raw.txt")
         with open(raw_file, "w", encoding="utf-8") as f:

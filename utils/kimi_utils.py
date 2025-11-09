@@ -130,7 +130,7 @@ class AnthropicProxy:
             # Make API call to Anthropic
             response = self.client.messages.create(
                 model=self.model,
-                max_tokens=12000,
+                max_tokens=15000,
                 temperature=0.1,
                 system=self.system_prompt,
                 messages=[
