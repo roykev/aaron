@@ -743,6 +743,39 @@ def generate_deep_report(dir_path):
 
 
 
+def normalize_header(header: str) -> str:
+    """
+    Normalize CSV header to a standard English key.
+    Supports both Hebrew and English headers.
+    """
+    header = header.strip().lower()
+
+    # Hebrew → English mappings
+    hebrew_to_english = {
+        'נושא': 'topic',
+        'דוגמה': 'example',
+        'דוגמא': 'example',
+        'מקור': 'reference',
+        'זמן': 'time',
+        'סוג': 'type',
+        'תיאור': 'description',
+        'סיבת הקושי': 'reason',
+        'המלצה לשיפור': 'recommendation',
+        'מספר_פרק': 'section_number',
+        'כותרת_פרק': 'title',
+        'משך': 'duration',
+        'מ': 'start',
+        'עד': 'end'
+    }
+
+    # Check if it's a Hebrew header
+    if header in hebrew_to_english:
+        return hebrew_to_english[header]
+
+    # Return English header as-is (lowercase)
+    return header
+
+
 def generate_report(dir_path):
     """Generate a beautiful, styled markdown report from output.txt"""
     INPUT_TXT = Path(os.path.join(dir_path,"output.txt"))
@@ -782,10 +815,18 @@ def generate_report(dir_path):
         md.append("")
         md.append("<div style='background: #fafafa; padding: 15px; margin: 15px 0;'>")
 
+        # Normalize headers to English for consistency
+        headers = [normalize_header(h) for h in sections_rows[0]]
+
         for row in sections_rows[1:]:
-            if len(row) >= 4:
-                num, start, end, section_title = row[0], row[1], row[2], row[3]
-                duration = row[4] if len(row) > 4 else ""
+            if len(row) >= len(headers):
+                section_dict = dict(zip(headers, row))
+                num = section_dict.get('section_number', section_dict.get('מספר_פרק', ''))
+                start = section_dict.get('start', section_dict.get('מ', ''))
+                end = section_dict.get('end', section_dict.get('עד', ''))
+                section_title = section_dict.get('title', section_dict.get('כותרת_פרק', ''))
+                duration = section_dict.get('duration', section_dict.get('משך', ''))
+
                 md.append(f"<details style='margin: 8px 0;'>")
                 md.append(f"<summary style='cursor: pointer; padding: 10px; background: white; border-left: 3px solid #9ca3af;'>")
                 md.append(f"<strong style='color: #374151;'>{num}. {section_title}</strong> <span style='color: #6b7280; font-size: 0.9em;'>({start} - {end})</span>")
@@ -809,14 +850,15 @@ def generate_report(dir_path):
         md.append("<p style='color: #6b7280; font-style: italic;'>Real examples used during instruction</p>")
         md.append("")
 
-        headers = [h.strip() for h in examples_rows[0]]
+        # Normalize headers to English
+        headers = [normalize_header(h) for h in examples_rows[0]]
 
         for i, row in enumerate(examples_rows[1:], 1):
             if len(row) >= len(headers):
                 example_dict = dict(zip(headers, row))
-                topic = example_dict.get('Topic', 'Unknown')
-                example = example_dict.get('Example', '')
-                reference = example_dict.get('Reference', example_dict.get('reference', 'class'))
+                topic = example_dict.get('topic', 'Unknown')
+                example = example_dict.get('example', '')
+                reference = example_dict.get('reference', 'class')
 
                 md.append(f"<details style='margin: 10px 0;'>")
                 md.append(f"<summary style='cursor: pointer; padding: 12px; background: #fafafa; border-left: 3px solid #9ca3af;'>")
@@ -884,14 +926,15 @@ def generate_report(dir_path):
         md.append("<p style='color: #6b7280; font-style: italic;'>Student engagement and participation moments</p>")
         md.append("")
 
-        headers = [h.strip() for h in inter_rows[0]]
+        # Normalize headers to English
+        headers = [normalize_header(h) for h in inter_rows[0]]
 
         for row in inter_rows[1:]:
             if len(row) >= len(headers):
                 inter_dict = dict(zip(headers, row))
-                time = inter_dict.get('Time', '')
-                itype = inter_dict.get('Type', 'interaction')
-                description = inter_dict.get('Description', '')
+                time = inter_dict.get('time', '')
+                itype = inter_dict.get('type', 'interaction')
+                description = inter_dict.get('description', '')
 
                 md.append(f"<div style='margin: 10px 0; padding: 12px; background: #fafafa; border-left: 3px solid #9ca3af;'>")
                 md.append(f"<p style='margin: 0; color: #374151;'><strong>{time}</strong> - <em style='color: #6b7280;'>{itype}</em></p>")
@@ -910,14 +953,15 @@ def generate_report(dir_path):
         md.append("<p style='color: #6b7280; font-style: italic;'>Areas where students needed additional support</p>")
         md.append("")
 
-        headers = [h.strip() for h in diff_rows[0]]
+        # Normalize headers to English
+        headers = [normalize_header(h) for h in diff_rows[0]]
 
         for i, row in enumerate(diff_rows[1:], 1):
             if len(row) >= len(headers):
                 diff_dict = dict(zip(headers, row))
-                topic = diff_dict.get('Topic', 'Unknown')
-                reason = diff_dict.get('Reason for difficulty', diff_dict.get('Reason', ''))
-                recommendation = diff_dict.get('Recommendation for improvement', diff_dict.get('Recommendation', ''))
+                topic = diff_dict.get('topic', 'Unknown')
+                reason = diff_dict.get('reason', '')
+                recommendation = diff_dict.get('recommendation', '')
 
                 md.append(f"<details style='margin: 10px 0;'>")
                 md.append(f"<summary style='cursor: pointer; padding: 12px; background: #fafafa; border-left: 3px solid #9ca3af;'>")
