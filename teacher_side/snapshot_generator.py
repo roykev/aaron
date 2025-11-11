@@ -31,6 +31,43 @@ class SnapshotGenerator:
         self.output_dir = os.path.dirname(output_file)
         self.transcript_duration = self._get_transcript_duration()
 
+    @staticmethod
+    def _normalize_header(header: str) -> str:
+        """
+        Normalize CSV header to a standard English key.
+        Supports both Hebrew and English headers.
+        """
+        header = header.strip().lower()
+
+        # Hebrew → English mappings
+        hebrew_to_english = {
+            'נושא': 'topic',
+            'דוגמה': 'example',
+            'דוגמא': 'example',
+            'מקור': 'reference',
+            'זמן': 'time',
+            'סוג': 'type',
+            'תיאור': 'description',
+            'סיבת הקושי': 'reason',
+            'reason for difficulty': 'reason',
+            'המלצה לשיפור': 'recommendation',
+            'recommendation for improvement': 'recommendation',
+            'מספר_פרק': 'section_number',
+            'chapter_num': 'section_number',
+            'כותרת_פרק': 'title',
+            'chapter_title': 'title',
+            'משך': 'duration',
+            'מ': 'start',
+            'עד': 'end'
+        }
+
+        # Check if it's a Hebrew header or alternative English header
+        if header in hebrew_to_english:
+            return hebrew_to_english[header]
+
+        # Return English header as-is (lowercase)
+        return header
+
     def _load_json_file(self, filepath: str) -> List[Dict]:
         """Load JSON data from file (handles both plain JSON and markdown code blocks)"""
         with open(filepath, 'r', encoding='utf-8') as f:
@@ -111,12 +148,14 @@ class SnapshotGenerator:
         return result
 
     def _parse_csv(self, csv_text: str) -> List[Dict]:
-        """Parse CSV text into list of dictionaries"""
+        """Parse CSV text into list of dictionaries with normalized headers"""
         lines = [line.strip() for line in csv_text.split('\n') if line.strip()]
         if not lines:
             return []
 
-        headers = [h.strip() for h in lines[0].split(',')]
+        # Normalize headers to English lowercase
+        raw_headers = [h.strip() for h in lines[0].split(',')]
+        headers = [self._normalize_header(h) for h in raw_headers]
         result = []
 
         for line in lines[1:]:
@@ -266,8 +305,8 @@ class SnapshotGenerator:
 
         if 'examples' in self.output_data:
             for example in self.output_data['examples'][:3]:
-                if 'Topic' in example:
-                    topics.append(example['Topic'])
+                if 'topic' in example:
+                    topics.append(example['topic'])
 
         return topics
 
@@ -277,10 +316,10 @@ class SnapshotGenerator:
 
         if 'interactions' in self.output_data:
             for interaction in self.output_data['interactions']:
-                if 'student question' in interaction.get('Type', '').lower():
+                if 'student question' in interaction.get('type', '').lower():
                     questions.append((
-                        interaction.get('Description', ''),
-                        interaction.get('Time', '')
+                        interaction.get('description', ''),
+                        interaction.get('time', '')
                     ))
 
         return questions[:2]
@@ -300,7 +339,7 @@ class SnapshotGenerator:
             duration = self.transcript_duration
         else:
             sections = self.output_data.get('sections', [])
-            duration = sections[-1].get('to', '60 דקות') if sections else '60 דקות'
+            duration = sections[-1].get('end', '60 דקות') if sections else '60 דקות'
 
         top_module, top_strength = self._get_top_strength()
 
@@ -427,7 +466,7 @@ class SnapshotGenerator:
             duration = self.transcript_duration
         else:
             sections = self.output_data.get('sections', [])
-            duration = sections[-1].get('to', '60 דקות') if sections else '60 דקות'
+            duration = sections[-1].get('end', '60 דקות') if sections else '60 דקות'
 
         sections = self.output_data.get('sections', [])
 
@@ -495,8 +534,8 @@ class SnapshotGenerator:
         md += "## 🗂️ מבנה השיעור\n\n"
         if sections:
             for section in sections:
-                num = section.get('chapter_num', '')
-                title = section.get('chapter_title', '')
+                num = section.get('section_number', '')
+                title = section.get('title', '')
                 duration = section.get('duration', '')
                 md += f"{num}. **{title}** ({duration})\n"
 
@@ -506,8 +545,8 @@ class SnapshotGenerator:
         md += "## 💡 דוגמאות מהשיעור\n\n"
         if 'examples' in self.output_data:
             for example in self.output_data['examples']:
-                topic = example.get('Topic', '')
-                ex = example.get('Example', '')
+                topic = example.get('topic', '')
+                ex = example.get('example', '')
                 ref = example.get('reference', '')
                 md += f"- **{topic}:** {ex} *({ref})*\n"
 
@@ -517,9 +556,9 @@ class SnapshotGenerator:
         md += "## 💬 אינטראקציות\n\n"
         if 'interactions' in self.output_data:
             for interaction in self.output_data['interactions']:
-                time = interaction.get('Time', '')
-                itype = interaction.get('Type', '')
-                desc = interaction.get('Description', '')
+                time = interaction.get('time', '')
+                itype = interaction.get('type', '')
+                desc = interaction.get('description', '')
                 md += f"- **{time}** [{itype}]: {desc}\n"
 
         md += "\n---\n\n"
@@ -547,9 +586,9 @@ class SnapshotGenerator:
         md += "## ⚠️ נושאים מאתגרים\n\n"
         if 'difficult_topics' in self.output_data:
             for topic_dict in self.output_data['difficult_topics']:
-                topic = topic_dict.get('Topic', '')
-                reason = topic_dict.get('Reason for difficulty', '')
-                rec = topic_dict.get('Recommendation for improvement', '')
+                topic = topic_dict.get('topic', '')
+                reason = topic_dict.get('reason', '')
+                rec = topic_dict.get('recommendation', '')
                 md += f"### {topic}\n"
                 md += f"**למה זה קשה:** {reason}\n\n"
                 md += f"**המלצה:** {rec}\n\n"
