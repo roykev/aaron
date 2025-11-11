@@ -95,21 +95,43 @@ class SnapshotGenerator:
 
         # Extract sections
         if '### sections ###' in content or '### task name ### sections' in content:
-            sections_start = content.find('chapter_num', content.find('sections'))
-            sections_end = content.find('### ', sections_start + 1)
-            if sections_end == -1:
-                sections_end = content.find('```', sections_start + 1)
-            sections_text = content[sections_start:sections_end].strip()
-            result['sections'] = self._parse_csv(sections_text)
+            # Try to find CSV data after "sections" marker - look for Hebrew or English headers
+            search_start = content.find('sections')
+            sections_start = -1
+
+            # Try multiple header patterns (Hebrew and English)
+            for pattern in ['chapter_num', 'מספר_פרק', 'מספר פרק']:
+                idx = content.find(pattern, search_start)
+                if idx != -1:
+                    sections_start = idx
+                    break
+
+            if sections_start != -1:
+                sections_end = content.find('### ', sections_start + 1)
+                if sections_end == -1:
+                    sections_end = content.find('```', sections_start + 1)
+                sections_text = content[sections_start:sections_end].strip()
+                result['sections'] = self._parse_csv(sections_text)
 
         # Extract examples
         if '### examples ###' in content or '### task name ### examples' in content:
-            examples_start = content.find('Topic,', content.find('examples'))
-            examples_end = content.find('### ', examples_start + 1)
-            if examples_end == -1:
-                examples_end = content.find('```', examples_start + 1)
-            examples_text = content[examples_start:examples_end].strip()
-            result['examples'] = self._parse_csv(examples_text)
+            # Try to find CSV data after "examples" marker - look for Hebrew or English headers
+            search_start = content.find('examples')
+            examples_start = -1
+
+            # Try multiple header patterns (Hebrew and English)
+            for pattern in ['Topic,', 'נושא,', 'נושא ,']:
+                idx = content.find(pattern, search_start)
+                if idx != -1:
+                    examples_start = idx
+                    break
+
+            if examples_start != -1:
+                examples_end = content.find('### ', examples_start + 1)
+                if examples_end == -1:
+                    examples_end = content.find('```', examples_start + 1)
+                examples_text = content[examples_start:examples_end].strip()
+                result['examples'] = self._parse_csv(examples_text)
 
         # Extract open questions
         if '### open_questions ###' in content or '### task name ### open_questions' in content:
@@ -129,21 +151,43 @@ class SnapshotGenerator:
 
         # Extract interactions
         if '### interaction ###' in content or '### task name ### interaction' in content:
-            interaction_start = content.find('Time,', content.find('interaction'))
-            interaction_end = content.find('### ', interaction_start + 1)
-            if interaction_end == -1:
-                interaction_end = content.find('```', interaction_start + 1)
-            interaction_text = content[interaction_start:interaction_end].strip()
-            result['interactions'] = self._parse_csv(interaction_text)
+            # Try to find CSV data after "interaction" marker - look for Hebrew or English headers
+            search_start = content.find('interaction')
+            interaction_start = -1
+
+            # Try multiple header patterns (Hebrew and English)
+            for pattern in ['Time,', 'זמן,', 'זמן ,']:
+                idx = content.find(pattern, search_start)
+                if idx != -1:
+                    interaction_start = idx
+                    break
+
+            if interaction_start != -1:
+                interaction_end = content.find('### ', interaction_start + 1)
+                if interaction_end == -1:
+                    interaction_end = content.find('```', interaction_start + 1)
+                interaction_text = content[interaction_start:interaction_end].strip()
+                result['interactions'] = self._parse_csv(interaction_text)
 
         # Extract difficult topics
         if '### difficult_topics ###' in content or '### task name ### difficult_topics' in content:
-            topics_start = content.find('Topic,', content.find('difficult_topics'))
-            topics_end = len(content)
-            topics_text = content[topics_start:topics_end].strip()
-            if '```' in topics_text:
-                topics_text = topics_text[:topics_text.find('```')]
-            result['difficult_topics'] = self._parse_csv(topics_text)
+            # Try to find CSV data after "difficult_topics" marker - look for Hebrew or English headers
+            search_start = content.find('difficult_topics')
+            topics_start = -1
+
+            # Try multiple header patterns (Hebrew and English)
+            for pattern in ['Topic,', 'נושא,', 'נושא ,']:
+                idx = content.find(pattern, search_start)
+                if idx != -1:
+                    topics_start = idx
+                    break
+
+            if topics_start != -1:
+                topics_end = len(content)
+                topics_text = content[topics_start:topics_end].strip()
+                if '```' in topics_text:
+                    topics_text = topics_text[:topics_text.find('```')]
+                result['difficult_topics'] = self._parse_csv(topics_text)
 
         return result
 
