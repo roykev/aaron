@@ -41,31 +41,45 @@ class SnapshotGenerator:
 
         # Hebrew → English mappings
         hebrew_to_english = {
+            # Topics and examples
             'נושא': 'topic',
             'דוגמה': 'example',
             'דוגמא': 'example',
             'מקור': 'reference',
+
+            # Interactions
             'זמן': 'time',
             'סוג': 'type',
             'תיאור': 'description',
+
+            # Difficult topics
             'סיבת הקושי': 'reason',
             'reason for difficulty': 'reason',
             'המלצה לשיפור': 'recommendation',
             'recommendation for improvement': 'recommendation',
+
+            # Sections - Hebrew
             'מספר_פרק': 'section_number',
-            'chapter_num': 'section_number',
+            'מספר פרק': 'section_number',
             'כותרת_פרק': 'title',
-            'chapter_title': 'title',
+            'כותרת פרק': 'title',
             'משך': 'duration',
             'מ': 'start',
-            'עד': 'end'
+            'עד': 'end',
+
+            # Sections - English variations
+            'section_num': 'section_number',
+            'chapter_num': 'section_number',
+            'chapter_title': 'title',
+            'from': 'start',
+            'to': 'end',
         }
 
-        # Check if it's a Hebrew header or alternative English header
+        # Check if it's a mapped header
         if header in hebrew_to_english:
             return hebrew_to_english[header]
 
-        # Return English header as-is (lowercase)
+        # Return as-is (lowercase)
         return header
 
     def _load_json_file(self, filepath: str) -> List[Dict]:
@@ -100,7 +114,7 @@ class SnapshotGenerator:
             sections_start = -1
 
             # Try multiple header patterns (Hebrew and English)
-            for pattern in ['chapter_num', 'מספר_פרק', 'מספר פרק']:
+            for pattern in ['section_num', 'chapter_num', 'מספר_פרק', 'מספר פרק']:
                 idx = content.find(pattern, search_start)
                 if idx != -1:
                     sections_start = idx

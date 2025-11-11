@@ -822,27 +822,45 @@ def normalize_header(header: str) -> str:
 
     # Hebrew → English mappings
     hebrew_to_english = {
+        # Topics and examples
         'נושא': 'topic',
         'דוגמה': 'example',
         'דוגמא': 'example',
         'מקור': 'reference',
+
+        # Interactions
         'זמן': 'time',
         'סוג': 'type',
         'תיאור': 'description',
+
+        # Difficult topics
         'סיבת הקושי': 'reason',
+        'reason for difficulty': 'reason',
         'המלצה לשיפור': 'recommendation',
+        'recommendation for improvement': 'recommendation',
+
+        # Sections - Hebrew
         'מספר_פרק': 'section_number',
+        'מספר פרק': 'section_number',
         'כותרת_פרק': 'title',
+        'כותרת פרק': 'title',
         'משך': 'duration',
         'מ': 'start',
-        'עד': 'end'
+        'עד': 'end',
+
+        # Sections - English variations
+        'section_num': 'section_number',
+        'chapter_num': 'section_number',
+        'chapter_title': 'title',
+        'from': 'start',
+        'to': 'end',
     }
 
-    # Check if it's a Hebrew header
+    # Check if it's a mapped header
     if header in hebrew_to_english:
         return hebrew_to_english[header]
 
-    # Return English header as-is (lowercase)
+    # Return as-is (lowercase)
     return header
 
 
@@ -903,11 +921,11 @@ def generate_report(dir_path):
         for row in sections_rows[1:]:
             if len(row) >= len(headers):
                 section_dict = dict(zip(headers, row))
-                num = section_dict.get('section_number', section_dict.get('מספר_פרק', ''))
-                start = section_dict.get('start', section_dict.get('מ', ''))
-                end = section_dict.get('end', section_dict.get('עד', ''))
-                section_title = section_dict.get('title', section_dict.get('כותרת_פרק', ''))
-                duration = section_dict.get('duration', section_dict.get('משך', ''))
+                num = section_dict.get('section_number', '')
+                start = section_dict.get('start', '')
+                end = section_dict.get('end', '')
+                section_title = section_dict.get('title', '')
+                duration = section_dict.get('duration', '')
 
                 md.append("<tr style='border-bottom: 1px solid #e5e7eb;'>")
                 md.append(f"<td style='padding: 12px;'><strong>{num}</strong></td>")
