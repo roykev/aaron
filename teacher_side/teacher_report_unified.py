@@ -14,6 +14,7 @@ import yaml
 import traceback
 
 from teacher_side.teacher_prompts import get_tasks
+from teacher_side.teacher_report import TeacherReport
 from teacher_side.teacher_report_deep import tasks_dict as deep_tasks_dict
 from teacher_side.teacher_report_storytelling import tasks_dict as story_tasks_dict
 from teacher_side.teacher_utils import read_transcript
@@ -21,7 +22,7 @@ from utils.kimi_utils import OpenRouterProxy, AnthropicProxy
 from utils.utils import get_logger
 
 
-class TeacherReportUnifiedBase:
+class TeacherReportUnifiedBase(TeacherReport):
     """Base class with shared logic for unified report generation."""
 
     def __init__(self, config: Dict[str, Any]):
