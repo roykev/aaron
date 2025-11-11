@@ -236,6 +236,28 @@ def generate_smart_insights(output_dir: str, config: dict):
     """
     logger = get_logger(__name__, config)
 
+    # Validate Anthropic settings
+    llm_config = config.get("llm", {})
+    disable_anthropic = llm_config.get("disable_anthropic", False)
+    use_openrouter = llm_config.get("use_openrouter", False)
+    model_name = llm_config.get("model", "")
+
+    if disable_anthropic:
+        if not use_openrouter:
+            raise ValueError(
+                "disable_anthropic=true but use_openrouter=false. "
+                "Cannot use Anthropic backend when Anthropic is disabled. "
+                "Set use_openrouter: true in config.yaml"
+            )
+
+        model_lower = model_name.lower()
+        if "anthropic" in model_lower or "claude" in model_lower:
+            raise ValueError(
+                f"disable_anthropic=true but model contains Anthropic/Claude: {model_name}. "
+                f"Please use a non-Anthropic model like moonshotai/kimi-k2:free, "
+                f"google/gemini-2.0-flash-exp:free, or deepseek/deepseek-chat-v3.1:free"
+            )
+
     # Check for required files
     deep_txt_path = os.path.join(output_dir, "deep.txt")
     story_txt_path = os.path.join(output_dir, "story.txt")
