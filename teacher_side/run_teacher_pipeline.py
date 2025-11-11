@@ -22,8 +22,7 @@ from teacher_side.teacher_report_storytelling import TeacherReportStoryTelling, 
 from teacher_side.snapshot_generator import SnapshotGenerator
 from teacher_side.teacher_report_smart_insights import TeacherReportSmartInsights, TeacherReportSmartInsightsOR
 from teacher_side.teacher_report_unified import TeacherReportUnified, TeacherReportUnifiedOR, parse_and_save_unified_output
-from teacher_side.teacher_utils import get_output_dir, generate_report, generate_story_report, generate_deep_report
-from teacher_side.generate_smart_insights import generate_smart_insights_markdown
+from teacher_side.teacher_utils import get_output_dir, generate_report, generate_story_report, generate_deep_report, generate_extended_insights
 from utils.utils import get_logger
 
 
@@ -264,42 +263,20 @@ def run_teacher_pipeline(config_path="./config.yaml"):
             logger.info("  Generating story.md from story.txt...")
             generate_story_report(output_dir)
 
-        # Generate smart insights markdown if JSON exists
-        if os.path.exists(insights_json_path):
-            logger.info("  Generating smart_insights.md from smart_insights.json...")
-            with open(insights_json_path, "r", encoding="utf-8") as f:
-                insights_json = f.read()
-            insights_md_path = os.path.join(output_dir, "smart_insights.md")
-            generate_smart_insights_markdown(insights_json, insights_md_path)
-            logger.info(f"  ✅ Smart insights markdown saved to: {insights_md_path}")
-
-        # Generate smart snapshot report if we have deep.txt and story.txt
+        # Generate teaching_snapshot.md (minimalist) if we have deep.txt and story.txt
         if os.path.exists(deep_txt_path) and os.path.exists(story_txt_path) and os.path.exists(output_txt_path):
-            logger.info("  Generating smart snapshot report with most important insights...")
-
-            # Create snapshot generator
+            logger.info("  Generating teaching_snapshot.md (quick overview)...")
             generator = SnapshotGenerator(story_txt_path, deep_txt_path, output_txt_path)
-
-            # Generate minimalist snapshot (smart report with key insights)
             minimalist_markdown = generator.generate_minimalist_markdown()
             minimalist_path = Path(os.path.join(output_dir, 'teaching_snapshot.md'))
             minimalist_path.write_text(minimalist_markdown, encoding='utf-8')
-            logger.info(f"  ✅ Smart snapshot saved to: {minimalist_path}")
+            logger.info(f"  ✅ Teaching snapshot saved to: {minimalist_path}")
 
-            # Generate expanded snapshot (detailed report)
-            expanded_markdown = generator.generate_expanded_markdown()
-            expanded_path = Path(os.path.join(output_dir, 'teaching_snapshot_expanded.md'))
-            expanded_path.write_text(expanded_markdown, encoding='utf-8')
-            logger.info(f"  ✅ Expanded snapshot saved to: {expanded_path}")
-        else:
-            missing = []
-            if not os.path.exists(output_txt_path):
-                missing.append("output.txt")
-            if not os.path.exists(deep_txt_path):
-                missing.append("deep.txt")
-            if not os.path.exists(story_txt_path):
-                missing.append("story.txt")
-            logger.warning(f"  ⚠️  Cannot generate smart snapshot - missing files: {', '.join(missing)}")
+        # Generate extended_insights.md (comprehensive) if we have the required files
+        if os.path.exists(deep_txt_path) or os.path.exists(story_txt_path):
+            logger.info("  Generating extended_insights.md (comprehensive analysis)...")
+            generate_extended_insights(output_dir)
+            logger.info(f"  ✅ Extended insights saved to: {os.path.join(output_dir, 'extended_insights.md')}")
 
         logger.info(f"✅ Markdown generation completed ({time.time() - step_start:.2f}s)")
     else:

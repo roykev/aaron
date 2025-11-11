@@ -8,6 +8,7 @@ import matplotlib
 import pandas as pd
 
 from pathlib import Path
+from datetime import datetime
 import re, json, csv, io, shutil, html
 # ---- Color maps for font colors ----
 INTERACTION_COLORS = {
@@ -982,7 +983,316 @@ def generate_report(dir_path):
     print(f"✅ Beautiful markdown report saved to: {OUTPUT_MD}")
 
 
+def generate_extended_insights(dir_path):
+    """
+    Generate extended_insights.md - A comprehensive visual report combining:
+    - Deep analysis (deep.txt)
+    - Storytelling analysis (story.txt)
+    - Smart insights (smart_insights.json if available)
 
+    This replaces teaching_snapshot_expanded.md with a more thorough, visual approach.
+    """
+    deep_path = Path(os.path.join(dir_path, "deep.txt"))
+    story_path = Path(os.path.join(dir_path, "story.txt"))
+    smart_path = Path(os.path.join(dir_path, "smart_insights.json"))
+    output_path = Path(os.path.join(dir_path, "output.txt"))
+
+    # Load data
+    deep_data = None
+    story_data = None
+    smart_data = None
+    title = "Class Analysis"
+
+    if deep_path.exists():
+        deep_data = parse_json_from_file(deep_path)
+
+    if story_path.exists():
+        story_data = parse_json_from_file(story_path)
+
+    if smart_path.exists():
+        try:
+            smart_data = json.loads(smart_path.read_text(encoding='utf-8'))
+        except:
+            pass
+
+    # Try to get title from output.txt
+    if output_path.exists():
+        try:
+            text = output_path.read_text(encoding="utf-8")
+            blocks = read_blocks(text)
+            title_block = blocks.get("title", blocks.get("task_title", ""))
+            title_block = strip_markdown_json_fence(title_block)
+            if title_block.startswith('{'):
+                title_json = json.loads(title_block)
+                title = title_json.get("title", "Class Analysis")
+            else:
+                title = title_block.strip() or "Class Analysis"
+        except:
+            pass
+
+    # Start building markdown
+    md = []
+
+    # Header with gradient
+    md.append("# 📊 Extended Teaching Insights")
+    md.append("")
+    md.append(f"<div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 25px; border-radius: 12px; color: white; margin: 20px 0;'>")
+    md.append(f"<h2 style='margin: 0; color: white;'>{title}</h2>")
+    md.append(f"<p style='margin: 10px 0 0 0; color: #f0f0f0;'>Comprehensive analysis combining storytelling, pedagogy, and AI-powered insights</p>")
+    md.append("</div>")
+    md.append("")
+    md.append("---")
+    md.append("")
+
+    # Smart Insights Section (if available)
+    if smart_data:
+        md.append("## 🎯 Key Insights & Recommendations")
+        md.append("")
+        md.append("<p style='color: #6b7280; font-style: italic;'>AI-powered analysis highlighting the most important findings</p>")
+        md.append("")
+
+        # Celebrated Strengths
+        strengths = smart_data.get("celebrated_strengths", smart_data.get("strengths", []))
+        if strengths:
+            md.append("<div style='background: #f0fdf4; border-left: 4px solid #22c55e; padding: 20px; margin: 15px 0;'>")
+            md.append("<h3 style='margin: 0 0 15px 0; color: #166534;'>✨ Celebrated Strengths</h3>")
+            for i, strength in enumerate(strengths, 1):
+                dimension = strength.get("dimension", "Unknown")
+                summary = strength.get("summary", "")
+                evidence = strength.get("evidence", [])
+                impact = strength.get("impact", "")
+
+                md.append(f"<details style='margin: 10px 0;'>")
+                md.append(f"<summary style='cursor: pointer; padding: 12px; background: white; border-radius: 8px; border-left: 3px solid #22c55e;'>")
+                md.append(f"<strong style='color: #166534;'>{i}. {dimension}:</strong> <span style='color: #6b7280;'>{summary}</span>")
+                md.append("</summary>")
+                md.append(f"<div style='padding: 15px; margin-top: 10px;'>")
+
+                if evidence:
+                    md.append("<p><strong>Evidence:</strong></p>")
+                    md.append("<ul>")
+                    for e in evidence:
+                        md.append(f"<li>{e}</li>")
+                    md.append("</ul>")
+
+                if impact:
+                    md.append(f"<p><strong>Impact:</strong> {impact}</p>")
+
+                md.append("</div>")
+                md.append("</details>")
+
+            md.append("</div>")
+            md.append("")
+
+        # Growth Opportunities
+        growth = smart_data.get("growth_opportunities", smart_data.get("improve", []))
+        if growth:
+            md.append("<div style='background: #fffbeb; border-left: 4px solid #f59e0b; padding: 20px; margin: 15px 0;'>")
+            md.append("<h3 style='margin: 0 0 15px 0; color: #92400e;'>🌱 Growth Opportunities</h3>")
+            for i, opp in enumerate(growth, 1):
+                dimension = opp.get("dimension", "Unknown")
+                summary = opp.get("summary", "")
+                recommendation = opp.get("recommendation", "")
+                expected_impact = opp.get("expected_impact", opp.get("expected_outcome", ""))
+
+                md.append(f"<details style='margin: 10px 0;'>")
+                md.append(f"<summary style='cursor: pointer; padding: 12px; background: white; border-radius: 8px; border-left: 3px solid #f59e0b;'>")
+                md.append(f"<strong style='color: #92400e;'>{i}. {dimension}:</strong> <span style='color: #6b7280;'>{summary}</span>")
+                md.append("</summary>")
+                md.append(f"<div style='padding: 15px; margin-top: 10px;'>")
+
+                if recommendation:
+                    md.append(f"<p><strong>Recommendation:</strong> {recommendation}</p>")
+
+                if expected_impact:
+                    md.append(f"<p><strong>Expected Impact:</strong> {expected_impact}</p>")
+
+                md.append("</div>")
+                md.append("</details>")
+
+            md.append("</div>")
+            md.append("")
+
+        md.append("---")
+        md.append("")
+
+    # Storytelling Analysis Section
+    if story_data:
+        md.append("## 📖 Storytelling Dimensions")
+        md.append("")
+        md.append("<p style='color: #6b7280; font-style: italic;'>How well the lesson engages students through narrative and emotional connection</p>")
+        md.append("")
+
+        emoji_map = {
+            "curiosity": "🔍",
+            "coherence": "🔗",
+            "emotional": "❤️",
+            "narrative": "📖",
+            "concrete2abstract": "🎯",
+            "characters": "👥"
+        }
+
+        for module_data in story_data:
+            if not isinstance(module_data, dict):
+                continue
+
+            module_name = module_data.get("module", "Unknown")
+            emoji = emoji_map.get(module_name.lower(), "📌")
+
+            strengths = module_data.get("strengths", [])
+            weaknesses = module_data.get("weaknesses", [])
+            recommendations = module_data.get("recommendations", [])
+            evidence = module_data.get("evidence", [])
+
+            # Create summary from first strength/weakness
+            summary = strengths[0] if strengths else (weaknesses[0] if weaknesses else "No data")
+            summary = summary[:80] + "..." if len(summary) > 80 else summary
+
+            md.append(f"<details style='margin: 15px 0;'>")
+            md.append(f"<summary style='cursor: pointer; padding: 15px; background: #fafafa; border-left: 4px solid #667eea; border-radius: 6px;'>")
+            md.append(f"<strong style='color: #374151; font-size: 1.1em;'>{emoji} {module_name.title()}</strong>")
+            md.append(f"<br><span style='color: #6b7280; font-size: 0.9em;'>{summary}</span>")
+            md.append("</summary>")
+            md.append(f"<div style='padding: 20px; background: #f9fafb; margin-top: 10px; border-radius: 6px;'>")
+
+            # Strengths
+            if strengths:
+                md.append("<div style='margin-bottom: 15px;'>")
+                md.append("<h4 style='color: #22c55e; margin: 0 0 10px 0;'>✅ Strengths</h4>")
+                md.append("<ul style='margin: 5px 0; padding-left: 20px;'>")
+                for s in strengths:
+                    md.append(f"<li style='margin: 5px 0;'>{s}</li>")
+                md.append("</ul>")
+                md.append("</div>")
+
+            # Weaknesses
+            if weaknesses:
+                md.append("<div style='margin-bottom: 15px;'>")
+                md.append("<h4 style='color: #f59e0b; margin: 0 0 10px 0;'>⚠️ Areas for Improvement</h4>")
+                md.append("<ul style='margin: 5px 0; padding-left: 20px;'>")
+                for w in weaknesses:
+                    md.append(f"<li style='margin: 5px 0;'>{w}</li>")
+                md.append("</ul>")
+                md.append("</div>")
+
+            # Recommendations
+            if recommendations:
+                md.append("<div style='margin-bottom: 15px;'>")
+                md.append("<h4 style='color: #3b82f6; margin: 0 0 10px 0;'>💡 Recommendations</h4>")
+                md.append("<ul style='margin: 5px 0; padding-left: 20px;'>")
+                for r in recommendations:
+                    md.append(f"<li style='margin: 5px 0;'>{r}</li>")
+                md.append("</ul>")
+                md.append("</div>")
+
+            # Evidence
+            if evidence:
+                md.append("<div>")
+                md.append("<h4 style='color: #6b7280; margin: 0 0 10px 0;'>📝 Evidence</h4>")
+                md.append("<ul style='margin: 5px 0; padding-left: 20px;'>")
+                for e in evidence:
+                    md.append(f"<li style='margin: 5px 0; color: #6b7280;'>{e}</li>")
+                md.append("</ul>")
+                md.append("</div>")
+
+            md.append("</div>")
+            md.append("</details>")
+
+        md.append("")
+        md.append("---")
+        md.append("")
+
+    # Deep Learning Analysis Section
+    if deep_data:
+        md.append("## 🎓 Pedagogical Dimensions")
+        md.append("")
+        md.append("<p style='color: #6b7280; font-style: italic;'>In-depth analysis of teaching effectiveness and learning support</p>")
+        md.append("")
+
+        emoji_map = {
+            "communication": "💬",
+            "content": "📚",
+            "pedagogical": "🎓",
+            "engagement": "⚡"
+        }
+
+        for module_data in deep_data:
+            if not isinstance(module_data, dict):
+                continue
+
+            module_name = module_data.get("module", "Unknown")
+            emoji = emoji_map.get(module_name.lower(), "📌")
+
+            strengths = module_data.get("strengths", [])
+            weaknesses = module_data.get("weaknesses", [])
+            recommendations = module_data.get("recommendations", [])
+            evidence = module_data.get("evidence", [])
+
+            # Create summary from first strength/weakness
+            summary = strengths[0] if strengths else (weaknesses[0] if weaknesses else "No data")
+            summary = summary[:80] + "..." if len(summary) > 80 else summary
+
+            md.append(f"<details style='margin: 15px 0;'>")
+            md.append(f"<summary style='cursor: pointer; padding: 15px; background: #fafafa; border-left: 4px solid #764ba2; border-radius: 6px;'>")
+            md.append(f"<strong style='color: #374151; font-size: 1.1em;'>{emoji} {module_name.title()}</strong>")
+            md.append(f"<br><span style='color: #6b7280; font-size: 0.9em;'>{summary}</span>")
+            md.append("</summary>")
+            md.append(f"<div style='padding: 20px; background: #f9fafb; margin-top: 10px; border-radius: 6px;'>")
+
+            # Strengths
+            if strengths:
+                md.append("<div style='margin-bottom: 15px;'>")
+                md.append("<h4 style='color: #22c55e; margin: 0 0 10px 0;'>✅ Strengths</h4>")
+                md.append("<ul style='margin: 5px 0; padding-left: 20px;'>")
+                for s in strengths:
+                    md.append(f"<li style='margin: 5px 0;'>{s}</li>")
+                md.append("</ul>")
+                md.append("</div>")
+
+            # Weaknesses
+            if weaknesses:
+                md.append("<div style='margin-bottom: 15px;'>")
+                md.append("<h4 style='color: #f59e0b; margin: 0 0 10px 0;'>⚠️ Areas for Improvement</h4>")
+                md.append("<ul style='margin: 5px 0; padding-left: 20px;'>")
+                for w in weaknesses:
+                    md.append(f"<li style='margin: 5px 0;'>{w}</li>")
+                md.append("</ul>")
+                md.append("</div>")
+
+            # Recommendations
+            if recommendations:
+                md.append("<div style='margin-bottom: 15px;'>")
+                md.append("<h4 style='color: #3b82f6; margin: 0 0 10px 0;'>💡 Recommendations</h4>")
+                md.append("<ul style='margin: 5px 0; padding-left: 20px;'>")
+                for r in recommendations:
+                    md.append(f"<li style='margin: 5px 0;'>{r}</li>")
+                md.append("</ul>")
+                md.append("</div>")
+
+            # Evidence
+            if evidence:
+                md.append("<div>")
+                md.append("<h4 style='color: #6b7280; margin: 0 0 10px 0;'>📝 Evidence</h4>")
+                md.append("<ul style='margin: 5px 0; padding-left: 20px;'>")
+                for e in evidence:
+                    md.append(f"<li style='margin: 5px 0; color: #6b7280;'>{e}</li>")
+                md.append("</ul>")
+                md.append("</div>")
+
+            md.append("</div>")
+            md.append("</details>")
+
+        md.append("")
+
+    # Footer
+    md.append("---")
+    md.append("")
+    md.append(f"*Generated by AaronOwl Teaching Excellence Analyzer | {datetime.now().strftime('%Y-%m-%d %H:%M')}*")
+
+    # Write to file
+    output_md_path = Path(os.path.join(dir_path, "extended_insights.md"))
+    output_md_path.write_text("\n".join(md) + "\n", encoding="utf-8")
+    print(f"✅ Extended insights report saved to: {output_md_path}")
 
 
 if __name__ == "__main__":
