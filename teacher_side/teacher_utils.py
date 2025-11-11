@@ -809,15 +809,27 @@ def generate_report(dir_path):
     md.append("</div>")
     md.append("")
 
-    # Sections - subtle styling
+    # Sections - table layout
     sections_rows = parse_csv_block(blocks.get("sections", ""))
     if sections_rows and len(sections_rows) > 1:
         md.append("## Class Structure")
         md.append("")
-        md.append("<div style='background: #fafafa; padding: 15px; margin: 15px 0;'>")
 
         # Normalize headers to English for consistency
         headers = [normalize_header(h) for h in sections_rows[0]]
+
+        # Create table
+        md.append("<table style='width: 100%; border-collapse: collapse;'>")
+        md.append("<thead>")
+        md.append("<tr style='background: #f3f4f6;'>")
+        md.append("<th style='padding: 12px; text-align: left; border-bottom: 2px solid #e5e7eb;'>#</th>")
+        md.append("<th style='padding: 12px; text-align: left; border-bottom: 2px solid #e5e7eb;'>Section</th>")
+        md.append("<th style='padding: 12px; text-align: left; border-bottom: 2px solid #e5e7eb;'>Start</th>")
+        md.append("<th style='padding: 12px; text-align: left; border-bottom: 2px solid #e5e7eb;'>End</th>")
+        md.append("<th style='padding: 12px; text-align: left; border-bottom: 2px solid #e5e7eb;'>Duration</th>")
+        md.append("</tr>")
+        md.append("</thead>")
+        md.append("<tbody>")
 
         for row in sections_rows[1:]:
             if len(row) >= len(headers):
@@ -828,22 +840,21 @@ def generate_report(dir_path):
                 section_title = section_dict.get('title', section_dict.get('כותרת_פרק', ''))
                 duration = section_dict.get('duration', section_dict.get('משך', ''))
 
-                md.append(f"<details style='margin: 8px 0;'>")
-                md.append(f"<summary style='cursor: pointer; padding: 10px; background: white; border-left: 3px solid #9ca3af;'>")
-                md.append(f"<strong style='color: #374151;'>{num}. {section_title}</strong> <span style='color: #6b7280; font-size: 0.9em;'>({start} - {end})</span>")
-                md.append("</summary>")
-                md.append(f"<div style='padding: 10px; margin-top: 5px; background: #f9fafb;'>")
-                md.append(f"<p><strong>Duration:</strong> {duration}</p>")
-                md.append(f"<p><strong>Time Range:</strong> {start} to {end}</p>")
-                md.append("</div>")
-                md.append("</details>")
+                md.append("<tr style='border-bottom: 1px solid #e5e7eb;'>")
+                md.append(f"<td style='padding: 12px;'><strong>{num}</strong></td>")
+                md.append(f"<td style='padding: 12px;'>{section_title}</td>")
+                md.append(f"<td style='padding: 12px;'>{start}</td>")
+                md.append(f"<td style='padding: 12px;'>{end}</td>")
+                md.append(f"<td style='padding: 12px;'>{duration}</td>")
+                md.append("</tr>")
 
-        md.append("</div>")
+        md.append("</tbody>")
+        md.append("</table>")
         md.append("")
         md.append("---")
         md.append("")
 
-    # Examples with subtle styling
+    # Examples - table layout
     examples_rows = parse_csv_block(blocks.get("examples", ""))
     if examples_rows and len(examples_rows) > 1:
         md.append("## Examples from Class")
@@ -854,22 +865,35 @@ def generate_report(dir_path):
         # Normalize headers to English
         headers = [normalize_header(h) for h in examples_rows[0]]
 
-        for i, row in enumerate(examples_rows[1:], 1):
+        # Create table
+        md.append("<table style='width: 100%; border-collapse: collapse;'>")
+        md.append("<thead>")
+        md.append("<tr style='background: #f3f4f6;'>")
+        md.append("<th style='padding: 12px; text-align: left; border-bottom: 2px solid #e5e7eb; width: 20%;'>Topic</th>")
+        md.append("<th style='padding: 12px; text-align: left; border-bottom: 2px solid #e5e7eb; width: 65%;'>Example</th>")
+        md.append("<th style='padding: 12px; text-align: left; border-bottom: 2px solid #e5e7eb; width: 15%;'>Reference</th>")
+        md.append("</tr>")
+        md.append("</thead>")
+        md.append("<tbody>")
+
+        for row in examples_rows[1:]:
             if len(row) >= len(headers):
                 example_dict = dict(zip(headers, row))
                 topic = example_dict.get('topic', 'Unknown')
                 example = example_dict.get('example', '')
                 reference = example_dict.get('reference', 'class')
 
-                md.append(f"<details style='margin: 10px 0;'>")
-                md.append(f"<summary style='cursor: pointer; padding: 12px; background: #fafafa; border-left: 3px solid #9ca3af;'>")
-                md.append(f"<strong style='color: #374151;'>{i}. {topic}</strong> <span style='font-size: 0.85em; color: #6b7280;'>({reference})</span>")
-                md.append("</summary>")
-                md.append(f"<div style='padding: 15px; background: #f9fafb; margin-top: 5px;'>")
-                md.append(f"<p>{example}</p>")
-                md.append("</div>")
-                md.append("</details>")
+                # Color-code reference
+                ref_color = '#9333ea' if 'external' in reference.lower() else '#22c55e'
 
+                md.append("<tr style='border-bottom: 1px solid #e5e7eb;'>")
+                md.append(f"<td style='padding: 12px; vertical-align: top;'><strong>{topic}</strong></td>")
+                md.append(f"<td style='padding: 12px; vertical-align: top;'>{example}</td>")
+                md.append(f"<td style='padding: 12px; vertical-align: top; color: {ref_color};'><strong>{reference}</strong></td>")
+                md.append("</tr>")
+
+        md.append("</tbody>")
+        md.append("</table>")
         md.append("")
         md.append("---")
         md.append("")
@@ -919,7 +943,7 @@ def generate_report(dir_path):
         md.append("---")
         md.append("")
 
-    # Interactions with subtle styling
+    # Interactions - table layout
     inter_rows = parse_csv_block(blocks.get("interaction", ""))
     if inter_rows and len(inter_rows) > 1:
         md.append("## Class Interactions")
@@ -930,6 +954,17 @@ def generate_report(dir_path):
         # Normalize headers to English
         headers = [normalize_header(h) for h in inter_rows[0]]
 
+        # Create table
+        md.append("<table style='width: 100%; border-collapse: collapse;'>")
+        md.append("<thead>")
+        md.append("<tr style='background: #f3f4f6;'>")
+        md.append("<th style='padding: 12px; text-align: left; border-bottom: 2px solid #e5e7eb; width: 12%;'>Time</th>")
+        md.append("<th style='padding: 12px; text-align: left; border-bottom: 2px solid #e5e7eb; width: 20%;'>Type</th>")
+        md.append("<th style='padding: 12px; text-align: left; border-bottom: 2px solid #e5e7eb; width: 68%;'>Description</th>")
+        md.append("</tr>")
+        md.append("</thead>")
+        md.append("<tbody>")
+
         for row in inter_rows[1:]:
             if len(row) >= len(headers):
                 inter_dict = dict(zip(headers, row))
@@ -937,11 +972,22 @@ def generate_report(dir_path):
                 itype = inter_dict.get('type', 'interaction')
                 description = inter_dict.get('description', '')
 
-                md.append(f"<div style='margin: 10px 0; padding: 12px; background: #fafafa; border-left: 3px solid #9ca3af;'>")
-                md.append(f"<p style='margin: 0; color: #374151;'><strong>{time}</strong> - <em style='color: #6b7280;'>{itype}</em></p>")
-                md.append(f"<p style='margin: 8px 0 0 0;'>{description}</p>")
-                md.append("</div>")
+                # Color-code interaction type
+                if 'question' in itype.lower():
+                    type_color = '#ea580c'  # Orange for questions
+                elif 'discussion' in itype.lower():
+                    type_color = '#2563eb'  # Blue for discussions
+                else:
+                    type_color = '#374151'  # Gray for other
 
+                md.append("<tr style='border-bottom: 1px solid #e5e7eb;'>")
+                md.append(f"<td style='padding: 12px; vertical-align: top;'><strong>{time}</strong></td>")
+                md.append(f"<td style='padding: 12px; vertical-align: top; color: {type_color};'><em>{itype}</em></td>")
+                md.append(f"<td style='padding: 12px; vertical-align: top;'>{description}</td>")
+                md.append("</tr>")
+
+        md.append("</tbody>")
+        md.append("</table>")
         md.append("")
         md.append("---")
         md.append("")
