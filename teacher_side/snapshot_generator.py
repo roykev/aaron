@@ -414,26 +414,6 @@ class SnapshotGenerator:
             md += "</div>\n</details>\n\n"
 
         md += "---\n\n"
-
-        # Side panel info
-        md += "## Key Topics\n\n"
-        hot_topics = self._get_hot_topics()
-        for i, topic in enumerate(hot_topics, 1):
-            md += f"{i}. {topic}\n"
-
-        md += "\n## Leading Questions\n\n"
-        questions = self._get_top_questions()
-        for question, time in questions:
-            md += f"- **{time}:** {question}\n"
-
-        md += "\n## Challenging Topics\n\n"
-        if 'difficult_topics' in self.output_data:
-            for topic_dict in self.output_data['difficult_topics'][:3]:
-                topic = topic_dict.get('Topic', '')
-                reason = topic_dict.get('Reason for difficulty', '')
-                md += f"- **{topic}:** {reason}\n"
-
-        md += "\n---\n\n"
         md += f"*נוצר על ידי AaronOwl Teaching Excellence Analyzer | {datetime.now().strftime('%Y-%m-%d %H:%M')}*\n"
 
         return md
