@@ -18,7 +18,7 @@ from teacher_side.teacher_report import TeacherReport
 from teacher_side.teacher_report_deep import tasks_dict as deep_tasks_dict
 from teacher_side.teacher_report_storytelling import tasks_dict as story_tasks_dict
 from teacher_side.teacher_utils import read_transcript
-from utils.kimi_utils import OpenRouterProxy, AnthropicProxy
+from utils.kimi_utils import OpenRouterProxy
 from utils.utils import get_logger
 
 
@@ -161,11 +161,11 @@ class TeacherReportUnifiedBase(TeacherReport):
         self.compose_user_prompt(lan, include_basic, include_deep, include_story)
 
 
-class TeacherReportUnified(TeacherReportUnifiedBase, AnthropicProxy):
-    """Unified teacher report using Anthropic Claude (default)."""
+class TeacherReportUnified(TeacherReportUnifiedBase, OpenRouterProxy):
+    """Unified teacher report using OpenRouter (default)."""
 
-    def __init__(self, config: Dict[str, Any], api_key: str = None):
-        AnthropicProxy.__init__(self, config, api_key)
+    def __init__(self, config: Dict[str, Any], api_key: str = None, base_url: str = "https://openrouter.ai/api/v1"):
+        OpenRouterProxy.__init__(self, config, api_key, base_url)
         TeacherReportUnifiedBase.__init__(self, config)
 
 

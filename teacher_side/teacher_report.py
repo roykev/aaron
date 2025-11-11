@@ -7,11 +7,11 @@ import yaml
 
 from teacher_side.teacher_prompts import get_tasks, extract_teacher_report_results
 from teacher_side.teacher_utils import read_transcript
-from utils.kimi_utils import AnthropicProxy, OpenRouterProxy
+from utils.kimi_utils import  OpenRouterProxy
 from utils.utils import get_logger
 
 
-class TeacherReport(AnthropicProxy):
+class TeacherReport(OpenRouterProxy):
     """Teacher report using Anthropic's Claude (default)."""
     def __init__(self, config: Dict[str, Any], api_key: str = None):
         super().__init__(config, api_key)
