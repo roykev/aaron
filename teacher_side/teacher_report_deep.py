@@ -5,7 +5,7 @@ from typing import Dict, Any
 import yaml
 
 from teacher_side.teacher_prompts import extract_teacher_report_results
-from teacher_side.teacher_report import TeacherReport
+from teacher_side.teacher_report import TeacherReport, TeacherReportOR
 from utils.utils import get_logger
 
 
@@ -109,13 +109,13 @@ class TeacherReportDeep(TeacherReport):
         self.user_prompt = build_tasks_array(lan=lan)
 
 
-class TeacherReportDeepOR(TeacherReport):
+class TeacherReportDeepOR(TeacherReportOR):
     """Deep analysis using OpenRouter (secondary option)."""
     def __init__(self, config: Dict[str, Any], api_key: str = None, base_url: str = "https://openrouter.ai/api/v1"):
-        # Import the OR version
-        from teacher_side.teacher_report import TeacherReportOR
-        # Initialize with OpenRouter parent
-        TeacherReportOR.__init__(self, config, api_key, base_url)
+        super().__init__(config, api_key, base_url)
+        # Set additional properties
+        self.course_name = config.get("course_name", "Unknown Course")
+        self.class_level = config.get("class_level", "Unknown Level")
     
     # Share the same methods with TeacherReportDeep
     compose_system_prompt = TeacherReportDeep.compose_system_prompt

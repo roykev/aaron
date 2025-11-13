@@ -10,11 +10,11 @@ import time
 from typing import Dict, Any
 import yaml
 
-from utils.kimi_utils import  OpenRouterProxy
+from utils.kimi_utils import AnthropicProxy, OpenRouterProxy
 from utils.utils import get_logger
 
 
-class TeacherReportSmartInsights(OpenRouterProxy):
+class TeacherReportSmartInsights(AnthropicProxy):
     """
     Analyzes existing teacher report outputs (deep.txt and story.txt) using an LLM
     to identify and synthesize the most important insights and recommendations.

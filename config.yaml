@@ -2,16 +2,17 @@
 #videos_dir: "/home/roy/FS/Dropbox/WORK/Ideas/aaron/ono/יזמות עסקית/מבוא ליזמות עסקית - סרטון עבור שיעור מקוון  מתאריך 03 03 2025 ושעת התחלה 12 15 - 15123880/"
 #videos_dir: "/home/roy/FS/Dropbox/WORK/Ideas/aaron/matan/Pharma2-Matan-Lecture2/"
 #videos_dir: "/home/roy/FS/Dropbox/WORK/Ideas/aaron/tal/"
-videos_dir: "/home/roy/FS/Dropbox/WORK/Ideas/aaron/ono/ella/2"
+#videos_dir: "/home/roy/FS/Dropbox/WORK/Ideas/aaron/ono/ella/2"
 #videos_dir: "/home/roy/Downloads/"
+videos_dir: "/mnt/d/Documents/Work/AaronTheOwl/Courses/Ono College/פסיכולוגיה/Lecture1"
 
 # Teacher report generation flags
 teacher_reports:
   use_unified_mode: true         # ⚡ NEW! Use 1 LLM call instead of 4 (much faster and cheaper)
-  generate_basic: false           # Generate basic report (sections, examples, interactions)
-  generate_deep: false          # Generate deep analysis report
-  generate_story: false           # Generate storytelling analysis report
-  generate_smart_insights: false  # Generate AI-powered smart insights (requires deep.txt and story.txt)
+  generate_basic: true           # Generate basic report (sections, examples, interactions)
+  generate_deep: true          # Generate deep analysis report
+  generate_story: true           # Generate storytelling analysis report
+  generate_smart_insights: true  # Generate AI-powered smart insights (requires deep.txt and story.txt)
   generate_markdown: true        # Generate markdown reports from outputs
 
 # Language configuration for report generation
@@ -28,36 +29,26 @@ logging:
 
 # LLM configuration
 llm:
-   # Backend selection: false = Anthropic (default), true = OpenRouter
-   use_openrouter: true
-
-   # Disable Anthropic completely - if true, will reject any Anthropic models (including via OpenRouter)
-   # This ensures no Anthropic API calls are made, useful for cost control or API quota management
-   disable_anthropic: true
+  # Backend selection: false = Anthropic direct API (default), true = OpenRouter API
+  use_openrouter: false
 
   # Model configuration:
-  # - For Anthropic backend: use direct model names like "claude-sonnet-4" or "claude-sonnet-4.5"
-  # - For OpenRouter backend: use OpenRouter paths like "anthropic/claude-sonnet-4.5" or "moonshotai/kimi-k2:free"
-  #
-  # When use_openrouter: false (Anthropic direct):
+  # - For Anthropic backend (use_openrouter: false):
   #   - Requires ANTHROPIC_API_KEY environment variable
-  #   - Model examples: "claude-sonnet-4", "claude-sonnet-4.5", "claude-opus-4"
+  #   - Use direct model names: "claude-sonnet-4", "claude-sonnet-4.5", "claude-opus-4"
+  #   - Model names with "/" prefix will be stripped (e.g., "anthropic/claude-sonnet-4.5" → "claude-sonnet-4.5")
   #
-  # When use_openrouter: true (OpenRouter):
+  # - For OpenRouter backend (use_openrouter: true):
   #   - Requires OPEN_ROUTER_API_KEY environment variable
-  #   - Model examples: "anthropic/claude-sonnet-4.5", "moonshotai/kimi-k2:free", "google/gemini-2.0-flash-exp:free"
+  #   - Use OpenRouter paths: "anthropic/claude-sonnet-4.5", "moonshotai/kimi-k2:free", "google/gemini-2.0-flash-exp:free"
   #
-  # When disable_anthropic: true:
-  #   - Will reject model names containing "anthropic" or "claude"
-  #   - Use only non-Anthropic models like "moonshotai/kimi-k2:free", "google/gemini-2.0-flash-exp:free", etc.
-  #
-  #model: "claude-sonnet-4-5-20250929"
+  model: "claude-sonnet-4-5-20250929"
 
   # Other OpenRouter models (uncomment and set use_openrouter: true to use):
-  # model: "moonshotai/kimi-k2:free"
-   #model: "google/gemini-2.0-flash-exp:free"
-   #model: "deepseek/deepseek-chat-v3.1:free"
-   model : "minimax/minimax-m2:free"
+  #model: "moonshotai/kimi-k2:free"
+  #model: "google/gemini-2.0-flash-exp:free"
+  #model: "deepseek/deepseek-chat-v3.1:free"
+  #model : "minimax/minimax-m2:free"
   #model: "anthropic/claude-sonnet-4.5"
 # Video summary configuration
 summary:

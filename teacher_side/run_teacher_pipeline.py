@@ -55,29 +55,6 @@ def run_teacher_pipeline(config_path="./config.yaml"):
     # Determine which LLM backend to use (Anthropic by default, OpenRouter as fallback)
     llm_config = config.get("llm", {})
     use_openrouter = llm_config.get("use_openrouter", False)
-    disable_anthropic = llm_config.get("disable_anthropic", False)
-    model_name = llm_config.get("model", "")
-
-    # Validate: If disable_anthropic is true, ensure we're not using Anthropic
-    if disable_anthropic:
-        # Check if using Anthropic backend
-        if not use_openrouter:
-            logger.error("❌ ERROR: disable_anthropic=true but use_openrouter=false")
-            logger.error("   Cannot use Anthropic backend when Anthropic is disabled.")
-            logger.error("   Set use_openrouter: true in config.yaml")
-            sys.exit(1)
-
-        # Check if model name contains anthropic or claude
-        model_lower = model_name.lower()
-        if "anthropic" in model_lower or "claude" in model_lower:
-            logger.error(f"❌ ERROR: disable_anthropic=true but model contains Anthropic/Claude: {model_name}")
-            logger.error("   Please use a non-Anthropic model like:")
-            logger.error("   - moonshotai/kimi-k2:free")
-            logger.error("   - google/gemini-2.0-flash-exp:free")
-            logger.error("   - deepseek/deepseek-chat-v3.1:free")
-            sys.exit(1)
-
-        logger.info("✅ Anthropic disabled - using non-Anthropic model only")
     
     # Select the appropriate classes based on configuration
     if use_openrouter:

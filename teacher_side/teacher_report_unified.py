@@ -14,19 +14,19 @@ import yaml
 import traceback
 
 from teacher_side.teacher_prompts import get_tasks
-from teacher_side.teacher_report import TeacherReport
+from teacher_side.teacher_report import TeacherReport, TeacherReportOR
 from teacher_side.teacher_report_deep import tasks_dict as deep_tasks_dict
 from teacher_side.teacher_report_storytelling import tasks_dict as story_tasks_dict
 from teacher_side.teacher_utils import read_transcript
-from utils.kimi_utils import OpenRouterProxy
+from utils.kimi_utils import AnthropicProxy, OpenRouterProxy
 from utils.utils import get_logger
 
 
 class TeacherReportUnifiedBase(TeacherReport):
-    """Base class with shared logic for unified report generation."""
+    """Base class with shared logic for unified report generation (Anthropic)."""
 
-    def __init__(self, config: Dict[str, Any]):
-        self.config = config
+    def __init__(self, config: Dict[str, Any], api_key: str = None):
+        super().__init__(config, api_key)
         self.course_name = config.get("course_name", "Unknown Course")
         self.class_level = config.get("class_level", "Unknown Level")
         # Track which parts to generate
@@ -161,20 +161,36 @@ class TeacherReportUnifiedBase(TeacherReport):
         self.compose_user_prompt(lan, include_basic, include_deep, include_story)
 
 
-class TeacherReportUnified(TeacherReportUnifiedBase, OpenRouterProxy):
-    """Unified teacher report using OpenRouter (default)."""
+class TeacherReportUnifiedBaseOR(TeacherReportOR):
+    """Base class with shared logic for unified report generation (OpenRouter)."""
 
     def __init__(self, config: Dict[str, Any], api_key: str = None, base_url: str = "https://openrouter.ai/api/v1"):
-        OpenRouterProxy.__init__(self, config, api_key, base_url)
-        TeacherReportUnifiedBase.__init__(self, config)
+        super().__init__(config, api_key, base_url)
+        self.course_name = config.get("course_name", "Unknown Course")
+        self.class_level = config.get("class_level", "Unknown Level")
+        # Track which parts to generate
+        self.include_basic = True
+        self.include_deep = True
+        self.include_story = True
+    
+    # Share the same methods with TeacherReportUnifiedBase
+    compose_system_prompt = TeacherReportUnifiedBase.compose_system_prompt
+    compose_user_prompt = TeacherReportUnifiedBase.compose_user_prompt
+    prepare_content = TeacherReportUnifiedBase.prepare_content
 
 
-class TeacherReportUnifiedOR(TeacherReportUnifiedBase, OpenRouterProxy):
+class TeacherReportUnified(TeacherReportUnifiedBase):
+    """Unified teacher report using Anthropic (default)."""
+
+    def __init__(self, config: Dict[str, Any], api_key: str = None):
+        super().__init__(config, api_key)
+
+
+class TeacherReportUnifiedOR(TeacherReportUnifiedBaseOR):
     """Unified teacher report using OpenRouter (fallback)."""
 
     def __init__(self, config: Dict[str, Any], api_key: str = None, base_url: str = "https://openrouter.ai/api/v1"):
-        OpenRouterProxy.__init__(self, config, api_key, base_url)
-        TeacherReportUnifiedBase.__init__(self, config)
+        super().__init__(config, api_key, base_url)
 
 
 def parse_and_save_unified_output(output_json: str, output_dir: str, logger):

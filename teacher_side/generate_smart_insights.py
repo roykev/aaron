@@ -17,7 +17,7 @@ import yaml
 import json
 from pathlib import Path
 
-from teacher_side.teacher_report_smart_insights import TeacherReportSmartInsights
+from teacher_side.teacher_report_smart_insights import TeacherReportSmartInsights, TeacherReportSmartInsightsOR
 from teacher_side.teacher_utils import get_output_dir
 from utils.utils import get_logger
 
@@ -236,27 +236,9 @@ def generate_smart_insights(output_dir: str, config: dict):
     """
     logger = get_logger(__name__, config)
 
-    # Validate Anthropic settings
+    # Get LLM backend configuration
     llm_config = config.get("llm", {})
-    disable_anthropic = llm_config.get("disable_anthropic", False)
     use_openrouter = llm_config.get("use_openrouter", False)
-    model_name = llm_config.get("model", "")
-
-    if disable_anthropic:
-        if not use_openrouter:
-            raise ValueError(
-                "disable_anthropic=true but use_openrouter=false. "
-                "Cannot use Anthropic backend when Anthropic is disabled. "
-                "Set use_openrouter: true in config.yaml"
-            )
-
-        model_lower = model_name.lower()
-        if "anthropic" in model_lower or "claude" in model_lower:
-            raise ValueError(
-                f"disable_anthropic=true but model contains Anthropic/Claude: {model_name}. "
-                f"Please use a non-Anthropic model like moonshotai/kimi-k2:free, "
-                f"google/gemini-2.0-flash-exp:free, or deepseek/deepseek-chat-v3.1:free"
-            )
 
     # Check for required files
     deep_txt_path = os.path.join(output_dir, "deep.txt")
@@ -284,13 +266,16 @@ def generate_smart_insights(output_dir: str, config: dict):
     # Get language from config
     language = config.get("language", "English")
 
-    # Create smart insights generator
+    # Create smart insights generator - select the right class based on configuration
     print("🤖 Calling LLM to analyze and synthesize insights...")
     print(f"   Language: {language}")
+    print(f"   Backend: {'OpenRouter' if use_openrouter else 'Anthropic'}")
     print(f"   Model: {config.get('llm', {}).get('model', 'default')}")
     print()
 
-    llmproxy = TeacherReportSmartInsights(config)
+    # Select the appropriate class based on configuration
+    InsightsClass = TeacherReportSmartInsights if not use_openrouter else TeacherReportSmartInsightsOR
+    llmproxy = InsightsClass(config)
     llmproxy.prepare_content(output_dir, lan=language)
 
     # Call API
