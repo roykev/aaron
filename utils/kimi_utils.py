@@ -77,7 +77,7 @@ class OpenRouterProxy:
             description = completion.choices[0].message.content.strip()
 
             # Debug: Log the raw response length
-            if hasattr(self, 'logger') and self.logger:
+            if hasattr(self, 'logger') and self.logger is not None:
                 self.logger.info(f"Raw API response length: {len(description)} characters")
                 if len(description) == 0:
                     self.logger.error("API returned empty response!")
@@ -89,7 +89,7 @@ class OpenRouterProxy:
             description = re.sub(r'<think>.*?</think>', '', description, flags=re.S).strip()
 
             # Debug: Check if regex removed everything
-            if hasattr(self, 'logger') and self.logger and len(pre_regex) > 0 and len(description) == 0:
+            if hasattr(self, 'logger') and self.logger is not None and len(pre_regex) > 0 and len(description) == 0:
                 self.logger.error("Thinking tag removal regex deleted all content!")
                 self.logger.info(f"Pre-regex length: {len(pre_regex)}")
                 # Save the pre-regex content for inspection
@@ -103,7 +103,7 @@ class OpenRouterProxy:
             return description
 
         except Exception as e:
-            if hasattr(self, 'logger') and self.logger:
+            if hasattr(self, 'logger') and self.logger is not None:
                 self.logger.error(f"API call exception: {type(e).__name__}: {str(e)}")
             raise RuntimeError(f"Failed to generate analysis: {str(e)}")
     def compose_system_prompt(self, lan="English"):
@@ -177,7 +177,7 @@ class AnthropicProxy:
             description = response.content[0].text.strip()
 
             # Debug: Log the raw response length
-            if hasattr(self, 'logger'):
+            if hasattr(self, 'logger') and self.logger is not None:
                 self.logger.info(f"Raw API response length: {len(description)} characters")
                 if len(description) == 0:
                     self.logger.error("API returned empty response!")
@@ -202,7 +202,7 @@ class AnthropicProxy:
             description = re.sub(r'<think>.*?</think>', '', description, flags=re.S).strip()
 
             # Debug: Check if regex removed everything
-            if hasattr(self, 'logger') and len(pre_regex) > 0 and len(description) == 0:
+            if hasattr(self, 'logger') and self.logger is not None and len(pre_regex) > 0 and len(description) == 0:
                 self.logger.error("Thinking tag removal regex deleted all content!")
                 self.logger.info(f"Pre-regex length: {len(pre_regex)}")
                 # Save the pre-regex content for inspection
@@ -216,7 +216,7 @@ class AnthropicProxy:
             return description
 
         except Exception as e:
-            if hasattr(self, 'logger'):
+            if hasattr(self, 'logger') and self.logger is not None:
                 self.logger.error(f"API call exception: {type(e).__name__}: {str(e)}")
             raise RuntimeError(f"Failed to generate analysis: {str(e)}")
     

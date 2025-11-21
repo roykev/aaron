@@ -6,7 +6,6 @@ from typing import Dict, Any
 import yaml
 
 from teacher_side.teacher_prompts import get_tasks, extract_teacher_report_results
-from teacher_side.teacher_utils import read_transcript
 from utils.kimi_utils import AnthropicProxy, OpenRouterProxy
 from utils.utils import get_logger
 
@@ -15,6 +14,62 @@ class TeacherReport(AnthropicProxy):
     """Teacher report using Anthropic's Claude (default)."""
     def __init__(self, config: Dict[str, Any], api_key: str = None):
         super().__init__(config, api_key)
+    
+    def read_transcript(self, suffix='.txt'):
+        def find_transcript_file(videos_dir: str, suffix='.txt') -> str:
+            """
+            Find the transcript file (.txt, .vtt, or .srt) in the videos directory.
+
+            Args:
+                videos_dir: Path to the videos directory
+                suffix: File extension to search for (default: '.txt')
+
+            Returns:
+                Path to the transcript file
+            """
+            # List of supported transcript formats
+            supported_formats = ['.txt', '.vtt', '.srt']
+
+            # If a specific suffix is provided, prioritize it
+            search_order = [suffix] + [fmt for fmt in supported_formats if fmt != suffix]
+
+            for fmt in search_order:
+                for file in os.listdir(videos_dir):
+                    if file.endswith(fmt):
+                        return os.path.join(videos_dir, file)
+
+            raise FileNotFoundError(f"No transcript file (.txt, .vtt, or .srt) found in {videos_dir}")
+
+        def parse_transcript_txt(transcript_path: str) -> str:
+            """
+            Read and extract the full transcript text from the file.
+
+            Args:
+                transcript_path: Path to the transcript file
+
+            Returns:
+                Full transcript text
+            """
+            with open(transcript_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+
+            # Extract only the text content, removing speaker labels and timestamps
+            lines = content.split('\n')
+            transcript_lines = []
+
+            for line in lines:
+                line = line.strip()
+                if line and not line.startswith('[') and not line.startswith('('):
+                    transcript_lines.append(line)
+
+            return ' '.join(transcript_lines)
+
+        trans_path = find_transcript_file(self.config["videos_dir"])
+        if suffix == ".txt":
+            self.transcript = parse_transcript_txt(trans_path)
+            logging.debug("Done reading transcript")
+        else:
+            logging.error(f"{trans_path}, suffix not supported!")
 
     def compose_system_prompt(self, lan="English"):
         system_prompt = (
@@ -32,9 +87,8 @@ class TeacherReport(AnthropicProxy):
 
     def compose_user_prompt(self, lan = "English"):
         self.user_prompt = get_tasks(lan)
-    
     def prepare_specific_content(self, lan):
-        self.transcript = read_transcript(self.config["videos_dir"])
+        self.read_transcript()
 
 
 class TeacherReportOR(OpenRouterProxy):
@@ -43,6 +97,7 @@ class TeacherReportOR(OpenRouterProxy):
         super().__init__(config, api_key, base_url)
     
     # Share the same methods with TeacherReport
+    read_transcript = TeacherReport.read_transcript
     compose_system_prompt = TeacherReport.compose_system_prompt
     compose_user_prompt = TeacherReport.compose_user_prompt
     prepare_specific_content = TeacherReport.prepare_specific_content
