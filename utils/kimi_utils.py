@@ -136,7 +136,7 @@ class AnthropicProxy:
 
         self.config = config
         self.logger = logger
-        self.api_key = api_key or env.get("ANTHROPIC_API_KEY")
+        self.api_key = api_key or source_key("ANTHROPIC_API_KEY")
         if not self.api_key:
             raise ValueError(
                 "API key is required. Set ANTHROPIC_API_KEY environment variable or pass api_key parameter.")
