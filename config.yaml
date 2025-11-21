@@ -50,6 +50,13 @@ llm:
   #model: "deepseek/deepseek-chat-v3.1:free"
   #model : "minimax/minimax-m2:free"
   #model: "anthropic/claude-sonnet-4.5"
+
+  # Maximum tokens for LLM response
+  # - Default: 12000 (suitable for single analysis)
+  # - Recommended for unified mode (all 3 analyses): 20000-24000
+  # - Increase if getting truncated JSON errors
+  max_tokens: 20000
+
 # Video summary configuration
 summary:
   max_words: 300  # Maximum number of words in the summary

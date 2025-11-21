@@ -286,22 +286,26 @@ class SnapshotGenerator:
 
         # Storytelling dimensions from story.txt
         storytelling_scores = {}
-        for module in self.story_data:
-            module_name = module['module']
-            # Simple heuristic: more strengths = higher score
-            strengths = len(module['strengths'])
-            weaknesses = len(module['weaknesses'])
-            score = min(10, max(1, 5 + (strengths * 2) - (weaknesses * 1.5)))
-            storytelling_scores[module_name] = int(score)
+        if isinstance(self.story_data, list):
+            for module in self.story_data:
+                if isinstance(module, dict) and 'module' in module:
+                    module_name = module['module']
+                    # Simple heuristic: more strengths = higher score
+                    strengths = len(module.get('strengths', []))
+                    weaknesses = len(module.get('weaknesses', []))
+                    score = min(10, max(1, 5 + (strengths * 2) - (weaknesses * 1.5)))
+                    storytelling_scores[module_name] = int(score)
 
         # Deep learning dimensions from deep.txt
         deep_scores = {}
-        for module in self.deep_data:
-            module_name = module['module']
-            strengths = len(module['strengths'])
-            weaknesses = len(module['weaknesses'])
-            score = min(10, max(1, 5 + (strengths * 2) - (weaknesses * 1.5)))
-            deep_scores[module_name] = int(score)
+        if isinstance(self.deep_data, list):
+            for module in self.deep_data:
+                if isinstance(module, dict) and 'module' in module:
+                    module_name = module['module']
+                    strengths = len(module.get('strengths', []))
+                    weaknesses = len(module.get('weaknesses', []))
+                    score = min(10, max(1, 5 + (strengths * 2) - (weaknesses * 1.5)))
+                    deep_scores[module_name] = int(score)
 
         # Overall score
         all_scores = list(storytelling_scores.values()) + list(deep_scores.values())
@@ -313,12 +317,18 @@ class SnapshotGenerator:
         """Extract the top strength from the data"""
         # Look for highest-scoring storytelling dimension
         storytelling_scores, _, _ = self._calculate_scores()
+
+        if not storytelling_scores:
+            return "Unknown", "No data available"
+
         top_module = max(storytelling_scores, key=storytelling_scores.get)
 
         # Get the first strength from that module
-        for module in self.story_data:
-            if module['module'] == top_module:
-                return top_module, module['strengths'][0] if module['strengths'] else ""
+        if isinstance(self.story_data, list):
+            for module in self.story_data:
+                if isinstance(module, dict) and module.get('module') == top_module:
+                    strengths = module.get('strengths', [])
+                    return top_module, strengths[0] if strengths else ""
 
         return top_module, ""
 
@@ -327,9 +337,13 @@ class SnapshotGenerator:
         items = []
 
         # From storytelling
-        for module in self.story_data:
-            for strength in module['strengths'][:1]:  # Top strength per module
-                items.append((module['module'], strength))
+        if isinstance(self.story_data, list):
+            for module in self.story_data:
+                if isinstance(module, dict):
+                    module_name = module.get('module', 'Unknown')
+                    strengths = module.get('strengths', [])
+                    for strength in strengths[:1]:  # Top strength per module
+                        items.append((module_name, strength))
 
         return items[:3]  # Top 3
 
@@ -338,12 +352,20 @@ class SnapshotGenerator:
         items = []
 
         # From storytelling and deep learning
-        all_modules = self.story_data + self.deep_data
+        all_modules = []
+        if isinstance(self.story_data, list):
+            all_modules.extend(self.story_data)
+        if isinstance(self.deep_data, list):
+            all_modules.extend(self.deep_data)
 
         for module in all_modules:
-            for i, weakness in enumerate(module['weaknesses'][:1]):  # Top weakness per module
-                recommendation = module['recommendations'][i] if i < len(module['recommendations']) else ""
-                items.append((module['module'], weakness, recommendation))
+            if isinstance(module, dict):
+                module_name = module.get('module', 'Unknown')
+                weaknesses = module.get('weaknesses', [])
+                recommendations = module.get('recommendations', [])
+                for i, weakness in enumerate(weaknesses[:1]):  # Top weakness per module
+                    recommendation = recommendations[i] if i < len(recommendations) else ""
+                    items.append((module_name, weakness, recommendation))
 
         return items[:3]  # Top 3
 
@@ -351,9 +373,18 @@ class SnapshotGenerator:
         """Extract actionable recommendations"""
         items = []
 
-        for module in self.story_data + self.deep_data:
-            for rec in module['recommendations'][:1]:  # One per module
-                items.append((module['module'], rec, "פעולה מומלצת"))
+        all_modules = []
+        if isinstance(self.story_data, list):
+            all_modules.extend(self.story_data)
+        if isinstance(self.deep_data, list):
+            all_modules.extend(self.deep_data)
+
+        for module in all_modules:
+            if isinstance(module, dict):
+                module_name = module.get('module', 'Unknown')
+                recommendations = module.get('recommendations', [])
+                for rec in recommendations[:1]:  # One per module
+                    items.append((module_name, rec, "פעולה מומלצת"))
 
         return items[:4]  # Top 4
 

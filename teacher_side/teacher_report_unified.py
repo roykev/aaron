@@ -11,22 +11,18 @@ import json
 from typing import Dict, Any
 
 import yaml
-import traceback
 
 from teacher_side.teacher_prompts import get_tasks
-from teacher_side.teacher_report import TeacherReport, TeacherReportOR
 from teacher_side.teacher_report_deep import tasks_dict as deep_tasks_dict
 from teacher_side.teacher_report_storytelling import tasks_dict as story_tasks_dict
-from teacher_side.teacher_utils import read_transcript
-from utils.kimi_utils import AnthropicProxy, OpenRouterProxy
+from utils.kimi_utils import OpenRouterProxy, AnthropicProxy
 from utils.utils import get_logger
 
 
-class TeacherReportUnifiedBase(TeacherReport):
-    """Base class with shared logic for unified report generation (Anthropic)."""
+class TeacherReportUnifiedBase:
+    """Base class with shared logic for unified report generation."""
 
-    def __init__(self, config: Dict[str, Any], api_key: str = None):
-        super().__init__(config, api_key)
+    def __init__(self, config: Dict[str, Any]):
         self.course_name = config.get("course_name", "Unknown Course")
         self.class_level = config.get("class_level", "Unknown Level")
         # Track which parts to generate
@@ -156,41 +152,89 @@ class TeacherReportUnifiedBase(TeacherReport):
 
     def prepare_content(self, lan="English", include_basic=True, include_deep=True, include_story=True):
         """Prepare unified content for analysis with selected parts."""
-        self.transcript = read_transcript(self.config["videos_dir"])
+        self.read_transcript()
         self.compose_system_prompt(lan, include_basic, include_deep, include_story)
         self.compose_user_prompt(lan, include_basic, include_deep, include_story)
 
 
-class TeacherReportUnifiedBaseOR(TeacherReportOR):
-    """Base class with shared logic for unified report generation (OpenRouter)."""
-
-    def __init__(self, config: Dict[str, Any], api_key: str = None, base_url: str = "https://openrouter.ai/api/v1"):
-        super().__init__(config, api_key, base_url)
-        self.course_name = config.get("course_name", "Unknown Course")
-        self.class_level = config.get("class_level", "Unknown Level")
-        # Track which parts to generate
-        self.include_basic = True
-        self.include_deep = True
-        self.include_story = True
-    
-    # Share the same methods with TeacherReportUnifiedBase
-    compose_system_prompt = TeacherReportUnifiedBase.compose_system_prompt
-    compose_user_prompt = TeacherReportUnifiedBase.compose_user_prompt
-    prepare_content = TeacherReportUnifiedBase.prepare_content
-
-
-class TeacherReportUnified(TeacherReportUnifiedBase):
-    """Unified teacher report using Anthropic (default)."""
+class TeacherReportUnified(TeacherReportUnifiedBase, AnthropicProxy):
+    """Unified teacher report using Anthropic Claude (default)."""
 
     def __init__(self, config: Dict[str, Any], api_key: str = None):
-        super().__init__(config, api_key)
+        AnthropicProxy.__init__(self, config, api_key)
+        TeacherReportUnifiedBase.__init__(self, config)
 
 
-class TeacherReportUnifiedOR(TeacherReportUnifiedBaseOR):
+class TeacherReportUnifiedOR(TeacherReportUnifiedBase, OpenRouterProxy):
     """Unified teacher report using OpenRouter (fallback)."""
 
     def __init__(self, config: Dict[str, Any], api_key: str = None, base_url: str = "https://openrouter.ai/api/v1"):
-        super().__init__(config, api_key, base_url)
+        OpenRouterProxy.__init__(self, config, api_key, base_url)
+        TeacherReportUnifiedBase.__init__(self, config)
+
+
+def repair_truncated_json(output_json: str, logger) -> tuple[str, bool]:
+    """
+    Attempt to repair truncated JSON by closing open structures.
+
+    Returns:
+        tuple: (repaired_json, was_truncated)
+    """
+    original = output_json.strip()
+
+    # Try parsing as-is first
+    try:
+        json.loads(original)
+        return original, False
+    except json.JSONDecodeError as e:
+        logger.warning(f"JSON parsing failed: {e}")
+        logger.info("Attempting to repair truncated JSON...")
+
+        # Find the last complete character before truncation
+        repaired = original
+
+        # Count unclosed structures
+        brace_count = repaired.count('{') - repaired.count('}')
+        bracket_count = repaired.count('[') - repaired.count(']')
+
+        # Check for unterminated string
+        # Count quotes, excluding escaped ones
+        in_string = False
+        escape_next = False
+        for char in repaired:
+            if escape_next:
+                escape_next = False
+                continue
+            if char == '\\':
+                escape_next = True
+                continue
+            if char == '"':
+                in_string = not in_string
+
+        # If we're in an unterminated string, close it
+        if in_string:
+            logger.info("Closing unterminated string")
+            repaired += '"'
+
+        # Close any open arrays
+        for _ in range(bracket_count):
+            logger.info("Closing unclosed array")
+            repaired += '\n]'
+
+        # Close any open objects
+        for _ in range(brace_count):
+            logger.info("Closing unclosed object")
+            repaired += '\n}'
+
+        # Try parsing again
+        try:
+            json.loads(repaired)
+            logger.info("✅ Successfully repaired JSON")
+            return repaired, True
+        except json.JSONDecodeError as e2:
+            logger.error(f"Could not repair JSON: {e2}")
+            # Return original
+            return original, True
 
 
 def parse_and_save_unified_output(output_json: str, output_dir: str, logger):
@@ -203,20 +247,19 @@ def parse_and_save_unified_output(output_json: str, output_dir: str, logger):
         logger: Logger instance
     """
     try:
-        # Strip markdown code fences if present
-        output_json = output_json.strip()
-        if output_json.startswith("```json"):
-            output_json = output_json[7:].lstrip()  # Remove ```json and any following whitespace
-        elif output_json.startswith("```"):
-            output_json = output_json[3:].lstrip()  # Remove ``` and any following whitespace
-        
-        if output_json.endswith("```"):
-            output_json = output_json[:-3].rstrip()  # Remove closing ``` and any preceding whitespace
-        
-        output_json = output_json.strip()
-        
+        # First, try to repair any truncated JSON
+        repaired_json, was_truncated = repair_truncated_json(output_json, logger)
+
+        if was_truncated:
+            logger.warning("⚠️  JSON was truncated - output may be incomplete")
+            # Save the repaired version for reference
+            repaired_file = os.path.join(output_dir, "unified_output_repaired.json")
+            with open(repaired_file, "w", encoding="utf-8") as f:
+                f.write(repaired_json)
+            logger.info(f"Repaired JSON saved to: {repaired_file}")
+
         # Parse JSON
-        data = json.loads(output_json)
+        data = json.loads(repaired_json)
 
         # Save basic analysis (output.txt)
         if "basic" in data:
@@ -281,7 +324,7 @@ def parse_and_save_unified_output(output_json: str, output_dir: str, logger):
         return True
 
     except json.JSONDecodeError as e:
-        logger.error(f"Failed to parse JSON output: {e}\n{traceback.format_exc()}")
+        logger.error(f"Failed to parse JSON output: {e}")
         # Save raw output for debugging
         raw_file = os.path.join(output_dir, "unified_output_raw.txt")
         with open(raw_file, "w", encoding="utf-8") as f:
