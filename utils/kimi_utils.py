@@ -21,7 +21,7 @@ class OpenRouterProxy:
     """
     A class for extracting AI artifacts from class transcripts.
     """
-    def __init__(self, config: Dict[str, Any], api_key: str = None, base_url: str = "https://openrouter.ai/api/v1"):
+    def __init__(self, config: Dict[str, Any], api_key: str = None, base_url: str = "https://openrouter.ai/api/v1", logger=None):
         """
         Initialize the VideoSummarizer.
 
@@ -29,9 +29,11 @@ class OpenRouterProxy:
             config: Configuration dictionary from pipe.yaml
             api_key: OpenAI API key (defaults to OPEN_ROUTER_API_KEY env var)
             base_url: Base URL for the API (defaults to OpenRouter)
+            logger: Optional logger instance for debugging
         """
         self.config = config
-        self.api_key =         source_key("OPEN_ROUTER_API_KEY")
+        self.logger = logger
+        self.api_key = env.get("OPEN_ROUTER_API_KEY")
         if not self.api_key:
             raise ValueError(
                 "API key is required. Set OPEN_ROUTER_API_KEY environment variable or pass api_key parameter.")
@@ -74,14 +76,35 @@ class OpenRouterProxy:
             # Extract and return the description
             description = completion.choices[0].message.content.strip()
 
+            # Debug: Log the raw response length
+            if hasattr(self, 'logger') and self.logger:
+                self.logger.info(f"Raw API response length: {len(description)} characters")
+                if len(description) == 0:
+                    self.logger.error("API returned empty response!")
 
             import re
+            # Save pre-regex description for debugging
+            pre_regex = description
             description = re.sub(r'◁think▷.*?◁/think▷', '', description, flags=re.S).strip()
             description = re.sub(r'<think>.*?</think>', '', description, flags=re.S).strip()
+
+            # Debug: Check if regex removed everything
+            if hasattr(self, 'logger') and self.logger and len(pre_regex) > 0 and len(description) == 0:
+                self.logger.error("Thinking tag removal regex deleted all content!")
+                self.logger.info(f"Pre-regex length: {len(pre_regex)}")
+                # Save the pre-regex content for inspection
+                debug_file = os.path.join(self.config.get("videos_dir", "."), "debug_pre_regex.txt")
+                with open(debug_file, 'w') as f:
+                    f.write(pre_regex)
+                self.logger.info(f"Saved pre-regex content to {debug_file}")
+                # Return the pre-regex version since regex is clearly broken
+                return pre_regex
 
             return description
 
         except Exception as e:
+            if hasattr(self, 'logger') and self.logger:
+                self.logger.error(f"API call exception: {type(e).__name__}: {str(e)}")
             raise RuntimeError(f"Failed to generate analysis: {str(e)}")
     def compose_system_prompt(self, lan="English"):
         self.system_prompt= "system prompt"
@@ -101,16 +124,18 @@ class AnthropicProxy:
     """
     A class for extracting AI artifacts from class transcripts using Anthropic's Claude.
     """
-    def __init__(self, config: Dict[str, Any], api_key: str = None):
+    def __init__(self, config: Dict[str, Any], api_key: str = None, logger=None):
         """
         Initialize the AnthropicProxy.
 
         Args:
             config: Configuration dictionary from config.yaml
             api_key: Anthropic API key (defaults to ANTHROPIC_API_KEY env var)
+            logger: Optional logger instance for debugging
         """
 
         self.config = config
+        self.logger = logger
         self.api_key = api_key or env.get("ANTHROPIC_API_KEY")
         if not self.api_key:
             raise ValueError(
@@ -151,29 +176,63 @@ class AnthropicProxy:
             # Extract and return the description
             description = response.content[0].text.strip()
 
+            # Debug: Log the raw response length
+            if hasattr(self, 'logger'):
+                self.logger.info(f"Raw API response length: {len(description)} characters")
+                if len(description) == 0:
+                    self.logger.error("API returned empty response!")
+                    # Save response object for debugging
+                    import json
+                    debug_file = os.path.join(self.config.get("videos_dir", "."), "debug_api_response.json")
+                    with open(debug_file, 'w') as f:
+                        json.dump({
+                            "model": response.model,
+                            "stop_reason": response.stop_reason,
+                            "usage": response.usage.model_dump() if hasattr(response.usage, 'model_dump') else str(response.usage),
+                            "content_blocks": len(response.content),
+                            "first_block_type": type(response.content[0]).__name__ if response.content else None
+                        }, f, indent=2)
+                    self.logger.info(f"Saved debug info to {debug_file}")
+
             # Remove thinking tags if present (similar to OpenRouter version)
             import re
+            # Save pre-regex description for debugging
+            pre_regex = description
             description = re.sub(r'◁think▷.*?◁/think▷', '', description, flags=re.S).strip()
             description = re.sub(r'<think>.*?</think>', '', description, flags=re.S).strip()
+
+            # Debug: Check if regex removed everything
+            if hasattr(self, 'logger') and len(pre_regex) > 0 and len(description) == 0:
+                self.logger.error("Thinking tag removal regex deleted all content!")
+                self.logger.info(f"Pre-regex length: {len(pre_regex)}")
+                # Save the pre-regex content for inspection
+                debug_file = os.path.join(self.config.get("videos_dir", "."), "debug_pre_regex.txt")
+                with open(debug_file, 'w') as f:
+                    f.write(pre_regex)
+                self.logger.info(f"Saved pre-regex content to {debug_file}")
+                # Return the pre-regex version since regex is clearly broken
+                return pre_regex
 
             return description
 
         except Exception as e:
+            if hasattr(self, 'logger'):
+                self.logger.error(f"API call exception: {type(e).__name__}: {str(e)}")
             raise RuntimeError(f"Failed to generate analysis: {str(e)}")
-
+    
     def compose_system_prompt(self, lan="English"):
         self.system_prompt = "system prompt"
-
+    
     def compose_user_prompt(self, lan="English"):
         self.user_prompt = "user prompt"
-
+    
     def prepare_prompts(self, lan="English"):
         self.compose_user_prompt(lan)
         self.compose_system_prompt(lan)
-
+    
     def prepare_specific_content(self, lan):
         pass
-
+    
     def prepare_content(self, lan="English"):
         self.prepare_specific_content(lan)
         self.prepare_prompts(lan)
