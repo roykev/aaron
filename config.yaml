@@ -29,7 +29,12 @@ logging:
 llm:
   # Backend selection: false = Anthropic (default), true = OpenRouter
   use_openrouter: false
-  
+
+  # Use cached API responses for debugging (avoids repeated API calls)
+  # When true, loads unified_output_raw.txt instead of calling API
+  # Useful for debugging JSON parsing issues without wasting API credits
+  use_cached_response: true
+
   # Model configuration:
   # - For Anthropic backend: use direct model names like "claude-sonnet-4" or "claude-sonnet-4.5"
   # - For OpenRouter backend: use OpenRouter paths like "anthropic/claude-sonnet-4.5" or "moonshotai/kimi-k2:free"
