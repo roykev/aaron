@@ -33,7 +33,7 @@ llm:
   # Use cached API responses for debugging (avoids repeated API calls)
   # When true, loads unified_output_raw.txt instead of calling API
   # Useful for debugging JSON parsing issues without wasting API credits
-  use_cached_response: true
+  use_cached_response: false
 
   # Model configuration:
   # - For Anthropic backend: use direct model names like "claude-sonnet-4" or "claude-sonnet-4.5"

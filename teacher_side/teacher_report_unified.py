@@ -219,16 +219,16 @@ def repair_truncated_json(output_json: str, logger) -> tuple[str, bool]:
         tuple: (repaired_json, was_truncated)
     """
     # DEBUG: Log what we received
-    logger.info(f"DEBUG: repair_truncated_json received {len(output_json)} chars")
-    logger.info(f"DEBUG: Type: {type(output_json)}, repr first 200: {repr(output_json[:200])}")
+    logger.debug(f"repair_truncated_json received {len(output_json)} chars")
+    logger.debug(f"Type: {type(output_json)}, repr first 200: {repr(output_json[:200])}")
 
     original = output_json.strip()
 
-    logger.info(f"DEBUG: After strip(), len={len(original)}, first 200: {repr(original[:200])}")
+    logger.debug(f"After strip(), len={len(original)}, first 200: {repr(original[:200])}")
 
     # Remove markdown code fences if present (```json ... ``` or ``` ... ```)
     if original.startswith('```'):
-        logger.info("DEBUG: Detected markdown code fences, removing them...")
+        logger.debug("Detected markdown code fences, removing them...")
         # Remove opening fence (```json or ```)
         lines = original.split('\n')
         if lines[0].startswith('```'):
@@ -237,12 +237,12 @@ def repair_truncated_json(output_json: str, logger) -> tuple[str, bool]:
         if lines and lines[-1].strip() == '```':
             lines = lines[:-1]  # Remove last line
         original = '\n'.join(lines)
-        logger.info(f"DEBUG: After removing fences, len={len(original)}, first 200: {repr(original[:200])}")
+        logger.debug(f"After removing fences, len={len(original)}, first 200: {repr(original[:200])}")
 
     # Try parsing as-is first
     try:
         json.loads(original)
-        logger.info("DEBUG: JSON is valid, returning as-is")
+        logger.debug("JSON is valid, returning as-is")
         return original, False
     except json.JSONDecodeError as e:
         logger.warning(f"JSON parsing failed: {e}")
@@ -306,16 +306,16 @@ def parse_and_save_unified_output(output_json: str, output_dir: str, logger):
     """
     try:
         # DEBUG: Log what we received
-        logger.info(f"DEBUG: parse_and_save_unified_output received {len(output_json)} chars")
-        logger.info(f"DEBUG: First 200 chars: {repr(output_json[:200])}")
-        logger.info(f"DEBUG: Last 200 chars: {repr(output_json[-200:])}")
+        logger.debug(f"parse_and_save_unified_output received {len(output_json)} chars")
+        logger.debug(f"First 200 chars: {repr(output_json[:200])}")
+        logger.debug(f"Last 200 chars: {repr(output_json[-200:])}")
 
         # First, try to repair any truncated JSON
         repaired_json, was_truncated = repair_truncated_json(output_json, logger)
 
         # DEBUG: Log what repair function returned
-        logger.info(f"DEBUG: repair_truncated_json returned {len(repaired_json)} chars, was_truncated={was_truncated}")
-        logger.info(f"DEBUG: First 200 chars of repaired: {repr(repaired_json[:200])}")
+        logger.debug(f"repair_truncated_json returned {len(repaired_json)} chars, was_truncated={was_truncated}")
+        logger.debug(f"First 200 chars of repaired: {repr(repaired_json[:200])}")
 
         if was_truncated:
             logger.warning("⚠️  JSON was truncated - output may be incomplete")
