@@ -43,6 +43,9 @@ class OpenRouterProxy:
         # Use model from config if available, otherwise default
         self.model = self.config.get('llm', {}).get('model', "moonshotai/kimi-k2:free")
 
+        # Get max_tokens from config, default to 12000
+        self.max_tokens = self.config.get('llm', {}).get('max_tokens', 12000)
+
     def call_api(self):
         try:
             # Make API call
@@ -63,7 +66,7 @@ class OpenRouterProxy:
                     },
 
                 ],
-                max_tokens=12000,
+                max_tokens=self.max_tokens,
                 temperature=0.1,
                 top_p=0.8,
             )
@@ -126,12 +129,15 @@ class AnthropicProxy:
         else:
             self.model = configured_model
 
+        # Get max_tokens from config, default to 12000
+        self.max_tokens = llm_config.get('max_tokens', 12000)
+
     def call_api(self):
         try:
             # Make API call to Anthropic
             response = self.client.messages.create(
                 model=self.model,
-                max_tokens=12000,
+                max_tokens=self.max_tokens,
                 temperature=0.1,
                 system=self.system_prompt,
                 messages=[

@@ -173,6 +173,70 @@ class TeacherReportUnifiedOR(TeacherReportUnifiedBase, OpenRouterProxy):
         TeacherReportUnifiedBase.__init__(self, config)
 
 
+def repair_truncated_json(output_json: str, logger) -> tuple[str, bool]:
+    """
+    Attempt to repair truncated JSON by closing open structures.
+
+    Returns:
+        tuple: (repaired_json, was_truncated)
+    """
+    original = output_json.strip()
+
+    # Try parsing as-is first
+    try:
+        json.loads(original)
+        return original, False
+    except json.JSONDecodeError as e:
+        logger.warning(f"JSON parsing failed: {e}")
+        logger.info("Attempting to repair truncated JSON...")
+
+        # Find the last complete character before truncation
+        repaired = original
+
+        # Count unclosed structures
+        brace_count = repaired.count('{') - repaired.count('}')
+        bracket_count = repaired.count('[') - repaired.count(']')
+
+        # Check for unterminated string
+        # Count quotes, excluding escaped ones
+        in_string = False
+        escape_next = False
+        for char in repaired:
+            if escape_next:
+                escape_next = False
+                continue
+            if char == '\\':
+                escape_next = True
+                continue
+            if char == '"':
+                in_string = not in_string
+
+        # If we're in an unterminated string, close it
+        if in_string:
+            logger.info("Closing unterminated string")
+            repaired += '"'
+
+        # Close any open arrays
+        for _ in range(bracket_count):
+            logger.info("Closing unclosed array")
+            repaired += '\n]'
+
+        # Close any open objects
+        for _ in range(brace_count):
+            logger.info("Closing unclosed object")
+            repaired += '\n}'
+
+        # Try parsing again
+        try:
+            json.loads(repaired)
+            logger.info("✅ Successfully repaired JSON")
+            return repaired, True
+        except json.JSONDecodeError as e2:
+            logger.error(f"Could not repair JSON: {e2}")
+            # Return original
+            return original, True
+
+
 def parse_and_save_unified_output(output_json: str, output_dir: str, logger):
     """
     Parse the unified JSON output and save to separate files.
@@ -183,8 +247,19 @@ def parse_and_save_unified_output(output_json: str, output_dir: str, logger):
         logger: Logger instance
     """
     try:
+        # First, try to repair any truncated JSON
+        repaired_json, was_truncated = repair_truncated_json(output_json, logger)
+
+        if was_truncated:
+            logger.warning("⚠️  JSON was truncated - output may be incomplete")
+            # Save the repaired version for reference
+            repaired_file = os.path.join(output_dir, "unified_output_repaired.json")
+            with open(repaired_file, "w", encoding="utf-8") as f:
+                f.write(repaired_json)
+            logger.info(f"Repaired JSON saved to: {repaired_file}")
+
         # Parse JSON
-        data = json.loads(output_json)
+        data = json.loads(repaired_json)
 
         # Save basic analysis (output.txt)
         if "basic" in data:
