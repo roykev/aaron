@@ -23,12 +23,50 @@ class TeacherReportUnifiedBase:
     """Base class with shared logic for unified report generation."""
 
     def __init__(self, config: Dict[str, Any]):
+        self.config = config
         self.course_name = config.get("course_name", "Unknown Course")
         self.class_level = config.get("class_level", "Unknown Level")
         # Track which parts to generate
         self.include_basic = True
         self.include_deep = True
         self.include_story = True
+        self.transcript = None
+
+    def read_transcript(self, suffix='.txt'):
+        """Read transcript file from videos directory."""
+        def find_transcript_file(videos_dir: str, suffix='.txt') -> str:
+            """Find the transcript file (.txt, .vtt, or .srt) in the videos directory."""
+            supported_formats = ['.txt', '.vtt', '.srt']
+            search_order = [suffix] + [fmt for fmt in supported_formats if fmt != suffix]
+
+            for fmt in search_order:
+                for file in os.listdir(videos_dir):
+                    if file.endswith(fmt):
+                        return os.path.join(videos_dir, file)
+
+            raise FileNotFoundError(f"No transcript file (.txt, .vtt, or .srt) found in {videos_dir}")
+
+        def parse_transcript_txt(transcript_path: str) -> str:
+            """Read and extract the full transcript text from the file."""
+            with open(transcript_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+
+            # Extract only the text content, removing speaker labels and timestamps
+            lines = content.split('\n')
+            transcript_lines = []
+
+            for line in lines:
+                line = line.strip()
+                if line and not line.startswith('[') and not line.startswith('('):
+                    transcript_lines.append(line)
+
+            return ' '.join(transcript_lines)
+
+        trans_path = find_transcript_file(self.config["videos_dir"])
+        if suffix == ".txt":
+            self.transcript = parse_transcript_txt(trans_path)
+        else:
+            raise ValueError(f"{trans_path}, suffix not supported!")
 
     def compose_system_prompt(self, lan="English", include_basic=True, include_deep=True, include_story=True):
         """Compose unified system prompt combining selected analyses."""
