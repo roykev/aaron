@@ -12,8 +12,8 @@ from utils.utils import get_logger
 
 class TeacherReport(AnthropicProxy):
     """Teacher report using Anthropic's Claude (default)."""
-    def __init__(self, config: Dict[str, Any], api_key: str = None):
-        super().__init__(config, api_key)
+    def __init__(self, config: Dict[str, Any], api_key: str = None, logger=None):
+        super().__init__(config, api_key, logger)
     
     def read_transcript(self, suffix='.txt'):
         def find_transcript_file(videos_dir: str, suffix='.txt') -> str:
@@ -93,8 +93,8 @@ class TeacherReport(AnthropicProxy):
 
 class TeacherReportOR(OpenRouterProxy):
     """Teacher report using OpenRouter (secondary option)."""
-    def __init__(self, config: Dict[str, Any], api_key: str = None, base_url: str = "https://openrouter.ai/api/v1"):
-        super().__init__(config, api_key, base_url)
+    def __init__(self, config: Dict[str, Any], api_key: str = None, base_url: str = "https://openrouter.ai/api/v1", logger=None):
+        super().__init__(config, api_key, base_url, logger)
     
     # Share the same methods with TeacherReport
     read_transcript = TeacherReport.read_transcript

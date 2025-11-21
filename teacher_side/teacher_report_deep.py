@@ -79,8 +79,8 @@ def build_tasks_array(lan="English"):
 
 class TeacherReportDeep(TeacherReport):
     """Deep analysis using Anthropic's Claude (default)."""
-    def __init__(self, config: Dict[str, Any], api_key: str = None):
-        super().__init__(config, api_key)
+    def __init__(self, config: Dict[str, Any], api_key: str = None, logger=None):
+        super().__init__(config, api_key, logger)
 
     def compose_system_prompt(self, lan="English"):      # System prompt - defines the analyzer's role and output format
             system_prompt= ("You are an educational content analyzer. Analyze the provided lecture transcription across multiple dimensions and provide structured feedback for improvement."
@@ -111,11 +111,11 @@ class TeacherReportDeep(TeacherReport):
 
 class TeacherReportDeepOR(TeacherReport):
     """Deep analysis using OpenRouter (secondary option)."""
-    def __init__(self, config: Dict[str, Any], api_key: str = None, base_url: str = "https://openrouter.ai/api/v1"):
+    def __init__(self, config: Dict[str, Any], api_key: str = None, base_url: str = "https://openrouter.ai/api/v1", logger=None):
         # Import the OR version
         from teacher_side.teacher_report import TeacherReportOR
         # Initialize with OpenRouter parent
-        TeacherReportOR.__init__(self, config, api_key, base_url)
+        TeacherReportOR.__init__(self, config, api_key, base_url, logger)
     
     # Share the same methods with TeacherReportDeep
     compose_system_prompt = TeacherReportDeep.compose_system_prompt

@@ -21,8 +21,8 @@ class TeacherReportSmartInsights(AnthropicProxy):
     Uses Anthropic's Claude (default).
     """
 
-    def __init__(self, config: Dict[str, Any], api_key: str = None):
-        super().__init__(config, api_key)
+    def __init__(self, config: Dict[str, Any], api_key: str = None, logger=None):
+        super().__init__(config, api_key, logger)
         self.deep_analysis = None
         self.story_analysis = None
         self.output_analysis = None
@@ -177,8 +177,8 @@ class TeacherReportSmartInsightsOR(OpenRouterProxy):
     Smart insights analysis using OpenRouter (secondary option).
     """
 
-    def __init__(self, config: Dict[str, Any], api_key: str = None, base_url: str = "https://openrouter.ai/api/v1"):
-        super().__init__(config, api_key, base_url)
+    def __init__(self, config: Dict[str, Any], api_key: str = None, base_url: str = "https://openrouter.ai/api/v1", logger=None):
+        super().__init__(config, api_key, base_url, logger)
         self.deep_analysis = None
         self.story_analysis = None
         self.output_analysis = None
