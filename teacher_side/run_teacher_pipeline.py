@@ -130,15 +130,15 @@ def run_teacher_pipeline(config_path="./config.yaml"):
         cached_file = os.path.join(output_dir, "unified_output_raw.txt")
 
         if use_cached and os.path.exists(cached_file):
-            logger.info(f"  📁 Loading cached API response from: {cached_file}")
+            logger.debug(f"  📁 Loading cached API response from: {cached_file}")
             with open(cached_file, 'r', encoding='utf-8') as f:
                 output = f.read()
-            logger.info(f"  ✅ Loaded {len(output)} characters from cache")
+            logger.debug(f"  ✅ Loaded {len(output)} characters from cache")
         else:
             logger.info(f"  Sending unified request to LLM (requesting: {parts_str})...")
             output = llmproxy.call_api()
 
-        logger.info("  Parsing and saving results...")
+        logger.debug("  Parsing and saving results...")
         success = parse_and_save_unified_output(output, output_dir, logger)
 
         if success:

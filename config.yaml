@@ -2,7 +2,7 @@
 #videos_dir: "/home/roy/FS/Dropbox/WORK/Ideas/aaron/ono/יזמות עסקית/מבוא ליזמות עסקית - סרטון עבור שיעור מקוון  מתאריך 03 03 2025 ושעת התחלה 12 15 - 15123880/"
 #videos_dir: "/home/roy/FS/Dropbox/WORK/Ideas/aaron/matan/Pharma2-Matan-Lecture2/"
 #videos_dir: "/home/roy/FS/Dropbox/WORK/Ideas/aaron/tal/"
-videos_dir: "/home/roy/FS/Dropbox/WORK/Ideas/aaron/ono/ella/2"
+videos_dir: "/home/roy/FS/Dropbox/WORK/Ideas/aaron/ono/lilach"
 #videos_dir: "/home/roy/Downloads/"
 
 # Teacher report generation flags
@@ -16,7 +16,7 @@ teacher_reports:
 
 # Language configuration for report generation
 language: "Hebrew"  # Options: "Hebrew", "English", etc.
-course_name: "Intro to Anatomy"
+course_name: "psychoplogy"
 class_level: "under graduate 1st year"
 logging:
     format: '%(asctime)s - %(levelname)s - %(message)s'
@@ -37,23 +37,22 @@ llm:
   use_cached_response: true
 
   # Model configuration:
-  # - For Anthropic backend: use direct model names like "claude-sonnet-4" or "claude-sonnet-4.5"
-  # - For OpenRouter backend: use OpenRouter paths like "anthropic/claude-sonnet-4.5" or "moonshotai/kimi-k2:free"
-  # 
-  # When use_openrouter: false (Anthropic direct):
+  # - For Anthropic backend (use_openrouter: false):
   #   - Requires ANTHROPIC_API_KEY environment variable
-  #   - Model examples: "claude-sonnet-4", "claude-sonnet-4.5", "claude-opus-4"
+  #   - Use direct model names: "claude-sonnet-4", "claude-sonnet-4.5", "claude-opus-4"
+  #   - Model names with "/" prefix will be stripped (e.g., "anthropic/claude-sonnet-4.5" → "claude-sonnet-4.5")
   #
-  # When use_openrouter: true (OpenRouter):
+  # - For OpenRouter backend (use_openrouter: true):
   #   - Requires OPEN_ROUTER_API_KEY environment variable
-  #   - Model examples: "anthropic/claude-sonnet-4.5", "moonshotai/kimi-k2:free", "google/gemini-2.0-flash-exp:free"
+  #   - Use OpenRouter paths: "anthropic/claude-sonnet-4.5", "moonshotai/kimi-k2:free", "google/gemini-2.0-flash-exp:free"
   #
   model: "claude-sonnet-4-5-20250929"
-  
+
   # Other OpenRouter models (uncomment and set use_openrouter: true to use):
   #model: "moonshotai/kimi-k2:free"
   #model: "google/gemini-2.0-flash-exp:free"
   #model: "deepseek/deepseek-chat-v3.1:free"
+  #model : "minimax/minimax-m2:free"
   #model: "anthropic/claude-sonnet-4.5"
 
   # Maximum tokens for LLM response
