@@ -2,9 +2,8 @@
 #videos_dir: "/home/roy/FS/Dropbox/WORK/Ideas/aaron/ono/יזמות עסקית/מבוא ליזמות עסקית - סרטון עבור שיעור מקוון  מתאריך 03 03 2025 ושעת התחלה 12 15 - 15123880/"
 #videos_dir: "/home/roy/FS/Dropbox/WORK/Ideas/aaron/matan/Pharma2-Matan-Lecture2/"
 #videos_dir: "/home/roy/FS/Dropbox/WORK/Ideas/aaron/tal/"
-#videos_dir: "/home/roy/FS/Dropbox/WORK/Ideas/aaron/ono/ella/2"
+videos_dir: "/home/roy/FS/Dropbox/WORK/Ideas/aaron/ono/ella/2"
 #videos_dir: "/home/roy/Downloads/"
-videos_dir: "/mnt/d/Documents/Work/AaronTheOwl/Courses/Ono College/פסיכולוגיה/Lecture1"
 
 # Teacher report generation flags
 teacher_reports:
@@ -17,7 +16,7 @@ teacher_reports:
 
 # Language configuration for report generation
 language: "Hebrew"  # Options: "Hebrew", "English", etc.
-course_name: "anatomy"
+course_name: "Intro to Anatomy"
 class_level: "under graduate 1st year"
 logging:
     format: '%(asctime)s - %(levelname)s - %(message)s'
