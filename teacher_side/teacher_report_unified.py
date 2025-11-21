@@ -198,16 +198,16 @@ class TeacherReportUnifiedBase:
 class TeacherReportUnified(TeacherReportUnifiedBase, AnthropicProxy):
     """Unified teacher report using Anthropic Claude (default)."""
 
-    def __init__(self, config: Dict[str, Any], api_key: str = None):
-        AnthropicProxy.__init__(self, config, api_key)
+    def __init__(self, config: Dict[str, Any], api_key: str = None, logger=None):
+        AnthropicProxy.__init__(self, config, api_key, logger)
         TeacherReportUnifiedBase.__init__(self, config)
 
 
 class TeacherReportUnifiedOR(TeacherReportUnifiedBase, OpenRouterProxy):
     """Unified teacher report using OpenRouter (fallback)."""
 
-    def __init__(self, config: Dict[str, Any], api_key: str = None, base_url: str = "https://openrouter.ai/api/v1"):
-        OpenRouterProxy.__init__(self, config, api_key, base_url)
+    def __init__(self, config: Dict[str, Any], api_key: str = None, base_url: str = "https://openrouter.ai/api/v1", logger=None):
+        OpenRouterProxy.__init__(self, config, api_key, base_url, logger)
         TeacherReportUnifiedBase.__init__(self, config)
 
 

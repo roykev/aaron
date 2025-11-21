@@ -27,6 +27,23 @@ class SnapshotGenerator:
     def __init__(self, story_file: str, deep_file: str, output_file: str):
         self.story_data = self._load_json_file(story_file)
         self.deep_data = self._load_json_file(deep_file)
+
+        # Ensure story_data and deep_data are lists (defensive programming)
+        # The unified mode might save them as dicts or lists depending on structure
+        if isinstance(self.story_data, dict):
+            # If it's a dict, wrap it in a list or extract the list if present
+            if 'story' in self.story_data:
+                self.story_data = self.story_data['story']
+            else:
+                self.story_data = [self.story_data]
+
+        if isinstance(self.deep_data, dict):
+            # If it's a dict, wrap it in a list or extract the list if present
+            if 'deep' in self.deep_data:
+                self.deep_data = self.deep_data['deep']
+            else:
+                self.deep_data = [self.deep_data]
+
         self.output_data = self._parse_output_file(output_file)
         self.output_dir = os.path.dirname(output_file)
         self.transcript_duration = self._get_transcript_duration()

@@ -113,7 +113,7 @@ def run_teacher_pipeline(config_path="./config.yaml"):
         UnifiedClass = TeacherReportUnifiedOR if use_openrouter else TeacherReportUnified
 
         logger.info(f"Step 1/2: Calling LLM for unified analysis ({parts_str})...")
-        llmproxy = UnifiedClass(config)
+        llmproxy = UnifiedClass(config, logger=logger)
         llmproxy.course_name = course_name
         llmproxy.class_level = class_level
         # Pass individual flags to control what gets generated
