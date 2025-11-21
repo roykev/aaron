@@ -226,6 +226,19 @@ def repair_truncated_json(output_json: str, logger) -> tuple[str, bool]:
 
     logger.info(f"DEBUG: After strip(), len={len(original)}, first 200: {repr(original[:200])}")
 
+    # Remove markdown code fences if present (```json ... ``` or ``` ... ```)
+    if original.startswith('```'):
+        logger.info("DEBUG: Detected markdown code fences, removing them...")
+        # Remove opening fence (```json or ```)
+        lines = original.split('\n')
+        if lines[0].startswith('```'):
+            lines = lines[1:]  # Remove first line
+        # Remove closing fence (```)
+        if lines and lines[-1].strip() == '```':
+            lines = lines[:-1]  # Remove last line
+        original = '\n'.join(lines)
+        logger.info(f"DEBUG: After removing fences, len={len(original)}, first 200: {repr(original[:200])}")
+
     # Try parsing as-is first
     try:
         json.loads(original)
