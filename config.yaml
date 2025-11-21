@@ -2,7 +2,7 @@
 #videos_dir: "/home/roy/FS/Dropbox/WORK/Ideas/aaron/ono/יזמות עסקית/מבוא ליזמות עסקית - סרטון עבור שיעור מקוון  מתאריך 03 03 2025 ושעת התחלה 12 15 - 15123880/"
 #videos_dir: "/home/roy/FS/Dropbox/WORK/Ideas/aaron/matan/Pharma2-Matan-Lecture2/"
 #videos_dir: "/home/roy/FS/Dropbox/WORK/Ideas/aaron/tal/"
-videos_dir: "/mnt/d/Documents/Work/AaronTheOwl/Courses/teacher_test/"
+videos_dir: "/home/user/aaron/test_lecture/"
 
 # Teacher report generation flags
 teacher_reports:
