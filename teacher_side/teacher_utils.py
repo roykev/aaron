@@ -812,6 +812,114 @@ def generate_deep_report(dir_path):
     print(f"Report saved to: {OUTPUT_MD}")
 
 
+def generate_active_report(dir_path):
+    """
+    Generate a markdown report from active.txt containing active learning analysis.
+    Uses bullet format for each dimension.
+
+    Args:
+        dir_path: Directory containing active.txt
+
+    Returns:
+        None (writes to active.md file)
+    """
+    INPUT_TXT = Path(os.path.join(dir_path, "active.txt"))
+    OUTPUT_MD = Path(os.path.join(dir_path, "active.md"))
+
+    emoji_map = {
+        "student_interaction": "🙋",
+        "short_tasks": "⚡",
+        "student_reflection": "🤔",
+        "collaboration": "👥",
+        "student_choice": "🎯",
+        "learning_scaffolding": "🪜"
+    }
+
+    # Read and parse JSON content using robust parser
+    try:
+        data = parse_json_from_file(INPUT_TXT)
+        print(f"DEBUG: Parsed data type: {type(data)}")
+        print(f"DEBUG: Data length: {len(data) if isinstance(data, list) else 'N/A'}")
+        if isinstance(data, list) and data:
+            print(f"DEBUG: First item type: {type(data[0])}")
+            print(f"DEBUG: First item content: {data[0]}")
+    except Exception as e:
+        print(f"Error loading active.txt: {e}")
+        raise
+
+    # Validate data structure
+    if not isinstance(data, list):
+        raise ValueError(f"Expected list of dimension objects, got {type(data)}")
+
+    if data and not isinstance(data[0], dict):
+        raise ValueError(f"Expected list of dictionaries, but first item is {type(data[0])}. Data preview: {str(data)[:200]}")
+
+    # Start building markdown
+    md = [
+        "# 🎓 Active Learning Analysis Report",
+        "",
+        "This report analyzes the use of active learning pedagogies and student engagement strategies.",
+        "",
+        "---",
+        ""
+    ]
+
+    # Process each dimension with bullet format
+    for dimension_data in data:
+        if not isinstance(dimension_data, dict):
+            print(f"Warning: Skipping non-dict item: {dimension_data}")
+            continue
+
+        dimension_name = dimension_data.get("dimension", "Unknown")
+        emoji = emoji_map.get(dimension_name.lower(), "📌")
+
+        strengths = dimension_data.get("strengths", [])
+        weaknesses = dimension_data.get("weaknesses", [])
+        recommendations = dimension_data.get("recommendations", [])
+        evidence = dimension_data.get("evidence", [])
+
+        # Convert snake_case to Title Case
+        display_name = dimension_name.replace("_", " ").title()
+
+        md.append(f"## {emoji} {display_name}")
+        md.append("")
+
+        # Strengths
+        if strengths:
+            md.append("**✅ Strengths:**")
+            for s in strengths:
+                md.append(f"- {s}")
+            md.append("")
+
+        # Weaknesses
+        if weaknesses:
+            md.append("**⚠️ Weaknesses:**")
+            for w in weaknesses:
+                md.append(f"- {w}")
+            md.append("")
+
+        # Recommendations
+        if recommendations:
+            md.append("**💡 Recommendations:**")
+            for r in recommendations:
+                md.append(f"- {r}")
+            md.append("")
+
+        # Evidence
+        if evidence:
+            md.append("**📝 Evidence:**")
+            for e in evidence:
+                md.append(f"- {e}")
+            md.append("")
+
+        md.append("---")
+        md.append("")
+
+    # Write to file
+    OUTPUT_MD.write_text("\n".join(md).strip() + "\n", encoding="utf-8")
+    print(f"Report saved to: {OUTPUT_MD}")
+
+
 
 def normalize_header(header: str) -> str:
     """
@@ -1127,12 +1235,14 @@ def generate_extended_insights(dir_path):
     """
     deep_path = Path(os.path.join(dir_path, "deep.txt"))
     story_path = Path(os.path.join(dir_path, "story.txt"))
+    active_path = Path(os.path.join(dir_path, "active.txt"))
     smart_path = Path(os.path.join(dir_path, "smart_insights.json"))
     output_path = Path(os.path.join(dir_path, "output.txt"))
 
     # Load data
     deep_data = None
     story_data = None
+    active_data = None
     smart_data = None
     title = "Class Analysis"
 
@@ -1141,6 +1251,12 @@ def generate_extended_insights(dir_path):
 
     if story_path.exists():
         story_data = parse_json_from_file(story_path)
+
+    if active_path.exists():
+        try:
+            active_data = parse_json_from_file(active_path)
+        except:
+            pass
 
     if smart_path.exists():
         try:
@@ -1415,6 +1531,95 @@ def generate_extended_insights(dir_path):
             md.append("</div>")
             md.append("</details>")
 
+        md.append("")
+
+    # Active Learning Analysis Section
+    if active_data:
+        md.append("## 🎯 Active Learning Dimensions")
+        md.append("")
+        md.append("<p style='color: #6b7280; font-style: italic;'>Analysis of student engagement, interaction, and active learning strategies</p>")
+        md.append("")
+
+        emoji_map = {
+            "student_interaction": "🙋",
+            "short_tasks": "⚡",
+            "student_reflection": "🤔",
+            "collaboration": "👥",
+            "student_choice": "🎯",
+            "learning_scaffolding": "🪜"
+        }
+
+        for dimension_data in active_data:
+            if not isinstance(dimension_data, dict):
+                continue
+
+            dimension_name = dimension_data.get("dimension", "Unknown")
+            emoji = emoji_map.get(dimension_name.lower(), "📌")
+
+            # Convert snake_case to Title Case
+            display_name = dimension_name.replace("_", " ").title()
+
+            strengths = dimension_data.get("strengths", [])
+            weaknesses = dimension_data.get("weaknesses", [])
+            recommendations = dimension_data.get("recommendations", [])
+            evidence = dimension_data.get("evidence", [])
+
+            # Create summary from first strength/weakness
+            summary = strengths[0] if strengths else (weaknesses[0] if weaknesses else "No data")
+            summary = summary[:80] + "..." if len(summary) > 80 else summary
+
+            md.append(f"<details style='margin: 15px 0;'>")
+            md.append(f"<summary style='cursor: pointer; padding: 15px; background: #fafafa; border-left: 4px solid #10b981; border-radius: 6px;'>")
+            md.append(f"<strong style='color: #374151; font-size: 1.1em;'>{emoji} {display_name}</strong>")
+            md.append(f"<br><span style='color: #6b7280; font-size: 0.9em;'>{summary}</span>")
+            md.append("</summary>")
+            md.append(f"<div style='padding: 20px; background: #f9fafb; margin-top: 10px; border-radius: 6px;'>")
+
+            # Strengths
+            if strengths:
+                md.append("<div style='margin-bottom: 15px;'>")
+                md.append("<h4 style='color: #22c55e; margin: 0 0 10px 0;'>✅ Strengths</h4>")
+                md.append("<ul style='margin: 5px 0; padding-left: 20px;'>")
+                for s in strengths:
+                    md.append(f"<li style='margin: 5px 0;'>{s}</li>")
+                md.append("</ul>")
+                md.append("</div>")
+
+            # Weaknesses
+            if weaknesses:
+                md.append("<div style='margin-bottom: 15px;'>")
+                md.append("<h4 style='color: #f59e0b; margin: 0 0 10px 0;'>⚠️ Areas for Improvement</h4>")
+                md.append("<ul style='margin: 5px 0; padding-left: 20px;'>")
+                for w in weaknesses:
+                    md.append(f"<li style='margin: 5px 0;'>{w}</li>")
+                md.append("</ul>")
+                md.append("</div>")
+
+            # Recommendations
+            if recommendations:
+                md.append("<div style='margin-bottom: 15px;'>")
+                md.append("<h4 style='color: #3b82f6; margin: 0 0 10px 0;'>💡 Recommendations</h4>")
+                md.append("<ul style='margin: 5px 0; padding-left: 20px;'>")
+                for r in recommendations:
+                    md.append(f"<li style='margin: 5px 0;'>{r}</li>")
+                md.append("</ul>")
+                md.append("</div>")
+
+            # Evidence
+            if evidence:
+                md.append("<div>")
+                md.append("<h4 style='color: #6b7280; margin: 0 0 10px 0;'>📝 Evidence</h4>")
+                md.append("<ul style='margin: 5px 0; padding-left: 20px;'>")
+                for e in evidence:
+                    md.append(f"<li style='margin: 5px 0; color: #6b7280;'>{e}</li>")
+                md.append("</ul>")
+                md.append("</div>")
+
+            md.append("</div>")
+            md.append("</details>")
+
+        md.append("")
+        md.append("---")
         md.append("")
 
     # Footer

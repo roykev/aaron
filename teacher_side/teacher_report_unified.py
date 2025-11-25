@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 AaronOwl Unified Teacher Report
-Combines all teacher report analyses (basic, deep, storytelling) into ONE LLM call
+Combines all teacher report analyses (basic, deep, storytelling, active learning) into ONE LLM call
 for maximum efficiency and cost savings.
 """
 
@@ -15,6 +15,7 @@ import yaml
 from teacher_side.teacher_prompts import get_tasks
 from teacher_side.teacher_report_deep import tasks_dict as deep_tasks_dict
 from teacher_side.teacher_report_storytelling import tasks_dict as story_tasks_dict
+from teacher_side.teacher_report_active_learning import tasks_dict as active_tasks_dict
 from utils.kimi_utils import OpenRouterProxy, AnthropicProxy
 from utils.utils import get_logger
 
@@ -30,6 +31,7 @@ class TeacherReportUnifiedBase:
         self.include_basic = True
         self.include_deep = True
         self.include_story = True
+        self.include_active = True
         self.transcript = None
 
     def read_transcript(self, suffix='.txt'):
@@ -68,12 +70,13 @@ class TeacherReportUnifiedBase:
         else:
             raise ValueError(f"{trans_path}, suffix not supported!")
 
-    def compose_system_prompt(self, lan="English", include_basic=True, include_deep=True, include_story=True):
+    def compose_system_prompt(self, lan="English", include_basic=True, include_deep=True, include_story=True, include_active=True):
         """Compose unified system prompt combining selected analyses."""
         # Store which parts to include
         self.include_basic = include_basic
         self.include_deep = include_deep
         self.include_story = include_story
+        self.include_active = include_active
 
         # Build list of enabled analyses
         enabled_analyses = []
@@ -83,6 +86,8 @@ class TeacherReportUnifiedBase:
             enabled_analyses.append("2. **Deep Pedagogical Analysis** - Communication, engagement, pedagogical approach, content delivery")
         if include_story:
             enabled_analyses.append("3. **Storytelling Analysis** - Narrative structure, curiosity, emotional engagement, coherence")
+        if include_active:
+            enabled_analyses.append("4. **Active Learning Analysis** - Student interaction, short tasks, reflection, collaboration, choice/agency, scaffolding")
 
         analyses_text = "\n".join(enabled_analyses)
 
@@ -142,6 +147,18 @@ class TeacherReportUnifiedBase:
                 '  ]'
             )
 
+        if include_active:
+            sections.append(
+                '  "active": [\n'
+                '    {"dimension": "student_interaction", "strengths": [...], "weaknesses": [...], "recommendations": [...], "evidence": [...]},\n'
+                '    {"dimension": "short_tasks", ...},\n'
+                '    {"dimension": "student_reflection", ...},\n'
+                '    {"dimension": "collaboration", ...},\n'
+                '    {"dimension": "student_choice", ...},\n'
+                '    {"dimension": "learning_scaffolding", ...}\n'
+                '  ]'
+            )
+
         system_prompt += ",\n".join(sections)
         system_prompt += (
             f"\n}}\n\n"
@@ -151,7 +168,7 @@ class TeacherReportUnifiedBase:
 
         self.system_prompt = system_prompt
 
-    def compose_user_prompt(self, lan="English", include_basic=True, include_deep=True, include_story=True):
+    def compose_user_prompt(self, lan="English", include_basic=True, include_deep=True, include_story=True, include_active=True):
         """Compose unified user prompt with selected tasks."""
 
         prompt_parts = []
@@ -178,6 +195,14 @@ class TeacherReportUnifiedBase:
             ])
             prompt_parts.append(f"# PART 3: STORYTELLING ANALYSIS\n{story_tasks}\n\n---\n")
 
+        # Add active learning tasks if enabled
+        if include_active:
+            active_tasks = "\n\n".join([
+                task(lan=lan, format='JSON')
+                for task in active_tasks_dict.values()
+            ])
+            prompt_parts.append(f"# PART 4: ACTIVE LEARNING ANALYSIS\n{active_tasks}\n\n---\n")
+
         prompt_parts.append(
             f"\nFINAL INSTRUCTIONS:\n"
             f"- Combine all results into a single JSON object as specified in the system prompt\n"
@@ -188,11 +213,11 @@ class TeacherReportUnifiedBase:
 
         self.user_prompt = "\n".join(prompt_parts)
 
-    def prepare_content(self, lan="English", include_basic=True, include_deep=True, include_story=True):
+    def prepare_content(self, lan="English", include_basic=True, include_deep=True, include_story=True, include_active=True):
         """Prepare unified content for analysis with selected parts."""
         self.read_transcript()
-        self.compose_system_prompt(lan, include_basic, include_deep, include_story)
-        self.compose_user_prompt(lan, include_basic, include_deep, include_story)
+        self.compose_system_prompt(lan, include_basic, include_deep, include_story, include_active)
+        self.compose_user_prompt(lan, include_basic, include_deep, include_story, include_active)
 
 
 class TeacherReportUnified(TeacherReportUnifiedBase, AnthropicProxy):
@@ -388,15 +413,23 @@ def parse_and_save_unified_output(output_json: str, output_dir: str, logger):
                 json.dump(data["story"], f, ensure_ascii=False, indent=2)
             logger.info(f"  ✅ Storytelling analysis saved to: {story_file}")
 
+        # Save active learning analysis (active.txt)
+        if "active" in data:
+            active_file = os.path.join(output_dir, "active.txt")
+            with open(active_file, "w", encoding="utf-8") as f:
+                json.dump(data["active"], f, ensure_ascii=False, indent=2)
+            logger.info(f"  ✅ Active learning analysis saved to: {active_file}")
+
+        raw_file = os.path.join(output_dir, "unified_output_raw.txt")
+        with open(raw_file, "w", encoding="utf-8") as f:
+            f.write(output_json)
+        logger.error(f"Raw output saved to: {raw_file}")
         return True
 
     except json.JSONDecodeError as e:
         logger.error(f"Failed to parse JSON output: {e}")
         # Save raw output for debugging
-        raw_file = os.path.join(output_dir, "unified_output_raw.txt")
-        with open(raw_file, "w", encoding="utf-8") as f:
-            f.write(output_json)
-        logger.error(f"Raw output saved to: {raw_file}")
+
         return False
 
 

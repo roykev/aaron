@@ -33,7 +33,7 @@ class OpenRouterProxy:
         """
         self.config = config
         self.logger = logger
-        self.api_key = env.get("OPEN_ROUTER_API_KEY")
+        self.api_key = source_key("OPEN_ROUTER_API_KEY")
         if not self.api_key:
             raise ValueError(
                 "API key is required. Set OPEN_ROUTER_API_KEY environment variable or pass api_key parameter.")

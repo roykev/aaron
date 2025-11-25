@@ -25,6 +25,7 @@ class TeacherReportSmartInsights(AnthropicProxy):
         super().__init__(config, api_key, logger)
         self.deep_analysis = None
         self.story_analysis = None
+        self.active_analysis = None
         self.output_analysis = None
 
     def load_analysis_files(self, output_dir: str):
@@ -32,7 +33,7 @@ class TeacherReportSmartInsights(AnthropicProxy):
         Load the analysis files from the output directory.
 
         Args:
-            output_dir: Directory containing output.txt, deep.txt, and story.txt
+            output_dir: Directory containing output.txt, deep.txt, story.txt, and active.txt
         """
         # Load deep.txt
         deep_path = os.path.join(output_dir, "deep.txt")
@@ -43,6 +44,12 @@ class TeacherReportSmartInsights(AnthropicProxy):
         story_path = os.path.join(output_dir, "story.txt")
         with open(story_path, 'r', encoding='utf-8') as f:
             self.story_analysis = f.read()
+
+        # Load active.txt (optional - active learning analysis)
+        active_path = os.path.join(output_dir, "active.txt")
+        if os.path.exists(active_path):
+            with open(active_path, 'r', encoding='utf-8') as f:
+                self.active_analysis = f.read()
 
         # Load output.txt (optional - for context about examples, questions, etc.)
         output_path = os.path.join(output_dir, "output.txt")
@@ -58,9 +65,10 @@ class TeacherReportSmartInsights(AnthropicProxy):
             f"insights and recommendations in a positive, constructive manner that celebrates strengths "
             f"and gently guides improvement.\n\n"
 
-            f"You will receive two detailed analyses:\n"
+            f"You will receive multiple detailed analyses:\n"
             f"1. **Deep Pedagogical Analysis** - covering communication, engagement, pedagogical approach, and content delivery\n"
-            f"2. **Storytelling Analysis** - covering narrative structure, character development, curiosity, emotional engagement, and coherence\n\n"
+            f"2. **Storytelling Analysis** - covering narrative structure, character development, curiosity, emotional engagement, and coherence\n"
+            f"3. **Active Learning Analysis** (if available) - covering student interaction, collaboration, reflection, choice/agency, and scaffolding\n\n"
 
             f"Your role is to:\n"
             f"1. Celebrate and highlight the TOP 3-5 most significant strengths that are driving student success\n"
@@ -86,6 +94,9 @@ class TeacherReportSmartInsights(AnthropicProxy):
             f"<deep_analysis>\n{self.deep_analysis}\n</deep_analysis>\n\n"
             f"<storytelling_analysis>\n{self.story_analysis}\n</storytelling_analysis>\n\n"
         )
+
+        if self.active_analysis:
+            system_prompt += f"<active_learning_analysis>\n{self.active_analysis}\n</active_learning_analysis>\n\n"
 
         if self.output_analysis:
             system_prompt += f"<class_details>\n{self.output_analysis}\n</class_details>\n\n"
@@ -137,6 +148,7 @@ class TeacherReportSmartInsights(AnthropicProxy):
             f'  "priority_actions": [\n'
             f'    {{\n'
             f'      "action": "Specific action to try in next class - phrase positively",\n'
+            f'      "duration": "how much time will the action take (preparation and class time),\n'          
             f'      "expected_outcome": "What positive change this could bring (use QUALITATIVE language only - NO percentages or specific numbers)",\n'
             f'      "difficulty": "easy/medium/hard"\n'
             f'    }}\n'
@@ -145,10 +157,11 @@ class TeacherReportSmartInsights(AnthropicProxy):
             f"}}\n\n"
 
             f"Requirements:\n"
+            f"- Be creative, yet specific in overall_assessment and key_message. don't repeat yourself"
             f"- Include 3-4 items in 'preserve' array\n"
             f"- Include 3-4 items in 'growth_opportunities' array (NOT 'improve')\n"
             f"- Include 4-5 items in 'priority_actions' array\n"
-            f"- Rank items by importance and feasibility (most impactful first)\n"
+            f"- Rank items by importance, duration and feasibility (most impactful that doesn't require much time first)\n"
             f"- Be specific and evidence-based\n"
             f"- Use ONLY positive, constructive language throughout\n"
             f"- NEVER use words like: weakness, lacking, poor, failure, inadequate, insufficient\n"
@@ -181,6 +194,7 @@ class TeacherReportSmartInsightsOR(OpenRouterProxy):
         super().__init__(config, api_key, base_url, logger)
         self.deep_analysis = None
         self.story_analysis = None
+        self.active_analysis = None
         self.output_analysis = None
     
     # Share the same methods with TeacherReportSmartInsights

@@ -25,7 +25,7 @@ def generate_smart_snapshot(output_dir: str):
     Generate smart snapshot report from existing output files.
 
     Args:
-        output_dir: Directory containing output.txt, deep.txt, and story.txt
+        output_dir: Directory containing output.txt, deep.txt, story.txt, and optionally active.txt
 
     Raises:
         FileNotFoundError: If required files are missing
@@ -34,6 +34,7 @@ def generate_smart_snapshot(output_dir: str):
     output_txt_path = os.path.join(output_dir, "output.txt")
     deep_txt_path = os.path.join(output_dir, "deep.txt")
     story_txt_path = os.path.join(output_dir, "story.txt")
+    active_txt_path = os.path.join(output_dir, "active.txt")
 
     missing_files = []
     if not os.path.exists(output_txt_path):
@@ -56,11 +57,18 @@ def generate_smart_snapshot(output_dir: str):
     print(f"   ✓ {output_txt_path}")
     print(f"   ✓ {deep_txt_path}")
     print(f"   ✓ {story_txt_path}")
+
+    # Check for optional active.txt
+    if os.path.exists(active_txt_path):
+        print(f"   ✓ {active_txt_path} (active learning analysis)")
+    else:
+        print(f"   ⊘ {active_txt_path} (optional - not found)")
+        active_txt_path = None
     print()
 
     # Create snapshot generator
     print("📊 Creating smart snapshot report...")
-    generator = SnapshotGenerator(story_txt_path, deep_txt_path, output_txt_path)
+    generator = SnapshotGenerator(story_txt_path, deep_txt_path, output_txt_path, active_txt_path)
 
     # Generate minimalist snapshot (smart report with key insights)
     print("   Generating minimalist snapshot (key insights)...")

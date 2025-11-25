@@ -12,7 +12,7 @@ from utils.utils import get_logger
 def task_narrative( lan="English",format='JSON'):  # Task 2: open questions
     prompt = (
         "Task name: <name>narrative/<name>\n"
-        """Analyze the lecture transcript and identify whether it follows a narrative arc structure. Specifically:
+        """Analyze the lecture transcript and identify whether it follows a structured narrative. Specifically:
 
 1. **Opening Hook** - What does the instructor use to capture attention in the first 3 minutes? Rate its effectiveness (strong/weak/absent) and identify the type (question/paradox/story/problem/none).
 
