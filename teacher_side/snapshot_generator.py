@@ -22,11 +22,20 @@ from utils.utils import get_logger
 
 
 class SnapshotGenerator:
-    """Generate teaching snapshots from story.txt, deep.txt, and output.txt"""
+    """Generate teaching snapshots from story.txt, deep.txt, active.txt, and output.txt"""
 
-    def __init__(self, story_file: str, deep_file: str, output_file: str):
+    def __init__(self, story_file: str, deep_file: str, output_file: str, active_file: str = None, smart_insights_file: str = None):
         self.story_data = self._load_json_file(story_file)
         self.deep_data = self._load_json_file(deep_file)
+        self.active_data = self._load_json_file(active_file) if active_file and os.path.exists(active_file) else None
+
+        # Load smart insights if available
+        self.smart_insights = None
+        if smart_insights_file and os.path.exists(smart_insights_file):
+            try:
+                self.smart_insights = self._load_json_file(smart_insights_file)
+            except:
+                pass
 
         # Ensure story_data and deep_data are lists (defensive programming)
         # The unified mode might save them as dicts or lists depending on structure
@@ -43,6 +52,13 @@ class SnapshotGenerator:
                 self.deep_data = self.deep_data['deep']
             else:
                 self.deep_data = [self.deep_data]
+
+        if self.active_data and isinstance(self.active_data, dict):
+            # If it's a dict, wrap it in a list or extract the list if present
+            if 'active' in self.active_data:
+                self.active_data = self.active_data['active']
+            else:
+                self.active_data = [self.active_data]
 
         self.output_data = self._parse_output_file(output_file)
         self.output_dir = os.path.dirname(output_file)
@@ -298,8 +314,8 @@ class SnapshotGenerator:
             print(f"Warning: Could not extract duration from transcript: {e}")
             return None
 
-    def _calculate_scores(self) -> Tuple[Dict[str, int], Dict[str, int], float]:
-        """Calculate scores for storytelling and deep learning dimensions"""
+    def _calculate_scores(self) -> Tuple[Dict[str, int], Dict[str, int], Dict[str, int], float]:
+        """Calculate scores for storytelling, deep learning, and active learning dimensions"""
 
         # Storytelling dimensions from story.txt
         storytelling_scores = {}
@@ -324,86 +340,241 @@ class SnapshotGenerator:
                     score = min(10, max(1, 5 + (strengths * 2) - (weaknesses * 1.5)))
                     deep_scores[module_name] = int(score)
 
+        # Active learning dimensions from active.txt
+        active_scores = {}
+        if self.active_data and isinstance(self.active_data, list):
+            for module in self.active_data:
+                if isinstance(module, dict):
+                    module_name = module.get('dimension', module.get('module', 'Unknown'))
+                    strengths = len(module.get('strengths', []))
+                    weaknesses = len(module.get('weaknesses', []))
+                    score = min(10, max(1, 5 + (strengths * 2) - (weaknesses * 1.5)))
+                    active_scores[module_name] = int(score)
+
         # Overall score
-        all_scores = list(storytelling_scores.values()) + list(deep_scores.values())
+        all_scores = list(storytelling_scores.values()) + list(deep_scores.values()) + list(active_scores.values())
         overall = sum(all_scores) / len(all_scores) if all_scores else 0
 
-        return storytelling_scores, deep_scores, overall
+        return storytelling_scores, deep_scores, active_scores, overall
 
-    def _get_top_strength(self) -> Tuple[str, str]:
-        """Extract the top strength from the data"""
-        # Look for highest-scoring storytelling dimension
-        storytelling_scores, _, _ = self._calculate_scores()
+    def _get_top_strength(self) -> Tuple[str, str, str]:
+        """Extract the top strength from ALL vectors (storytelling, deep, active)
+        Returns: (vector, dimension, strength) tuple
+        """
+        # Look for highest-scoring dimension across all vectors
+        storytelling_scores, deep_scores, active_scores, _ = self._calculate_scores()
 
-        if not storytelling_scores:
-            return "Unknown", "No data available"
+        # Combine all scores with their vectors
+        all_scores = []
+        for module, score in storytelling_scores.items():
+            all_scores.append(("Storytelling", module, score))
+        for module, score in deep_scores.items():
+            all_scores.append(("Deep Analysis", module, score))
+        for module, score in active_scores.items():
+            all_scores.append(("Active Learning", module, score))
 
-        top_module = max(storytelling_scores, key=storytelling_scores.get)
+        if not all_scores:
+            return "Unknown", "Unknown", "No data available"
 
-        # Get the first strength from that module
-        if isinstance(self.story_data, list):
+        # Find the highest scoring dimension
+        top_vector, top_module, top_score = max(all_scores, key=lambda x: x[2])
+
+        # Get the first strength from that module in the appropriate data source
+        if top_vector == "Storytelling" and isinstance(self.story_data, list):
             for module in self.story_data:
                 if isinstance(module, dict) and module.get('module') == top_module:
                     strengths = module.get('strengths', [])
-                    return top_module, strengths[0] if strengths else ""
+                    return top_vector, top_module, strengths[0] if strengths else ""
 
-        return top_module, ""
+        elif top_vector == "Deep Analysis" and isinstance(self.deep_data, list):
+            for module in self.deep_data:
+                if isinstance(module, dict) and module.get('module') == top_module:
+                    strengths = module.get('strengths', [])
+                    return top_vector, top_module, strengths[0] if strengths else ""
 
-    def _get_preserve_items(self) -> List[Tuple[str, str]]:
-        """Extract items to preserve from all modules"""
+        elif top_vector == "Active Learning" and self.active_data and isinstance(self.active_data, list):
+            for module in self.active_data:
+                if isinstance(module, dict) and (module.get('dimension') == top_module or module.get('module') == top_module):
+                    strengths = module.get('strengths', [])
+                    return top_vector, top_module, strengths[0] if strengths else ""
+
+        return top_vector, top_module, ""
+
+    def _find_vector_for_dimension(self, dimension: str) -> str:
+        """Find which analysis vector (Storytelling, Deep Analysis, Active Learning) a dimension belongs to"""
+        # Check storytelling
+        if isinstance(self.story_data, list):
+            for module in self.story_data:
+                if isinstance(module, dict):
+                    module_name = module.get('module', module.get('dimension', ''))
+                    if module_name.lower() == dimension.lower():
+                        return "Storytelling"
+
+        # Check deep analysis
+        if isinstance(self.deep_data, list):
+            for module in self.deep_data:
+                if isinstance(module, dict):
+                    module_name = module.get('module', module.get('dimension', ''))
+                    if module_name.lower() == dimension.lower():
+                        return "Deep Analysis"
+
+        # Check active learning
+        if self.active_data and isinstance(self.active_data, list):
+            for module in self.active_data:
+                if isinstance(module, dict):
+                    module_name = module.get('dimension', module.get('module', ''))
+                    if module_name.lower() == dimension.lower():
+                        return "Active Learning"
+
+        # Default fallback - return the dimension itself instead of generic "Analysis"
+        return dimension
+
+    def _get_preserve_items(self) -> List[Tuple[str, str, str, str, str]]:
+        """Extract items to preserve from smart_insights if available, otherwise from ALL analysis approaches (story, deep, active)
+        Returns: List of (vector, dimension, strength, why_important, evidence) tuples
+        """
         items = []
 
+        # PRIORITY 1: Use 'preserve' array from smart_insights.json if available
+        if self.smart_insights and isinstance(self.smart_insights, dict):
+            preserve = self.smart_insights.get('preserve', [])
+            if preserve:
+                for item in preserve:
+                    if isinstance(item, dict):
+                        # Extract dimension, strength, why_important, and evidence
+                        dimension = item.get('dimension', 'Unknown')
+                        strength = item.get('strength', '')
+                        why_important = item.get('why_important', '')
+                        evidence = item.get('evidence', '')
+                        # Find which vector this dimension belongs to
+                        vector = self._find_vector_for_dimension(dimension)
+                        items.append((vector, dimension, strength, why_important, evidence))
+                return items[:5]  # Return top 5 from smart insights
+
+        # FALLBACK: If smart_insights not available, extract from raw analysis files
         # From storytelling
         if isinstance(self.story_data, list):
             for module in self.story_data:
                 if isinstance(module, dict):
-                    module_name = module.get('module', 'Unknown')
+                    module_name = module.get('module', module.get('dimension', 'Unknown'))
                     strengths = module.get('strengths', [])
                     for strength in strengths[:1]:  # Top strength per module
-                        items.append((module_name, strength))
+                        items.append(("Storytelling", module_name, strength, "", ""))
 
-        return items[:3]  # Top 3
+        # From deep learning
+        if isinstance(self.deep_data, list):
+            for module in self.deep_data:
+                if isinstance(module, dict):
+                    module_name = module.get('module', module.get('dimension', 'Unknown'))
+                    strengths = module.get('strengths', [])
+                    for strength in strengths[:1]:  # Top strength per module
+                        items.append(("Deep Analysis", module_name, strength, "", ""))
 
-    def _get_improve_items(self) -> List[Tuple[str, str, str]]:
-        """Extract items to improve"""
+        # From active learning
+        if self.active_data and isinstance(self.active_data, list):
+            for module in self.active_data:
+                if isinstance(module, dict):
+                    module_name = module.get('dimension', module.get('module', 'Unknown'))
+                    strengths = module.get('strengths', [])
+                    for strength in strengths[:1]:  # Top strength per module
+                        items.append(("Active Learning", module_name, strength, "", ""))
+
+        return items[:5]  # Top 5 from all approaches
+
+    def _get_improve_items(self) -> List[Tuple[str, str, str, str, str]]:
+        """Extract items to improve from smart_insights if available, otherwise from ALL analysis approaches (story, deep, active)
+        Returns: List of (vector, dimension, opportunity, suggestion, potential_benefit) tuples
+        """
         items = []
 
-        # From storytelling and deep learning
-        all_modules = []
+        # PRIORITY 1: Use 'growth_opportunities' array from smart_insights.json if available
+        if self.smart_insights and isinstance(self.smart_insights, dict):
+            growth_opportunities = self.smart_insights.get('growth_opportunities', [])
+            if growth_opportunities:
+                for opportunity_obj in growth_opportunities:
+                    if isinstance(opportunity_obj, dict):
+                        # Extract dimension, opportunity, suggestion, and potential_benefit
+                        dimension = opportunity_obj.get('dimension', 'Unknown')
+                        opportunity = opportunity_obj.get('opportunity', '')
+                        suggestion = opportunity_obj.get('suggestion', '')
+                        potential_benefit = opportunity_obj.get('potential_benefit', '')
+                        # Find which vector this dimension belongs to
+                        vector = self._find_vector_for_dimension(dimension)
+                        items.append((vector, dimension, opportunity, suggestion, potential_benefit))
+                return items[:5]  # Return top 5 from smart insights
+
+        # FALLBACK: If smart_insights not available, extract from raw analysis files
+        # From storytelling
         if isinstance(self.story_data, list):
-            all_modules.extend(self.story_data)
+            for module in self.story_data:
+                if isinstance(module, dict):
+                    module_name = module.get('module', module.get('dimension', 'Unknown'))
+                    weaknesses = module.get('weaknesses', [])
+                    recommendations = module.get('recommendations', [])
+                    for i, weakness in enumerate(weaknesses[:1]):  # Top weakness per module
+                        recommendation = recommendations[i] if i < len(recommendations) else ""
+                        items.append(("Storytelling", module_name, weakness, recommendation, ""))
+
+        # From deep learning
         if isinstance(self.deep_data, list):
-            all_modules.extend(self.deep_data)
+            for module in self.deep_data:
+                if isinstance(module, dict):
+                    module_name = module.get('module', module.get('dimension', 'Unknown'))
+                    weaknesses = module.get('weaknesses', [])
+                    recommendations = module.get('recommendations', [])
+                    for i, weakness in enumerate(weaknesses[:1]):  # Top weakness per module
+                        recommendation = recommendations[i] if i < len(recommendations) else ""
+                        items.append(("Deep Analysis", module_name, weakness, recommendation, ""))
 
-        for module in all_modules:
-            if isinstance(module, dict):
-                module_name = module.get('module', 'Unknown')
-                weaknesses = module.get('weaknesses', [])
-                recommendations = module.get('recommendations', [])
-                for i, weakness in enumerate(weaknesses[:1]):  # Top weakness per module
-                    recommendation = recommendations[i] if i < len(recommendations) else ""
-                    items.append((module_name, weakness, recommendation))
+        # From active learning
+        if self.active_data and isinstance(self.active_data, list):
+            for module in self.active_data:
+                if isinstance(module, dict):
+                    module_name = module.get('dimension', module.get('module', 'Unknown'))
+                    weaknesses = module.get('weaknesses', [])
+                    recommendations = module.get('recommendations', [])
+                    for i, weakness in enumerate(weaknesses[:1]):  # Top weakness per module
+                        recommendation = recommendations[i] if i < len(recommendations) else ""
+                        items.append(("Active Learning", module_name, weakness, recommendation, ""))
 
-        return items[:3]  # Top 3
+        return items[:5]  # Top 5 from all approaches
 
     def _get_action_items(self) -> List[Tuple[str, str, str]]:
-        """Extract actionable recommendations"""
+        """Extract actionable recommendations from smart_insights if available, otherwise from ALL analysis approaches (story, deep, active)"""
         items = []
 
+        # PRIORITY 1: Use 'priority_actions' array from smart_insights.json if available
+        if self.smart_insights and isinstance(self.smart_insights, dict):
+            priority_actions = self.smart_insights.get('priority_actions', [])
+            if priority_actions:
+                for action_item in priority_actions:
+                    if isinstance(action_item, dict):
+                        # Extract action, expected outcome, and difficulty
+                        action = action_item.get('action', '')
+                        duration = action_item.get('duration', '')
+                        difficulty = action_item.get('difficulty', 'unknown')
+                        # Use difficulty/duration as the tag
+                        tag = f"{difficulty} ({duration})" if duration else difficulty
+                        items.append(("Priority Action", action, tag))
+                return items[:6]  # Return top 6 from smart insights
+
+        # FALLBACK: Extract from raw analysis files
         all_modules = []
         if isinstance(self.story_data, list):
             all_modules.extend(self.story_data)
         if isinstance(self.deep_data, list):
             all_modules.extend(self.deep_data)
+        if self.active_data and isinstance(self.active_data, list):
+            all_modules.extend(self.active_data)
 
         for module in all_modules:
             if isinstance(module, dict):
-                module_name = module.get('module', 'Unknown')
+                module_name = module.get('module', module.get('dimension', 'Unknown'))
                 recommendations = module.get('recommendations', [])
                 for rec in recommendations[:1]:  # One per module
                     items.append((module_name, rec, "פעולה מומלצת"))
 
-        return items[:4]  # Top 4
+        return items[:6]  # Top 6 from all approaches
 
     def _get_hot_topics(self) -> List[str]:
         """Extract hot topics from examples and interactions"""
@@ -447,10 +618,13 @@ class SnapshotGenerator:
             sections = self.output_data.get('sections', [])
             duration = sections[-1].get('end', '60 דקות') if sections else '60 דקות'
 
-        top_module, top_strength = self._get_top_strength()
-
-        # Simple main message without fictional scoring
-        main_msg = "שיעור עם נקודות חזקות ותחומים לשיפור"
+        # Get main message from smart insights if available, otherwise use generic message
+        if self.smart_insights and isinstance(self.smart_insights, dict):
+            main_msg = self.smart_insights.get('overall_assessment',
+                                               self.smart_insights.get('key_message',
+                                                                      'שיעור עם נקודות חזקות ותחומים לשיפור'))
+        else:
+            main_msg = "שיעור עם נקודות חזקות ותחומים לשיפור"
 
         md = f"""# Teaching Snapshot
 
@@ -465,67 +639,106 @@ class SnapshotGenerator:
 
 ## Outstanding Performance
 
-<div style='background: #f9fafb; border-left: 3px solid #6b7280; padding: 15px; margin: 15px 0;'>
-<p style='margin: 0; color: #374151;'><strong>{top_module}:</strong> {top_strength}</p>
-</div>
-
----
-
-## Successful Practices
-
 """
+
+        # Use top_strength from smart_insights if available, otherwise use fallback method
+        if self.smart_insights and isinstance(self.smart_insights, dict):
+            top_strength_obj = self.smart_insights.get('top_strength')
+            if top_strength_obj and isinstance(top_strength_obj, dict):
+                dimension = top_strength_obj.get('dimension', 'Unknown')
+                description = top_strength_obj.get('description', '')
+                evidence = top_strength_obj.get('evidence', '')
+
+                # Find which vector this dimension belongs to
+                vector = self._find_vector_for_dimension(dimension)
+
+                md += "<div style='background: #f9fafb; border-left: 3px solid #6b7280; padding: 15px; margin: 15px 0;'>\n"
+                # Only show vector if it's different from dimension
+                if vector.lower() != dimension.lower():
+                    md += f"<p style='margin: 0; color: #374151;'><strong>{vector}: {dimension}</strong></p>\n"
+                else:
+                    md += f"<p style='margin: 0; color: #374151;'><strong>{dimension}</strong></p>\n"
+                md += f"<p style='margin: 10px 0 0 0; color: #4b5563;'>{description}</p>\n"
+                if evidence:
+                    md += f"<p style='margin: 10px 0 0 0; color: #6b7280; font-style: italic;'><strong>Evidence:</strong> {evidence}</p>\n"
+                md += "</div>\n\n"
+            else:
+                # Fallback to old method if top_strength not available
+                top_vector, top_module, top_strength = self._get_top_strength()
+                md += "<div style='background: #f9fafb; border-left: 3px solid #6b7280; padding: 15px; margin: 15px 0;'>\n"
+                md += f"<p style='margin: 0; color: #374151;'><strong>{top_vector}: {top_module}:</strong> {top_strength}</p>\n"
+                md += "</div>\n\n"
+        else:
+            # Fallback to old method if smart_insights not available
+            top_vector, top_module, top_strength = self._get_top_strength()
+            md += "<div style='background: #f9fafb; border-left: 3px solid #6b7280; padding: 15px; margin: 15px 0;'>\n"
+            md += f"<p style='margin: 0; color: #374151;'><strong>{top_vector}: {top_module}:</strong> {top_strength}</p>\n"
+            md += "</div>\n\n"
+
+        md += "---\n\n"
+
+        # Long-term opportunity section (if exists in smart_insights)
+        if self.smart_insights and isinstance(self.smart_insights, dict):
+            long_term_opp = self.smart_insights.get('long_term_opportunity')
+            if long_term_opp:
+                md += """## Long-Term Growth Opportunity
+
+<div style='background: #eff6ff; border-left: 3px solid #3b82f6; padding: 15px; margin: 15px 0;'>
+"""
+                md += f"<p style='margin: 0; color: #1e40af;'><strong>Strategic Vision:</strong> {long_term_opp}</p>\n"
+                md += "</div>\n\n"
+                md += "---\n\n"
+
+        md += "## Successful Practices\n\n"
 
         # Preserve section - each item expandable with full details
         preserve_items = self._get_preserve_items()
-        for i, (module, item) in enumerate(preserve_items, 1):
+        for i, (vector, module, item, why_important, evidence) in enumerate(preserve_items, 1):
             # Create a short summary (first 80 chars of the item)
             summary = item[:80] + '...' if len(item) > 80 else item
             md += f"<details style='margin: 10px 0;'>\n"
             md += f"<summary style='cursor: pointer; padding: 12px; background: #fafafa; border-left: 3px solid #9ca3af;'>"
-            md += f"<strong style='color: #374151;'>{i}. {module}:</strong> <span style='color: #6b7280;'>{summary}</span>"
+            # Only show vector if it's different from the dimension
+            if vector.lower() != module.lower():
+                md += f"<strong style='color: #374151;'>{i}. {vector}: {module}:</strong> <span style='color: #6b7280;'>{summary}</span>"
+            else:
+                md += f"<strong style='color: #374151;'>{i}. {module}:</strong> <span style='color: #6b7280;'>{summary}</span>"
             md += "</summary>\n\n"
             md += f"<div style='padding: 15px; background: #f9fafb; margin-top: 10px;'>\n"
-            md += f"<p><strong>חוזקה עיקרית:</strong> {item}</p>\n\n"
 
-            # Find the full module data
-            module_data = next((m for m in self.story_data if m['module'] == module), None)
-            if module_data and len(module_data['strengths']) > 1:
-                md += "<p><strong>חוזקות נוספות:</strong></p>\n<ul>\n"
-                for strength in module_data['strengths'][1:]:  # Skip first one, already shown
-                    md += f"<li>{strength}</li>\n"
-                md += "</ul>\n"
+            # Add why_important if available
+            if why_important:
+                md += f"<p><strong>למה זה חשוב:</strong> {why_important}</p>\n\n"
+
+            # Add evidence if available
+            if evidence:
+                md += f"<p style='font-style: italic; color: #6b7280;'><strong>Evidence:</strong> {evidence}</p>\n\n"
 
             md += "</div>\n</details>\n\n"
 
         md += "---\n\n"
 
         # Improve section - each item expandable with full details
-        md += "## Areas for Enhancement\n\n"
+        md += "## Opportunities for Enhancement\n\n"
         improve_items = self._get_improve_items()
-        for i, (module, weakness, recommendation) in enumerate(improve_items, 1):
-            # Create a short summary (first 80 chars of the weakness)
-            summary = weakness[:80] + '...' if len(weakness) > 80 else weakness
+        for i, (vector, module, opportunity, suggestion, potential_benefit) in enumerate(improve_items, 1):
+            # Create a short summary (first 80 chars of the opportunity)
+            summary = opportunity[:80] + '...' if len(opportunity) > 80 else opportunity
             md += f"<details style='margin: 10px 0;'>\n"
             md += f"<summary style='cursor: pointer; padding: 12px; background: #fafafa; border-left: 3px solid #9ca3af;'>"
-            md += f"<strong style='color: #374151;'>{i}. {module}:</strong> <span style='color: #6b7280;'>{summary}</span>"
+            # Only show vector if it's different from the dimension
+            if vector.lower() != module.lower():
+                md += f"<strong style='color: #374151;'>{i}. {vector}: {module}:</strong> <span style='color: #6b7280;'>{summary}</span>"
+            else:
+                md += f"<strong style='color: #374151;'>{i}. {module}:</strong> <span style='color: #6b7280;'>{summary}</span>"
             md += "</summary>\n\n"
             md += f"<div style='padding: 15px; background: #f9fafb; margin-top: 10px;'>\n"
-            md += f"<p><strong>הבעיה:</strong> {weakness}</p>\n\n"
-            md += f"<p><strong>הפתרון:</strong> {recommendation}</p>\n\n"
+            md += f"<p><strong>ההזדמנות:</strong> {opportunity}</p>\n\n"
+            md += f"<p><strong>הפתרון:</strong> {suggestion}</p>\n\n"
 
-            # Find the full module data
-            module_data = None
-            for m in self.story_data + self.deep_data:
-                if m['module'] == module:
-                    module_data = m
-                    break
-
-            if module_data and len(module_data['weaknesses']) > 1:
-                md += "<p><strong>תחומים נוספים לשיפור:</strong></p>\n<ul>\n"
-                # Skip the first weakness as it's already shown
-                for weak in module_data['weaknesses'][1:]:
-                    md += f"<li>{weak}</li>\n"
-                md += "</ul>\n"
+            # Add potential_benefit if available
+            if potential_benefit:
+                md += f"<p style='color: #059669;'><strong>התועלת הפוטנציאלית:</strong> {potential_benefit}</p>\n\n"
 
             md += "</div>\n</details>\n\n"
 
@@ -535,9 +748,27 @@ class SnapshotGenerator:
         md += "## Recommended Actions for Next Session\n\n"
         action_items = self._get_action_items()
         for i, (module, action, tag) in enumerate(action_items, 1):
+            # Determine difficulty icon and color based on tag
+            difficulty_icon = ""
+            difficulty_color = "#9ca3af"
+            if tag and tag != "פעולה מומלצת":
+                tag_lower = tag.lower()
+                if "easy" in tag_lower or "קל" in tag_lower:
+                    difficulty_icon = "🟢 "
+                    difficulty_color = "#10b981"  # green
+                elif "medium" in tag_lower or "בינוני" in tag_lower:
+                    difficulty_icon = "🟡 "
+                    difficulty_color = "#f59e0b"  # amber
+                elif "hard" in tag_lower or "difficult" in tag_lower or "קשה" in tag_lower:
+                    difficulty_icon = "🔴 "
+                    difficulty_color = "#ef4444"  # red
+
             md += f"<details style='margin: 10px 0;'>\n"
             md += f"<summary style='cursor: pointer; padding: 12px; background: #fafafa; border-left: 3px solid #9ca3af;'>"
-            md += f"<strong style='color: #374151;'>{i}. {action[:80]}{'...' if len(action) > 80 else ''}</strong>"
+            # Show action summary with time/difficulty tag and icon
+            action_summary = action[:80] + '...' if len(action) > 80 else action
+            tag_display = f" <span style='color: {difficulty_color}; font-size: 0.9em;'>{difficulty_icon}[{tag}]</span>" if tag and tag != "פעולה מומלצת" else ""
+            md += f"<strong style='color: #374151;'>{i}. {action_summary}</strong>{tag_display}"
             md += "</summary>\n\n"
             md += f"<div style='padding: 15px; background: #f9fafb; margin-top: 10px;'>\n"
             md += f"<p><strong>פעולה מלאה:</strong> {action}</p>\n\n"
@@ -634,6 +865,31 @@ class SnapshotGenerator:
 
             md += "\n"
 
+        # Add Active Learning section if available
+        if self.active_data and isinstance(self.active_data, list):
+            md += "\n### 🎯 Active Learning Dimensions\n"
+
+            for module in self.active_data:
+                module_name = module.get('dimension', module.get('module', 'Unknown'))
+                md += f"\n#### {module_name}\n\n"
+
+                if module.get('strengths'):
+                    md += "**חוזקות:**\n"
+                    for strength in module['strengths']:
+                        md += f"- {strength}\n"
+
+                if module.get('weaknesses'):
+                    md += "\n**חולשות:**\n"
+                    for weakness in module['weaknesses']:
+                        md += f"- {weakness}\n"
+
+                if module.get('recommendations'):
+                    md += "\n**המלצות:**\n"
+                    for rec in module['recommendations']:
+                        md += f"- {rec}\n"
+
+                md += "\n"
+
         md += "\n---\n\n"
 
         # Section breakdown
@@ -719,9 +975,19 @@ def main():
     story_path = os.path.join(output_dir,"story.txt")
     deep_path = os.path.join(output_dir,"deep.txt")
     basic_path = os.path.join(output_dir,"output.txt")
+    active_path = os.path.join(output_dir,"active.txt")
+    smart_insights_path = os.path.join(output_dir,"smart_insights.json")
+
+    # Check if active.txt exists
+    if not os.path.exists(active_path):
+        active_path = None
+
+    # Check if smart_insights.json exists
+    if not os.path.exists(smart_insights_path):
+        smart_insights_path = None
 
     # Generate snapshot
-    generator = SnapshotGenerator(story_path, deep_path, basic_path)
+    generator = SnapshotGenerator(story_path, deep_path, basic_path, active_path, smart_insights_path)
 
     # Generate both minimalist and expanded by default
     minimalist_markdown = generator.generate_minimalist_markdown()
