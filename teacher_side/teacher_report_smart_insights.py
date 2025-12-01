@@ -121,7 +121,7 @@ class TeacherReportSmartInsights(AnthropicProxy):
 
             f"Return a JSON object with this EXACT structure:\n"
             f"{{\n"
-            f'  "overall_assessment": "One warm, appreciative paragraph celebrating the instructor\'s strengths and gently mentioning growth opportunities",\n'
+            f'  "overall_assessment": "One warm, appreciative short paragraph celebrating the instructor\'s strengths and gently mentioning growth opportunities (20-30 words)",\n'
             f'  "key_message": "One positive, actionable sentence capturing the path forward",\n'
             f'  "top_strength": {{\n'
             f'    "dimension": "Name of the dimension (e.g., Curiosity, Engagement)",\n'
@@ -153,7 +153,7 @@ class TeacherReportSmartInsights(AnthropicProxy):
             f'      "difficulty": "easy/medium/hard"\n'
             f'    }}\n'
             f'  ],\n'
-            f'  "long_term_opportunity": "The ONE area that offers the most exciting potential for growth and impact"\n'
+            f'  "long_term_opportunity": "The ONE area that offers the most exciting potential for growth and impact (20-30 words)"\n'
             f"}}\n\n"
 
             f"Requirements:\n"
