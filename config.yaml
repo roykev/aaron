@@ -7,18 +7,18 @@ videos_dir: "/home/roy/FS/Dropbox/WORK/Ideas/aaron/demo/psy/"
 
 # Teacher report generation flags
 teacher_reports:
-  use_unified_mode: true         # ⚡ NEW! Use 1 LLM call instead of 4 (much faster and cheaper)
-  generate_basic: true           # Generate basic report (sections, examples, interactions)
-  generate_deep: true            # Generate deep analysis report
-  generate_story: true           # Generate storytelling analysis report
-  generate_active: true          # Generate active learning analysis report
-  generate_smart_insights: true  # Generate AI-powered smart insights (requires deep.txt, story.txt, and optionally active.txt)
+  use_unified_mode: false         # ⚡ NEW! Use 1 LLM call instead of 4 (much faster and cheaper)
+  generate_basic: false           # Generate basic report (sections, examples, interactions)
+  generate_deep: false            # Generate deep analysis report
+  generate_story: false           # Generate storytelling analysis report
+  generate_active: false          # Generate active learning analysis report
+  generate_smart_insights: false  # Generate AI-powered smart insights (requires deep.txt, story.txt, and optionally active.txt)
   generate_markdown: true        # Generate markdown reports from outputs
 
 # Language configuration for report generation
-language: "Hebrew"  # Options: "Hebrew", "English", etc.
+language: "English"  # Options: "Hebrew", "English", etc.
 course_name: "psychology"
-class_level: "under graduate 1st year"
+class_level: "undergraduate 1st year"
 logging:
     format: '%(asctime)s - %(levelname)s - %(message)s'
     level: INFO  # Changed from WARNING to INFO to see more details
@@ -55,7 +55,8 @@ llm:
   #model: "deepseek/deepseek-chat-v3.1:free"
   #model : "minimax/minimax-m2:free"
   #model: "anthropic/claude-sonnet-4.5"
-  model: "x-ai/grok-4.1-fast"
+  #model: "nvidia/nemotron-nano-12b-v2-vl:free"
+  model: "amazon/nova-2-lite-v1:free"
 
   # Maximum tokens for LLM response
   # - Default: 12000 (suitable for single analysis)
@@ -66,3 +67,27 @@ llm:
 # Video summary configuration
 summary:
   max_words: 300  # Maximum number of words in the summary
+
+# Gemini RAG configuration
+gemini_rag:
+  # Store configuration
+  # The store_id is looked up from the registry using (institute, course_name)
+  # Registry file: chat/gemini/store_registry.json
+
+  # Model configuration
+  model: "gemini-2.0-flash-exp"  # Gemini model to use for RAG queries
+
+  # Chunking configuration
+  chunk_interval_seconds: 30  # Time interval for transcript chunks (in seconds)
+
+  # Upload configuration
+  max_upload_wait_seconds: 300  # Maximum time to wait for file uploads (5 minutes)
+  max_files_per_query: 10  # Maximum number of files to use as context per query
+
+  # Context files (optional - used by interactive.py for better context)
+  concepts_file: "concepts.txt"  # Path to concepts file (relative to videos_dir or absolute)
+  summary_file: "short_summary.txt"  # Path to short summary file (relative to videos_dir or absolute)
+
+  # Logging configuration
+  query_log_path: "chat/gemini/query_log.json"  # Path to unified query log file (JSON Lines format)
+  institute: "ono"  # Institute name (optional, leave empty if not applicable)

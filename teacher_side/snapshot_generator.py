@@ -24,10 +24,11 @@ from utils.utils import get_logger
 class SnapshotGenerator:
     """Generate teaching snapshots from story.txt, deep.txt, active.txt, and output.txt"""
 
-    def __init__(self, story_file: str, deep_file: str, output_file: str, active_file: str = None, smart_insights_file: str = None):
+    def __init__(self, story_file: str, deep_file: str, output_file: str, active_file: str = None, smart_insights_file: str = None, language: str = "English"):
         self.story_data = self._load_json_file(story_file)
         self.deep_data = self._load_json_file(deep_file)
         self.active_data = self._load_json_file(active_file) if active_file and os.path.exists(active_file) else None
+        self.language = language.lower()  # Store language preference (english or hebrew)
 
         # Load smart insights if available
         self.smart_insights = None
@@ -63,6 +64,22 @@ class SnapshotGenerator:
         self.output_data = self._parse_output_file(output_file)
         self.output_dir = os.path.dirname(output_file)
         self.transcript_duration = self._get_transcript_duration()
+
+    def _translate(self, hebrew_text: str, english_text: str) -> str:
+        """
+        Return the appropriate text based on language setting.
+
+        Args:
+            hebrew_text: Text in Hebrew
+            english_text: Text in English
+
+        Returns:
+            The text in the appropriate language
+        """
+        if self.language == "hebrew":
+            return hebrew_text
+        else:  # Default to English for any other value
+            return english_text
 
     @staticmethod
     def _normalize_header(header: str) -> str:
@@ -198,23 +215,17 @@ class SnapshotGenerator:
 
         # Extract interactions
         if '### interaction ###' in content or '### task name ### interaction' in content:
-            # Try to find CSV data after "interaction" marker - look for Hebrew or English headers
             search_start = content.find('interaction')
-            interaction_start = -1
+            interaction_end = content.find('### ', search_start + 1)
+            if interaction_end == -1:
+                interaction_end = content.find('```', search_start + 1)
+            if interaction_end == -1:
+                interaction_end = len(content)
 
-            # Try multiple header patterns (Hebrew and English)
-            for pattern in ['Time,', 'זמן,', 'זמן ,']:
-                idx = content.find(pattern, search_start)
-                if idx != -1:
-                    interaction_start = idx
-                    break
+            interaction_text = content[search_start:interaction_end].strip()
 
-            if interaction_start != -1:
-                interaction_end = content.find('### ', interaction_start + 1)
-                if interaction_end == -1:
-                    interaction_end = content.find('```', interaction_start + 1)
-                interaction_text = content[interaction_start:interaction_end].strip()
-                result['interactions'] = self._parse_csv(interaction_text)
+            # Use the new parser that handles both old CSV and new formats
+            result['interactions'] = self._parse_interactions(interaction_text)
 
         # Extract difficult topics
         if '### difficult_topics ###' in content or '### task name ### difficult_topics' in content:
@@ -235,6 +246,59 @@ class SnapshotGenerator:
                 if '```' in topics_text:
                     topics_text = topics_text[:topics_text.find('```')]
                 result['difficult_topics'] = self._parse_csv(topics_text)
+
+        return result
+
+    def _parse_interactions(self, interaction_text: str) -> List[Dict]:
+        """
+        Parse interactions - handles multiple formats:
+        1. Standard CSV format: Time,Type,Description
+        2. New format with descriptive lines followed by data:
+           Time of the interaction:
+           Type: student question/teacher question/discussion/other
+           00:28:41, Type: teacher question, Description: "..."
+        """
+        lines = [line.strip() for line in interaction_text.split('\n') if line.strip()]
+        if not lines:
+            return []
+
+        result = []
+
+        # Check if it's the new format (has "Time of the interaction:" header)
+        if any('time of the interaction' in line.lower() for line in lines[:3]):
+            # New format: skip descriptive header lines and parse data lines
+            for line in lines:
+                # Skip header/description lines
+                if 'time of the interaction' in line.lower():
+                    continue
+                if 'type:' in line.lower() and ('student question' in line.lower() or 'teacher question' in line.lower() or 'discussion' in line.lower()):
+                    if line.count(':') <= 2:  # This is a header line, not data
+                        continue
+
+                # Parse data lines that match the pattern: HH:MM:SS, Type: xxx, Description: "..."
+                if re.match(r'\d{2}:\d{2}:\d{2}', line):
+                    # Extract time (first timestamp)
+                    time_match = re.match(r'(\d{2}:\d{2}:\d{2})', line)
+                    if not time_match:
+                        continue
+                    time_str = time_match.group(1)
+
+                    # Extract type (after "Type:")
+                    type_match = re.search(r'Type:\s*([^,]+)', line, re.IGNORECASE)
+                    type_str = type_match.group(1).strip() if type_match else ''
+
+                    # Extract description (after "Description:")
+                    desc_match = re.search(r'Description:\s*(.+)', line, re.IGNORECASE)
+                    desc_str = desc_match.group(1).strip().strip('"') if desc_match else ''
+
+                    result.append({
+                        'time': time_str,
+                        'type': type_str,
+                        'description': desc_str
+                    })
+        else:
+            # Old CSV format - use standard CSV parser
+            result = self._parse_csv(interaction_text)
 
         return result
 
@@ -609,30 +673,32 @@ class SnapshotGenerator:
 
     def generate_minimalist_markdown(self) -> str:
         """Generate minimalist markdown snapshot (no numbers by default)"""
-        title = self.output_data.get('title', {}).get('title', 'שיעור ללא שם')
+        title = self.output_data.get('title', {}).get('title', self._translate('שיעור ללא שם', 'Untitled Lecture'))
 
         # Use transcript duration if available, otherwise fall back to sections
         if self.transcript_duration:
             duration = self.transcript_duration
         else:
             sections = self.output_data.get('sections', [])
-            duration = sections[-1].get('end', '60 דקות') if sections else '60 דקות'
+            duration = sections[-1].get('end', self._translate('60 דקות', '60 minutes')) if sections else self._translate('60 דקות', '60 minutes')
 
         # Get main message from smart insights if available, otherwise use generic message
         if self.smart_insights and isinstance(self.smart_insights, dict):
             main_msg = self.smart_insights.get('overall_assessment',
                                                self.smart_insights.get('key_message',
-                                                                      'שיעור עם נקודות חזקות ותחומים לשיפור'))
+                                                                      self._translate('שיעור עם נקודות חזקות ותחומים לשיפור',
+                                                                                    'Lecture with strong points and areas for improvement')))
         else:
-            main_msg = "שיעור עם נקודות חזקות ותחומים לשיפור"
+            main_msg = self._translate('שיעור עם נקודות חזקות ותחומים לשיפור',
+                                      'Lecture with strong points and areas for improvement')
 
         md = f"""# Teaching Snapshot
 
 ## {title}
 
 <div style='border-left: 3px solid #6b7280; padding: 15px 20px; margin: 20px 0; background: #fafafa;'>
-<p style='margin: 0; color: #374151;'><strong>המסר המרכזי:</strong> {main_msg}</p>
-<p style='margin: 10px 0 0 0; color: #6b7280;'><strong>משך השיעור:</strong> {duration}</p>
+<p style='margin: 0; color: #374151;'><strong>{self._translate('המסר המרכזי:', 'Key Message:')}</strong> {main_msg}</p>
+<p style='margin: 10px 0 0 0; color: #6b7280;'><strong>{self._translate('משך השיעור:', 'Lecture Duration:')}</strong> {duration}</p>
 </div>
 
 ---
@@ -708,7 +774,7 @@ class SnapshotGenerator:
 
             # Add why_important if available
             if why_important:
-                md += f"<p><strong>למה זה חשוב:</strong> {why_important}</p>\n\n"
+                md += f"<p><strong>{self._translate('למה זה חשוב:', 'Why it matters:')}</strong> {why_important}</p>\n\n"
 
             # Add evidence if available
             if evidence:
@@ -733,12 +799,12 @@ class SnapshotGenerator:
                 md += f"<strong style='color: #374151;'>{i}. {module}:</strong> <span style='color: #6b7280;'>{summary}</span>"
             md += "</summary>\n\n"
             md += f"<div style='padding: 15px; background: #f9fafb; margin-top: 10px;'>\n"
-            md += f"<p><strong>ההזדמנות:</strong> {opportunity}</p>\n\n"
-            md += f"<p><strong>הפתרון:</strong> {suggestion}</p>\n\n"
+            md += f"<p><strong>{self._translate('ההזדמנות:', 'The Opportunity:')}</strong> {opportunity}</p>\n\n"
+            md += f"<p><strong>{self._translate('הפתרון:', 'The Solution:')}</strong> {suggestion}</p>\n\n"
 
             # Add potential_benefit if available
             if potential_benefit:
-                md += f"<p style='color: #059669;'><strong>התועלת הפוטנציאלית:</strong> {potential_benefit}</p>\n\n"
+                md += f"<p style='color: #059669;'><strong>{self._translate('התועלת הפוטנציאלית:', 'Potential Benefit:')}</strong> {potential_benefit}</p>\n\n"
 
             md += "</div>\n</details>\n\n"
 
@@ -747,11 +813,12 @@ class SnapshotGenerator:
         # Action items - each item expandable
         md += "## Recommended Actions for Next Session\n\n"
         action_items = self._get_action_items()
+        recommended_action_tag = self._translate("פעולה מומלצת", "Recommended Action")
         for i, (module, action, tag) in enumerate(action_items, 1):
             # Determine difficulty icon and color based on tag
             difficulty_icon = ""
             difficulty_color = "#9ca3af"
-            if tag and tag != "פעולה מומלצת":
+            if tag and tag != "פעולה מומלצת" and tag != "Recommended Action":
                 tag_lower = tag.lower()
                 if "easy" in tag_lower or "קל" in tag_lower:
                     difficulty_icon = "🟢 "
@@ -767,12 +834,12 @@ class SnapshotGenerator:
             md += f"<summary style='cursor: pointer; padding: 12px; background: #fafafa; border-left: 3px solid #9ca3af;'>"
             # Show action summary with time/difficulty tag and icon
             action_summary = action[:80] + '...' if len(action) > 80 else action
-            tag_display = f" <span style='color: {difficulty_color}; font-size: 0.9em;'>{difficulty_icon}[{tag}]</span>" if tag and tag != "פעולה מומלצת" else ""
+            tag_display = f" <span style='color: {difficulty_color}; font-size: 0.9em;'>{difficulty_icon}[{tag}]</span>" if tag and tag != "פעולה מומלצת" and tag != "Recommended Action" else ""
             md += f"<strong style='color: #374151;'>{i}. {action_summary}</strong>{tag_display}"
             md += "</summary>\n\n"
             md += f"<div style='padding: 15px; background: #f9fafb; margin-top: 10px;'>\n"
-            md += f"<p><strong>פעולה מלאה:</strong> {action}</p>\n\n"
-            md += f"<p style='font-style: italic; color: #6b7280;'>מתוך: {module}</p>\n\n"
+            md += f"<p><strong>{self._translate('פעולה מלאה:', 'Full Action:')}</strong> {action}</p>\n\n"
+            md += f"<p style='font-style: italic; color: #6b7280;'>{self._translate('מתוך:', 'From:')}</strong> {module}</p>\n\n"
 
             # Show all recommendations from this module
             module_data = None
@@ -782,7 +849,7 @@ class SnapshotGenerator:
                     break
 
             if module_data and len(module_data['recommendations']) > 1:
-                md += "<p><strong>המלצות נוספות:</strong></p>\n<ul>\n"
+                md += f"<p><strong>{self._translate('המלצות נוספות:', 'Additional Recommendations:')}</strong></p>\n<ul>\n"
                 for rec in module_data['recommendations'][1:]:
                     md += f"<li>{rec}</li>\n"
                 md += "</ul>\n"
@@ -790,32 +857,32 @@ class SnapshotGenerator:
             md += "</div>\n</details>\n\n"
 
         md += "---\n\n"
-        md += f"*נוצר על ידי AaronOwl Teaching Excellence Analyzer | {datetime.now().strftime('%Y-%m-%d %H:%M')}*\n"
+        md += f"*{self._translate('נוצר על ידי', 'Generated by')} AaronOwl Teaching Excellence Analyzer | {datetime.now().strftime('%Y-%m-%d %H:%M')}*\n"
 
         return md
 
     def generate_expanded_markdown(self) -> str:
         """Generate expanded markdown with full details"""
-        title = self.output_data.get('title', {}).get('title', 'שיעור ללא שם')
+        title = self.output_data.get('title', {}).get('title', self._translate('שיעור ללא שם', 'Untitled Lecture'))
 
         # Use transcript duration if available, otherwise fall back to sections
         if self.transcript_duration:
             duration = self.transcript_duration
         else:
             sections = self.output_data.get('sections', [])
-            duration = sections[-1].get('end', '60 דקות') if sections else '60 דקות'
+            duration = sections[-1].get('end', self._translate('60 דקות', '60 minutes')) if sections else self._translate('60 דקות', '60 minutes')
 
         sections = self.output_data.get('sections', [])
 
-        md = f"""# 🦉 AaronOwl - ניתוח מפורט
+        md = f"""# 🦉 AaronOwl - {self._translate('ניתוח מפורט', 'Detailed Analysis')}
 
 ## {title}
 
-**משך השיעור:** {duration}
+**{self._translate('משך השיעור:', 'Lecture Duration:')}** {duration}
 
 ---
 
-## 📊 ניתוח לפי ממדים
+## 📊 {self._translate('ניתוח לפי ממדים', 'Analysis by Dimensions')}
 
 ### 📚 Storytelling Dimensions
 """
@@ -826,17 +893,17 @@ class SnapshotGenerator:
 
             # Find the module data
             if module['strengths']:
-                md += "**חוזקות:**\n"
+                md += f"**{self._translate('חוזקות:', 'Strengths:')}**\n"
                 for strength in module['strengths']:
                     md += f"- {strength}\n"
 
             if module['weaknesses']:
-                md += "\n**חולשות:**\n"
+                md += f"\n**{self._translate('חולשות:', 'Weaknesses:')}**\n"
                 for weakness in module['weaknesses']:
                     md += f"- {weakness}\n"
 
             if module['recommendations']:
-                md += "\n**המלצות:**\n"
+                md += f"\n**{self._translate('המלצות:', 'Recommendations:')}**\n"
                 for rec in module['recommendations']:
                     md += f"- {rec}\n"
 
@@ -849,17 +916,17 @@ class SnapshotGenerator:
             md += f"\n#### {module_name}\n\n"
 
             if module['strengths']:
-                md += "**חוזקות:**\n"
+                md += f"**{self._translate('חוזקות:', 'Strengths:')}**\n"
                 for strength in module['strengths']:
                     md += f"- {strength}\n"
 
             if module['weaknesses']:
-                md += "\n**חולשות:**\n"
+                md += f"\n**{self._translate('חולשות:', 'Weaknesses:')}**\n"
                 for weakness in module['weaknesses']:
                     md += f"- {weakness}\n"
 
             if module['recommendations']:
-                md += "\n**המלצות:**\n"
+                md += f"\n**{self._translate('המלצות:', 'Recommendations:')}**\n"
                 for rec in module['recommendations']:
                     md += f"- {rec}\n"
 
@@ -874,17 +941,17 @@ class SnapshotGenerator:
                 md += f"\n#### {module_name}\n\n"
 
                 if module.get('strengths'):
-                    md += "**חוזקות:**\n"
+                    md += f"**{self._translate('חוזקות:', 'Strengths:')}**\n"
                     for strength in module['strengths']:
                         md += f"- {strength}\n"
 
                 if module.get('weaknesses'):
-                    md += "\n**חולשות:**\n"
+                    md += f"\n**{self._translate('חולשות:', 'Weaknesses:')}**\n"
                     for weakness in module['weaknesses']:
                         md += f"- {weakness}\n"
 
                 if module.get('recommendations'):
-                    md += "\n**המלצות:**\n"
+                    md += f"\n**{self._translate('המלצות:', 'Recommendations:')}**\n"
                     for rec in module['recommendations']:
                         md += f"- {rec}\n"
 
@@ -893,7 +960,7 @@ class SnapshotGenerator:
         md += "\n---\n\n"
 
         # Section breakdown
-        md += "## 🗂️ מבנה השיעור\n\n"
+        md += f"## 🗂️ {self._translate('מבנה השיעור', 'Lecture Structure')}\n\n"
         if sections:
             for section in sections:
                 num = section.get('section_number', '')
@@ -904,7 +971,7 @@ class SnapshotGenerator:
         md += "\n---\n\n"
 
         # Examples
-        md += "## 💡 דוגמאות מהשיעור\n\n"
+        md += f"## 💡 {self._translate('דוגמאות מהשיעור', 'Examples from the Lecture')}\n\n"
         if 'examples' in self.output_data:
             for example in self.output_data['examples']:
                 topic = example.get('topic', '')
@@ -915,7 +982,7 @@ class SnapshotGenerator:
         md += "\n---\n\n"
 
         # Interactions
-        md += "## 💬 אינטראקציות\n\n"
+        md += f"## 💬 {self._translate('אינטראקציות', 'Interactions')}\n\n"
         if 'interactions' in self.output_data:
             for interaction in self.output_data['interactions']:
                 time = interaction.get('time', '')
@@ -926,18 +993,18 @@ class SnapshotGenerator:
         md += "\n---\n\n"
 
         # Questions
-        md += "## ❓ שאלות למחשבה\n\n"
+        md += f"## ❓ {self._translate('שאלות למחשבה', 'Reflection Questions')}\n\n"
         if 'open_questions' in self.output_data:
             questions = self.output_data['open_questions']
 
             if 'simple' in questions or 'simple_questions' in questions:
-                md += "### שאלות פשוטות:\n"
+                md += f"### {self._translate('שאלות פשוטות:', 'Simple Questions:')}\n"
                 simple = questions.get('simple', questions.get('simple_questions', []))
                 for q in simple:
                     md += f"- {q}\n"
 
             if 'difficult' in questions or 'difficult_questions' in questions:
-                md += "\n### שאלות מורכבות:\n"
+                md += f"\n### {self._translate('שאלות מורכבות:', 'Complex Questions:')}\n"
                 difficult = questions.get('difficult', questions.get('difficult_questions', []))
                 for q in difficult:
                     md += f"- {q}\n"
@@ -945,18 +1012,18 @@ class SnapshotGenerator:
         md += "\n---\n\n"
 
         # Difficult topics
-        md += "## ⚠️ נושאים מאתגרים\n\n"
+        md += f"## ⚠️ {self._translate('נושאים מאתגרים', 'Challenging Topics')}\n\n"
         if 'difficult_topics' in self.output_data:
             for topic_dict in self.output_data['difficult_topics']:
                 topic = topic_dict.get('topic', '')
                 reason = topic_dict.get('reason', '')
                 rec = topic_dict.get('recommendation', '')
                 md += f"### {topic}\n"
-                md += f"**למה זה קשה:** {reason}\n\n"
-                md += f"**המלצה:** {rec}\n\n"
+                md += f"**{self._translate('למה זה קשה:', 'Why it is difficult:')}** {reason}\n\n"
+                md += f"**{self._translate('המלצה:', 'Recommendation:')}** {rec}\n\n"
 
         md += "---\n\n"
-        md += f"*נוצר על ידי AaronOwl Teaching Excellence Analyzer | {datetime.now().strftime('%Y-%m-%d %H:%M')}*\n"
+        md += f"*{self._translate('נוצר על ידי', 'Generated by')} AaronOwl Teaching Excellence Analyzer | {datetime.now().strftime('%Y-%m-%d %H:%M')}*\n"
 
         return md
 
@@ -978,6 +1045,9 @@ def main():
     active_path = os.path.join(output_dir,"active.txt")
     smart_insights_path = os.path.join(output_dir,"smart_insights.json")
 
+    # Get language from config, default to English
+    language = config.get('language', 'English')
+
     # Check if active.txt exists
     if not os.path.exists(active_path):
         active_path = None
@@ -986,8 +1056,8 @@ def main():
     if not os.path.exists(smart_insights_path):
         smart_insights_path = None
 
-    # Generate snapshot
-    generator = SnapshotGenerator(story_path, deep_path, basic_path, active_path, smart_insights_path)
+    # Generate snapshot with language parameter
+    generator = SnapshotGenerator(story_path, deep_path, basic_path, active_path, smart_insights_path, language=language)
 
     # Generate both minimalist and expanded by default
     minimalist_markdown = generator.generate_minimalist_markdown()

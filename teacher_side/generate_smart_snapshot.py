@@ -20,12 +20,13 @@ from teacher_side.snapshot_generator import SnapshotGenerator
 from teacher_side.teacher_utils import get_output_dir
 
 
-def generate_smart_snapshot(output_dir: str):
+def generate_smart_snapshot(output_dir: str, language: str = "English"):
     """
     Generate smart snapshot report from existing output files.
 
     Args:
         output_dir: Directory containing output.txt, deep.txt, story.txt, and optionally active.txt
+        language: Language for the report (default: "English")
 
     Raises:
         FileNotFoundError: If required files are missing
@@ -35,6 +36,7 @@ def generate_smart_snapshot(output_dir: str):
     deep_txt_path = os.path.join(output_dir, "deep.txt")
     story_txt_path = os.path.join(output_dir, "story.txt")
     active_txt_path = os.path.join(output_dir, "active.txt")
+    smart_insights_txt_path = os.path.join(output_dir, "smart_insights.json")
 
     missing_files = []
     if not os.path.exists(output_txt_path):
@@ -64,11 +66,18 @@ def generate_smart_snapshot(output_dir: str):
     else:
         print(f"   ⊘ {active_txt_path} (optional - not found)")
         active_txt_path = None
+
+    # Check for optional smart_insights.json
+    if os.path.exists(smart_insights_txt_path):
+        print(f"   ✓ {smart_insights_txt_path} (smart insights)")
+    else:
+        print(f"   ⊘ {smart_insights_txt_path} (optional - not found)")
+        smart_insights_txt_path = None
     print()
 
-    # Create snapshot generator
+    # Create snapshot generator with language parameter
     print("📊 Creating smart snapshot report...")
-    generator = SnapshotGenerator(story_txt_path, deep_txt_path, output_txt_path, active_txt_path)
+    generator = SnapshotGenerator(story_txt_path, deep_txt_path, output_txt_path, active_txt_path, smart_insights_txt_path, language=language)
 
     # Generate minimalist snapshot (smart report with key insights)
     print("   Generating minimalist snapshot (key insights)...")
@@ -101,6 +110,7 @@ def main():
     # Get output directory from command line or config
     if len(sys.argv) > 1:
         output_dir = sys.argv[1]
+        language = "English"  # Default language when using command line
     else:
         # Load from config.yaml
         config_path = "./config.yaml"
@@ -114,12 +124,14 @@ def main():
 
         config = yaml.safe_load(open(config_path))
         output_dir = get_output_dir(config)
+        language = config.get('language', 'English')  # Get language from config
         print(f"Using output directory from config.yaml: {output_dir}")
+        print(f"Using language: {language}")
         print()
 
     # Generate the smart snapshot
     try:
-        generate_smart_snapshot(output_dir)
+        generate_smart_snapshot(output_dir, language=language)
     except FileNotFoundError as e:
         print(f"❌ Error: {e}")
         sys.exit(1)
