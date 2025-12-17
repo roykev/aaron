@@ -47,7 +47,7 @@ class GeminiConfig:
     output_dir: str = "psychology_chunks"
 
     # Model Configuration
-    model_name: str = "gemini-2.0-flash-exp"
+    model_name: str = "gemini-1.5-pro"
 
     # Upload Configuration
     max_upload_wait_seconds: int = 300  # 5 minutes
@@ -131,7 +131,7 @@ class GeminiConfig:
             videos_dir=videos_dir,
             store_display_name=store_display_name,
             chunk_interval_seconds=gemini_config.get('chunk_interval_seconds', 30),
-            model_name=gemini_config.get('model', 'gemini-2.0-flash-exp'),
+            model_name=gemini_config.get('model', 'gemini-1.5-pro'),
             max_upload_wait_seconds=gemini_config.get('max_upload_wait_seconds', 300),
             max_files_per_query=gemini_config.get('max_files_per_query', 10),
             query_log_path=gemini_config.get('query_log_path', 'chat/gemini/query_log.json'),

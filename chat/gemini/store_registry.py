@@ -1,10 +1,11 @@
 """
-Store Registry - Maps (institute, course) pairs to Gemini File Search Store names
+Store Registry - Maps (institute, course) pairs to Gemini File Search Store names and course directories
 """
 
 import json
 import os
-from typing import Optional, Dict, Tuple
+from typing import Optional, Dict, Tuple, Any
+from datetime import datetime
 
 
 class StoreRegistry:
@@ -69,7 +70,14 @@ class StoreRegistry:
         """Create registry key from institute and course"""
         return f"{institute.lower().strip()}:{course.lower().strip()}"
 
-    def register_store(self, institute: str, course: str, store_name: str):
+    def register_store(
+        self,
+        institute: str,
+        course: str,
+        store_name: str,
+        course_root: Optional[str] = None,
+        class_level: Optional[str] = None
+    ):
         """
         Register a store for an institute/course pair
 
@@ -77,25 +85,108 @@ class StoreRegistry:
             institute: Institute name (e.g., "Hebrew University")
             course: Course name (e.g., "Psychology 101")
             store_name: Gemini store name (e.g., "fileSearchStores/7askqtkrfkr4-yntw8sntgxmn")
+            course_root: Root directory for course data (e.g., "/path/to/courses/psychology")
+            class_level: Class level (e.g., "undergraduate 1st year")
         """
         key = self._make_key(institute, course)
-        self.registry[key] = store_name
+
+        # Check if this is an existing entry to preserve created_at
+        existing_entry = self.registry.get(key)
+        created_at = None
+        if existing_entry and isinstance(existing_entry, dict):
+            created_at = existing_entry.get('metadata', {}).get('created_at')
+
+        # Create new format entry
+        entry = {
+            "store_id": store_name,
+            "metadata": {
+                "course_name": course,
+                "institute": institute,
+                "created_at": created_at or datetime.now().isoformat(),
+                "last_updated": datetime.now().isoformat()
+            }
+        }
+
+        if course_root:
+            entry["course_root"] = course_root
+        if class_level:
+            entry["metadata"]["class_level"] = class_level
+
+        self.registry[key] = entry
         self._save_registry()
         print(f"-> Registered store '{store_name}' for {institute} - {course}")
+        if course_root:
+            print(f"   Course root: {course_root}")
 
     def get_store(self, institute: str, course: str) -> Optional[str]:
         """
-        Get store name for an institute/course pair
+        Get store ID for an institute/course pair (backward compatible)
 
         Args:
             institute: Institute name
             course: Course name
 
         Returns:
-            Store name if found, None otherwise
+            Store ID if found, None otherwise
         """
         key = self._make_key(institute, course)
-        return self.registry.get(key)
+        entry = self.registry.get(key)
+
+        if entry is None:
+            return None
+
+        # Handle both old format (string) and new format (dict)
+        if isinstance(entry, str):
+            return entry  # Old format: just the store_id
+        elif isinstance(entry, dict):
+            return entry.get("store_id")  # New format: extract store_id from dict
+        return None
+
+    def get_course_root(self, institute: str, course: str) -> Optional[str]:
+        """
+        Get course root directory for an institute/course pair
+
+        Args:
+            institute: Institute name
+            course: Course name
+
+        Returns:
+            Course root path if found, None otherwise
+        """
+        key = self._make_key(institute, course)
+        entry = self.registry.get(key)
+
+        if entry and isinstance(entry, dict):
+            return entry.get("course_root")
+        return None
+
+    def get_entry(self, institute: str, course: str) -> Optional[Dict[str, Any]]:
+        """
+        Get full registry entry for an institute/course pair
+
+        Args:
+            institute: Institute name
+            course: Course name
+
+        Returns:
+            Full entry dict if found, None otherwise
+        """
+        key = self._make_key(institute, course)
+        entry = self.registry.get(key)
+
+        if entry is None:
+            return None
+
+        # Convert old format to new format on the fly
+        if isinstance(entry, str):
+            return {
+                "store_id": entry,
+                "metadata": {
+                    "course_name": course,
+                    "institute": institute
+                }
+            }
+        return entry
 
     def remove_store(self, institute: str, course: str) -> bool:
         """

@@ -233,7 +233,8 @@ def main():
         client = genai.Client(api_key=config.api_key)
 
         # Look up store_id from registry using (institute, course)
-        registry_path = "chat/gemini/store_registry.json"
+        # Use absolute path based on current script directory
+        registry_path = os.path.join(current_dir, "store_registry.json")
         registry = StoreRegistry(registry_path)
 
         institute = config.institute if config.institute else "default_institute"
@@ -295,7 +296,9 @@ def main():
         logger=logger,
         class_level=config.class_level,
         query_scope=args.scope,
-        lecture_id=args.lecture_id
+        lecture_id=args.lecture_id,
+        course_name=config.course_name,
+        institute=config.institute
     )
 
     scope_info = f"{args.scope}"

@@ -28,7 +28,9 @@ class QueryEngine:
         class_level: Optional[str] = None,
         query_scope: str = "course",
         lecture_id: Optional[str] = None,
-        top_chunks_to_show: int = 3
+        top_chunks_to_show: int = 3,
+        course_name: Optional[str] = None,
+        institute: Optional[str] = None
     ):
         """
         Initialize query engine
@@ -57,6 +59,8 @@ class QueryEngine:
         self.query_scope = query_scope
         self.lecture_id = lecture_id
         self.top_chunks_to_show = top_chunks_to_show
+        self.course_name = course_name
+        self.institute = institute
 
     def _filter_files_by_scope(self, files: List) -> List:
         """
@@ -182,32 +186,59 @@ class QueryEngine:
                 print(f"-> Using class scope filter: lecture_id={self.lecture_id}")
 
         # Configure File Search tool
-        file_search_config = types.FileSearch(
-            file_search_store_names=[self.store_name]
-        )
-
-        # Add metadata filter if applicable
+        # Build tool config based on whether we have metadata filter
         if metadata_filter:
             file_search_config = types.FileSearch(
                 file_search_store_names=[self.store_name],
                 metadata_filter=metadata_filter
             )
+        else:
+            file_search_config = types.FileSearch(
+                file_search_store_names=[self.store_name]
+            )
 
-        # Create tool configuration
-        tools = [types.Tool(file_search=file_search_config)]
-
-        if verbose:
-            print(f"-> Query scope: {self.query_scope}")
+        # Create tool configuration - pass fileSearch (camelCase) as the tool type
+        tools = [types.Tool(fileSearch=file_search_config)]
 
         # Generate response with File Search Store
-        response = self.client.models.generate_content(
-            model=self.model_name,
-            contents=user_query,
-            config=types.GenerateContentConfig(
-                system_instruction=system_instruction,
-                tools=tools
+        # Try-catch to handle potential API changes
+        try:
+            # Use tool_config parameter which specifies how tools should be used
+            tool_config = types.ToolConfig(
+                function_calling_config=types.FunctionCallingConfig(
+                    mode="AUTO"
+                )
             )
-        )
+
+            response = self.client.models.generate_content(
+                model=self.model_name,
+                contents=user_query,
+                config=types.GenerateContentConfig(
+                    system_instruction=system_instruction,
+                    tools=tools,
+                    tool_config=tool_config
+                )
+            )
+        except Exception as e:
+            # If tools with tool_config fail, try without tool_config
+            try:
+                response = self.client.models.generate_content(
+                    model=self.model_name,
+                    contents=user_query,
+                    config=types.GenerateContentConfig(
+                        system_instruction=system_instruction,
+                        tools=tools
+                    )
+                )
+            except Exception as e2:
+                # If tools fail completely, try without them (final fallback)
+                response = self.client.models.generate_content(
+                    model=self.model_name,
+                    contents=user_query,
+                    config=types.GenerateContentConfig(
+                        system_instruction=system_instruction
+                    )
+                )
 
         # Calculate response time
         response_time = time.time() - start_time
@@ -245,67 +276,69 @@ class QueryEngine:
                         chunks_used.append(chunk_info)
 
         # Fallback: Use answer-to-chunk similarity matching if no grounding metadata
-        if not chunks_used and verbose:
-            print("\n-> No grounding metadata - using answer similarity matching")
-
+        if not chunks_used:
             # Find chunks directory based on scope
-            chunks_dirs = glob.glob(os.path.join(os.getcwd(), "*_chunks"))
+            # Search in project root (parent of chat/gemini directory)
+            from pathlib import Path
+            script_dir = Path(__file__).resolve().parent
+            project_root = script_dir.parent.parent  # Go up two levels from chat/gemini to project root
+
+            chunks_dirs = glob.glob(os.path.join(str(project_root), "*_chunks"))
 
             if self.query_scope == "class" and self.lecture_id:
                 # Class scope: use specific lecture's chunks directory
                 lecture_chunks_dir = f"{self.lecture_id}_chunks"
                 if os.path.exists(lecture_chunks_dir):
-                    chunks_dir = lecture_chunks_dir
-                    if verbose:
-                        print(f"-> Using class-level chunks: {lecture_chunks_dir}")
+                    chunks_dirs_to_search = [lecture_chunks_dir]
                 elif chunks_dirs:
                     # Fallback: find chunks dir matching lecture_id
                     matching_dirs = [d for d in chunks_dirs if self.lecture_id in d]
-                    if matching_dirs:
-                        chunks_dir = matching_dirs[0]
-                        if verbose:
-                            print(f"-> Using class-level chunks: {chunks_dir}")
-                    else:
-                        chunks_dir = max(chunks_dirs, key=os.path.getmtime)
-                        if verbose:
-                            print(f"-> Warning: No chunks found for {self.lecture_id}, using most recent")
+                    chunks_dirs_to_search = matching_dirs if matching_dirs else [max(chunks_dirs, key=os.path.getmtime)]
                 else:
-                    chunks_dir = None
+                    chunks_dirs_to_search = []
             elif chunks_dirs:
-                # Course scope: use most recent chunks directory (contains all lectures)
-                chunks_dir = max(chunks_dirs, key=os.path.getmtime)
-                if verbose:
-                    print(f"-> Using course-level chunks: {chunks_dir}")
+                # Course scope: search across ALL chunks directories
+                chunks_dirs_to_search = chunks_dirs
             else:
-                chunks_dir = None
+                chunks_dirs_to_search = []
 
-            if chunks_dir:
-                # Create chunk matcher and find similar chunks
-                matcher = ChunkMatcher(chunks_dir)
+            if chunks_dirs_to_search:
+                try:
+                    # Collect matches from all relevant chunks directories
+                    all_matches = []
 
-                # For class scope, filter matches to specific lecture_id
-                if self.query_scope == "class" and self.lecture_id:
-                    all_matches = matcher.find_matching_chunks(response.text, top_k=self.top_chunks_to_show * 3)
-                    # Filter to only this lecture_id
-                    matches = [m for m in all_matches if m['lecture_id'] == self.lecture_id][:self.top_chunks_to_show]
-                else:
-                    matches = matcher.find_matching_chunks(response.text, top_k=self.top_chunks_to_show)
+                    for chunks_dir in chunks_dirs_to_search:
+                        # Create chunk matcher for this directory
+                        matcher = ChunkMatcher(chunks_dir)
 
-                # Convert to chunks_used format
-                chunks_used = [
-                    {
-                        'lecture_id': m['lecture_id'],
-                        'start_time': m['start_time'],
-                        'end_time': m['end_time'],
-                        'filename': m['filename'],
-                        'content': m['content'],
-                        'similarity': m['similarity']
-                    }
-                    for m in matches
-                ]
+                        # Find matches in this directory
+                        dir_matches = matcher.find_matching_chunks(response.text, top_k=self.top_chunks_to_show * 5)
+                        all_matches.extend(dir_matches)
 
-                if verbose and chunks_used:
-                    print(f"   Found {len(chunks_used)} matching chunks based on answer similarity")
+                    # Sort all matches by similarity score
+                    all_matches.sort(key=lambda x: x.get('similarity', 0), reverse=True)
+
+                    # For class scope, filter matches to specific lecture_id
+                    if self.query_scope == "class" and self.lecture_id:
+                        matches = [m for m in all_matches if m['lecture_id'] == self.lecture_id][:self.top_chunks_to_show]
+                    else:
+                        matches = all_matches[:self.top_chunks_to_show]
+
+                    # Convert to chunks_used format
+                    chunks_used = [
+                        {
+                            'lecture_id': m['lecture_id'],
+                            'start_time': m['start_time'],
+                            'end_time': m['end_time'],
+                            'filename': m['filename'],
+                            'content': m['content'],
+                            'similarity': m['similarity']
+                        }
+                        for m in matches
+                    ]
+                except Exception as e:
+                    if verbose:
+                        print(f"Error during chunk matching: {e}")
 
         # Prepare result
         result = {
@@ -343,7 +376,21 @@ class QueryEngine:
                     # Check if this is a similarity-matched chunk or grounding metadata chunk
                     if 'lecture_id' in chunk and 'start_time' in chunk:
                         # Similarity-matched chunk with timestamps
-                        print(f"\n[{i}] {chunk['lecture_id']}")
+                        # Build header line with course info
+                        header_parts = []
+                        if self.course_name:
+                            header_parts.append(self.course_name.title())
+                        if self.class_level:
+                            header_parts.append(f"({self.class_level})")
+
+                        if header_parts:
+                            print(f"\n[{i}] {' '.join(header_parts)}")
+                            print(f"    📅 Lecture: {chunk['lecture_id']}")
+                        else:
+                            print(f"\n[{i}] {chunk['lecture_id']}")
+
+                        if self.institute:
+                            print(f"    🏫 Institute: {self.institute}")
                         print(f"    ⏰ Time: {chunk['start_time']} - {chunk['end_time']}")
                         if 'filename' in chunk:
                             print(f"    📄 File: {chunk['filename']}")
