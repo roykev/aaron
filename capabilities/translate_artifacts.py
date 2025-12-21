@@ -62,7 +62,7 @@ class ArtifactTranslatorBase:
         self.config = config
         self.videos_dir = config.get("videos_dir")
         self.target_language = config.get("translation", {}).get("target_language", "Arabic")
-        self.output_folder = config.get("translation", {}).get("output_folder_name", "arabic")
+        self.output_folder = config.get("translation", {}).get("output_folder_name", self.target_language.lower())
         self.artifacts_content = {}
 
     def read_artifacts(self):
@@ -373,7 +373,8 @@ def save_translated_artifacts(translations: Dict[str, str], config: Dict[str, An
         logger: Logger instance
     """
     videos_dir = config.get("videos_dir")
-    output_folder = config.get("translation", {}).get("output_folder_name", "arabic")
+    target_language = config.get("translation", {}).get("target_language", "Arabic")
+    output_folder = config.get("translation", {}).get("output_folder_name", target_language.lower())
 
     # Create output directory
     output_dir = os.path.join(videos_dir, output_folder)
@@ -458,7 +459,7 @@ def main():
     logger = get_logger(__name__, config)
 
     target_language = config.get("translation", {}).get("target_language", "Arabic")
-    output_folder = config.get("translation", {}).get("output_folder_name", "arabic")
+    output_folder = config.get("translation", {}).get("output_folder_name", target_language.lower())
 
     logger.info(f"Starting artifact translation to {target_language}")
     logger.info(f"Output folder: {output_folder}/")
@@ -474,7 +475,7 @@ def main():
         translator = ArtifactTranslator(config, logger=logger)
 
     # Prepare content
-    logger.info("Loading artifacts...")
+    logger.info(f"Loading artifacts... from folder: {config['videos_dir']}")
     translator.prepare_content()
 
     if not translator.artifacts_content:

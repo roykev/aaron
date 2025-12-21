@@ -23,7 +23,7 @@ from utils.utils import get_logger
 class TeacherReportUnifiedBase:
     """Base class with shared logic for unified report generation."""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: Dict[str, Any], logger=None):
         self.config = config
         self.course_name = config.get("course_name", "Unknown Course")
         self.class_level = config.get("class_level", "Unknown Level")
@@ -33,20 +33,21 @@ class TeacherReportUnifiedBase:
         self.include_story = True
         self.include_active = True
         self.transcript = None
+        self.logger = logger
 
-    def read_transcript(self, suffix='.txt'):
+    def read_transcript(self):
         """Read transcript file from videos directory."""
-        def find_transcript_file(videos_dir: str, suffix='.txt') -> str:
-            """Find the transcript file (.txt, .vtt, or .srt) in the videos directory."""
-            supported_formats = ['.txt', '.vtt', '.srt']
-            search_order = [suffix] + [fmt for fmt in supported_formats if fmt != suffix]
+        def find_transcript_file(videos_dir: str) -> str:
+            """Find the transcript file (.vtt, .srt, .csv or .txt) in the videos directory."""
+            supported_formats = ['.vtt', '.srt', '.csv', '.txt']
+            search_order = [fmt for fmt in supported_formats]
 
             for fmt in search_order:
                 for file in os.listdir(videos_dir):
                     if file.endswith(fmt):
                         return os.path.join(videos_dir, file)
 
-            raise FileNotFoundError(f"No transcript file (.txt, .vtt, or .srt) found in {videos_dir}")
+            raise FileNotFoundError(f"No transcript file (.vtt, .srt, .csv or .txt) found in {videos_dir}")
 
         def parse_transcript_txt(transcript_path: str) -> str:
             """Read and extract the full transcript text from the file."""
@@ -65,10 +66,8 @@ class TeacherReportUnifiedBase:
             return ' '.join(transcript_lines)
 
         trans_path = find_transcript_file(self.config["videos_dir"])
-        if suffix == ".txt":
-            self.transcript = parse_transcript_txt(trans_path)
-        else:
-            raise ValueError(f"{trans_path}, suffix not supported!")
+        self.logger.info(f"DEBUG: parsing transcript from {trans_path}")
+        self.transcript = parse_transcript_txt(trans_path)
 
     def compose_system_prompt(self, lan="English", include_basic=True, include_deep=True, include_story=True, include_active=True):
         """Compose unified system prompt combining selected analyses."""
@@ -225,7 +224,7 @@ class TeacherReportUnified(TeacherReportUnifiedBase, AnthropicProxy):
 
     def __init__(self, config: Dict[str, Any], api_key: str = None, logger=None):
         AnthropicProxy.__init__(self, config, api_key, logger)
-        TeacherReportUnifiedBase.__init__(self, config)
+        TeacherReportUnifiedBase.__init__(self, config, logger)
 
 
 class TeacherReportUnifiedOR(TeacherReportUnifiedBase, OpenRouterProxy):
@@ -233,7 +232,7 @@ class TeacherReportUnifiedOR(TeacherReportUnifiedBase, OpenRouterProxy):
 
     def __init__(self, config: Dict[str, Any], api_key: str = None, base_url: str = "https://openrouter.ai/api/v1", logger=None):
         OpenRouterProxy.__init__(self, config, api_key, base_url, logger)
-        TeacherReportUnifiedBase.__init__(self, config)
+        TeacherReportUnifiedBase.__init__(self, config, logger)
 
 
 def repair_truncated_json(output_json: str, logger) -> tuple[str, bool]:
