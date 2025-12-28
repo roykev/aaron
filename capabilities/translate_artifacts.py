@@ -64,6 +64,18 @@ class ArtifactTranslatorBase:
         self.target_language = config.get("translation", {}).get("target_language", "Arabic")
         self.output_folder = config.get("translation", {}).get("output_folder_name", self.target_language.lower())
         self.artifacts_content = {}
+        self.summary_prefixes = {}  # Store prefixes for summary files
+        self._load_asset_prefills()
+
+    def _load_asset_prefills(self):
+        """Load hardcoded prefill values for summary files."""
+        # Hardcoded prefixes based on asset_creation.yaml defaults
+        # Note: These values correspond to the prefill text with parameters filled in
+        self.summary_prefixes = {
+            'short_summary': "Following is a digest in approximately 250 words: \n<summary>",
+            'long_summary': "Following is a detailed and thorough summary of the lecture transcript, \ncovering the key points and concepts in approximately 1000 words: \n<summary>"
+        }
+        print(f"✓ Loaded hardcoded prefills for short_summary and long_summary")
 
     def read_artifacts(self):
         """Read all available artifact files."""
@@ -84,12 +96,53 @@ class ArtifactTranslatorBase:
                             self.artifacts_content[artifact_id] = json.dumps(svg_texts, ensure_ascii=False)
                             print(f"✓ Loaded: {artifact_info['filename']} ({len(svg_texts)} text strings)")
                         else:
+                            # For summary files, strip prefix and postfix before translation
+                            if artifact_id in ['short_summary', 'long_summary']:
+                                content = self._strip_summary_wrapper(artifact_id, content)
+                            
                             self.artifacts_content[artifact_id] = content
                             print(f"✓ Loaded: {artifact_info['filename']}")
                 except Exception as e:
                     print(f"⚠ Warning: Could not read {artifact_info['filename']}: {e}")
             else:
                 print(f"⚠ Warning: {artifact_info['filename']} not found, skipping")
+
+    def _strip_summary_wrapper(self, artifact_id: str, content: str) -> str:
+        """
+        Strip the prefix (from prefill) and postfix (</summary>) from summary content.
+        
+        Args:
+            artifact_id: The artifact identifier (e.g., 'short_summary', 'long_summary')
+            content: The original content with prefix and postfix
+            
+        Returns:
+            Content with prefix and postfix removed
+        """
+        if artifact_id not in self.summary_prefixes:
+            return content  # No prefix to strip
+        
+        prefix = self.summary_prefixes[artifact_id]
+        postfix = "</summary>"
+        
+        # For hardcoded prefixes with variable word counts, use pattern matching
+        if artifact_id == 'short_summary':
+            # Match pattern: "Following is a digest in approximately XXX words: \n<summary>"
+            pattern = r'^Following is a digest in approximately \d+ words:\s*\n<summary>\s*'
+            content = re.sub(pattern, '', content, flags=re.MULTILINE)
+        elif artifact_id == 'long_summary':
+            # Match pattern: "Following is a detailed and thorough summary...approximately XXX words: \n<summary>"
+            pattern = r'^Following is a detailed and thorough summary of the lecture transcript,\s*\ncovering the key points and concepts in approximately \d+ words:\s*\n<summary>\s*'
+            content = re.sub(pattern, '', content, flags=re.MULTILINE)
+        else:
+            # Fallback: exact prefix matching
+            if prefix and content.startswith(prefix):
+                content = content[len(prefix):].lstrip()
+        
+        # Strip postfix if present
+        if content.endswith(postfix):
+            content = content[:-len(postfix)].rstrip()
+        
+        return content
 
     def compose_system_prompt(self):
         """Compose system prompt for translation."""
@@ -363,7 +416,7 @@ def replace_svg_text_content(svg_content: str, translation_map: Dict[str, str]) 
     return result
 
 
-def save_translated_artifacts(translations: Dict[str, str], config: Dict[str, Any], logger):
+def save_translated_artifacts(translations: Dict[str, str], config: Dict[str, Any], logger, summary_prefixes: Dict[str, str] = None):
     """
     Save translated artifacts to language-specific subfolder.
 
@@ -371,6 +424,7 @@ def save_translated_artifacts(translations: Dict[str, str], config: Dict[str, An
         translations: Dictionary mapping artifact_id to translated content
         config: Configuration dictionary
         logger: Logger instance
+        summary_prefixes: Dictionary mapping artifact_id to prefill text for summaries
     """
     videos_dir = config.get("videos_dir")
     target_language = config.get("translation", {}).get("target_language", "Arabic")
@@ -380,6 +434,16 @@ def save_translated_artifacts(translations: Dict[str, str], config: Dict[str, An
     output_dir = os.path.join(videos_dir, output_folder)
     os.makedirs(output_dir, exist_ok=True)
     logger.info(f"Created output directory: {output_dir}")
+    
+    # Helper function to add summary wrapper
+    def add_summary_wrapper(artifact_id: str, translated_content: str) -> str:
+        """Add back prefix and postfix to summary content."""
+        if not summary_prefixes or artifact_id not in summary_prefixes:
+            return translated_content
+        
+        prefix = summary_prefixes[artifact_id]
+        postfix = "</summary>"
+        return f"{prefix}\n{translated_content}\n{postfix}"
 
     # Save each translated artifact with original filename
     for artifact_id, translated_content in translations.items():
@@ -443,7 +507,11 @@ def save_translated_artifacts(translations: Dict[str, str], config: Dict[str, An
                         else:
                             f.write(json.dumps(cleaned_content, ensure_ascii=False, indent=2))
                     else:
-                        # For text files, write as-is
+                        # For text files, add back prefix/postfix for summaries
+                        if artifact_id in ['short_summary', 'long_summary']:
+                            cleaned_content = add_summary_wrapper(artifact_id, cleaned_content)
+                        
+                        # Write the content
                         f.write(cleaned_content if isinstance(cleaned_content, str) else str(cleaned_content))
 
             logger.info(f"  ✅ Saved: {output_file}")
@@ -513,7 +581,7 @@ def main():
 
         # Save translated artifacts
         logger.info("Saving translated artifacts...")
-        save_translated_artifacts(translations, config, logger)
+        save_translated_artifacts(translations, config, logger, translator.summary_prefixes)
 
         logger.info(f"✅ Translation completed successfully!")
         logger.info(f"Translated files saved to: {os.path.join(config['videos_dir'], output_folder)}/")
