@@ -129,7 +129,7 @@ class StoreRegistry:
         Returns:
             Store ID if found, None otherwise
         """
-        key = self._make_key(institute, course)
+        key = self._make_key(institute, course.lower())
         entry = self.registry.get(key)
 
         if entry is None:
