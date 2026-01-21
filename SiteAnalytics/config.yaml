@@ -1,0 +1,112 @@
+# Mixpanel Export Configuration
+
+# Mixpanel API credentials
+mixpanel:
+  # API secret (optional if MIXPANEL_SECRET is set in ~/.bashrc or environment)
+  api_secret: "YOUR_API_SECRET_HERE"
+  project_id: null  # Optional: Your Mixpanel Project ID
+
+# Export settings
+export:
+  # Snapshot report: specific date range
+  from_date: "2025-12-18"
+  to_date: "2026-01-12"
+  output_file: "mixpanel_export.csv"
+  output_dir: "/home/roy/FS/Dropbox/WORK/Ideas/aaron/Analytics/mixpanel_export"
+  chunk_days: null  # Set to a number (e.g., 7) to export in chunks
+  event: null  # Optional: Filter by specific event name
+
+  # Directory organization
+  raw_data_dir: "/home/roy/FS/Dropbox/WORK/Ideas/aaron/Analytics/raw_data"  # Raw CSV exports
+  reports_dir: "/home/roy/FS/Dropbox/WORK/Ideas/aaron/Analytics/reports"    # HTML reports and analysis
+
+# Semester settings
+semester:
+  start_date: "2025-10-16"  # Semester start date (16/10/2025)
+  end_date: "2026-02-01"    # Semester end date (1/2/2026)
+  weekly_output_dir: "/home/roy/FS/Dropbox/WORK/Ideas/aaron/Analytics/weekly_data"
+
+  # Operations to run when using run_all() or no CLI args
+  run_data_extraction: true         # Extract only NEW weeks since last extraction
+
+  # NOTE: run_all() now automatically generates new reports (A, B, C, D) after data extraction
+  # The following old report summary  settings are DEPRECATED and no longer used:
+  # run_semester_report: true         # DEPRECATED - Use new reports instead
+  # run_weekly_report: true           # DEPRECATED - Use new reports instead
+  # run_weekly_progress: false        # DEPRECATED - Use new reports instead
+  # run_institute_progress: true      # DEPRECATED - Use new reports instead
+  # report_week_number: null          # DEPRECATED - No longer needed
+  #progress_course_id: "0904aae7-8f9a-426a-a4fb-f2f5213b3dfd"  # Specific course for weekly progress (null = all courses combined)
+  #progress_course_id: "5625f759-688d-499c-906c-586501b9cdf0"
+  #progress_course_id: "d8c06ad8-e30f-4061-a53a-2aa2eacd282a"
+  #progress_course_id: "431ccb6f-5f7f-4b59-965a-7a361534be93"
+  #progress_course_id: "2ddfade1-30ba-488e-a515-691f3412bc9a"
+  progress_course_id: "e0e83296-4d12-457c-995d-3088ee36c0da"
+  # Extraction settings
+  force_reextract_weekly: false       # Force re-extraction of weekly files even if they already exist
+  api_request_delay_seconds: 5       # Delay between API requests to avoid rate limits (increase if hitting limits)
+  max_weeks_per_run: 10              # Maximum weeks to extract per run (to avoid rate limits, extract in batches)
+
+# Course information
+info:
+  course_list: "/home/roy/FS/Dropbox/WORK/Ideas/aaron/Analytics/courses.csv"
+
+# Report settings
+report:
+  split_by_institution: "both"  # Options: false (unified), true (split per institution), "both" (unified + split)
+  session_timeout_minutes: 5
+
+  # Minutes to add to last activity per session for time calculation
+
+  # Engagement scoring configuration
+  engagement_scoring:
+    # Persistence category weights
+    consistent_weight: 10    # Weight for consistent users (active ≥60% of weeks)
+    moderate_weight: 3       # Weight for moderate users (active 25-59% of weeks)
+    sporadic_weight: 1       # Weight for sporadic users (active <25% of weeks)
+
+    # Expected distribution (baseline percentages for comparison)
+    expected_consistent_pct: 5    # Expected % of consistent users
+    expected_moderate_pct: 25     # Expected % of moderate users
+    expected_sporadic_pct: 70     # Expected % of sporadic users
+
+    # Engagement score interpretation thresholds
+    excellent_threshold: 5.0      # Score >= this is "Excellent engagement"
+    good_threshold: 2.5           # Score >= this is "Good engagement"
+    moderate_threshold: 1.7       # Score >= this is "Moderate engagement"
+    # Below moderate_threshold is "Poor engagement"
+
+  # Feature usage scoring configuration
+  feature_scoring:
+    # Feature usage level weights
+    high_weight: 5          # Weight for high usage features (>40%)
+    moderate_weight: 3      # Weight for moderate usage features (20-40%)
+    low_weight: 1           # Weight for low usage features (<20%)
+
+    # Feature usage thresholds
+    high_threshold: 40      # Usage % >= this is "High"
+    moderate_threshold: 20  # Usage % >= this is "Moderate", below is "Low"
+
+    # Expected distribution (baseline for comparison)
+    expected_high_count: 2      # Expected number of high-usage features
+    expected_moderate_count: 3  # Expected number of moderate-usage features
+    expected_low_count: 2       # Expected number of low-usage features
+# Blacklist configuration
+# Events with these user_ids or course_ids will be excluded from the export
+blacklist:
+  user_ids:
+    - "83718399-1e94-45ab-9d38-0e7dd37def97" #	Aaron Demo
+    - "87e24c1d-f91b-4c30-a04d-2dc35455d798" #	roie
+    - "0c0c2d19-b549-4c0e-9e14-70fe774d7a39" #	Aaron Demo3
+    - "cbca285e-e15f-4cfd-b119-1c9d8e05d60b" #
+    - "abdbd5bc-d132-486f-991e-f11263b70607" #	Roy
+    - "83e2fe08-50e4-40da-a430-4b05e7d0ac15" #	Nasreen Ghadir
+    - "0681dd69-53c2-405b-b4a1-f4425326737e" #	Aaron Demo3
+    - "856bda12-f442-4b1b-bd23-a0be4d9b5c66" #	Aaron Owl
+    - "d53d29dd-74ef-4205-8bb6-41757c2356dc" #	Ariel Geva
+    # Add more user IDs to exclude
+
+  course_ids:
+    - "demo_course"
+    - "test_course_456"
+    # Add more course IDs to exclude
