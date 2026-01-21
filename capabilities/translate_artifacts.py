@@ -280,6 +280,95 @@ def clean_llm_output(output: str) -> str:
     return output
 
 
+def fix_json_escaping(json_str: str) -> str:
+    """
+    Fix common JSON escaping issues like unescaped newlines in string values.
+    
+    This function handles cases where the LLM outputs JSON with literal newlines
+    inside string values, which is invalid JSON.
+    
+    Args:
+        json_str: Potentially malformed JSON string
+        
+    Returns:
+        Fixed JSON string with proper escaping
+    """
+    import re
+    
+    # Strategy: Find all string values in the JSON and escape their content
+    # This is a bit tricky because we need to handle nested quotes properly
+    
+    # First, try to use json.loads with strict=False (doesn't exist, but worth noting)
+    # Instead, we'll do a regex-based fix
+    
+    # Pattern to match JSON string values that might contain unescaped newlines
+    # This looks for: "key": "value..." where value might have newlines before the closing quote
+    
+    def escape_string_content(match):
+        """Helper to escape content within a JSON string value."""
+        prefix = match.group(1)  # Everything before the string value
+        string_content = match.group(2)  # The actual string content
+        
+        # Escape special characters
+        string_content = string_content.replace('\\', '\\\\')  # Backslashes first
+        string_content = string_content.replace('\n', '\\n')   # Newlines
+        string_content = string_content.replace('\r', '\\r')   # Carriage returns
+        string_content = string_content.replace('\t', '\\t')   # Tabs
+        string_content = string_content.replace('"', '\\"')    # Quotes
+        
+        return f'{prefix}"{string_content}"'
+    
+    # For complex nested JSON, we need a more sophisticated approach
+    # Let's use a state machine to track whether we're inside a string
+    
+    result = []
+    in_string = False
+    escape_next = False
+    i = 0
+    
+    while i < len(json_str):
+        char = json_str[i]
+        
+        if escape_next:
+            # Previous char was backslash, so this char is escaped
+            result.append(char)
+            escape_next = False
+            i += 1
+            continue
+        
+        if char == '\\' and in_string:
+            # Start of an escape sequence
+            result.append(char)
+            escape_next = True
+            i += 1
+            continue
+        
+        if char == '"':
+            # Toggle string state
+            in_string = not in_string
+            result.append(char)
+            i += 1
+            continue
+        
+        if in_string:
+            # We're inside a string - escape special characters
+            if char == '\n':
+                result.append('\\n')
+            elif char == '\r':
+                result.append('\\r')
+            elif char == '\t':
+                result.append('\\t')
+            else:
+                result.append(char)
+        else:
+            # We're outside a string - keep as-is
+            result.append(char)
+        
+        i += 1
+    
+    return ''.join(result)
+
+
 def extract_svg_text_content(svg_content: str) -> List[str]:
     """
     Extract actual text content from SVG <text> elements (removing HTML tags).
@@ -565,6 +654,10 @@ def main():
     # Clean and parse output
     try:
         cleaned_output = clean_llm_output(output)
+        
+        # Fix JSON escaping issues (like unescaped newlines)
+        logger.info("Fixing JSON escaping...")
+        cleaned_output = fix_json_escaping(cleaned_output)
 
         # Try to parse JSON - use JSONDecoder to handle extra data after valid JSON
         from json import JSONDecoder
