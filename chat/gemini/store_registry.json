@@ -1,3 +1,11 @@
 {
-  "ono:psychology": "fileSearchStores/5dqu31ux5614-r0yk8fxg18mf"
+  "ono:psychology": {
+    "store_id": "fileSearchStores/5dqu31ux5614-r0yk8fxg18mf",
+    "metadata": {
+      "course_name": "psychology",
+      "institute": "ono",
+      "created_at": "2026-01-07T19:24:00.601470",
+      "last_updated": "2026-01-07T19:24:00.601475"
+    }
+  }
 }
