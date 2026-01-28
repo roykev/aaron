@@ -243,11 +243,11 @@ class NewInstituteReportsGenerator:
             if len(metrics) > 0:
                 latest = metrics.iloc[-1]
                 from_date = pd.to_datetime(latest['from_date'])
-                to_date = pd.to_datetime(latest['to_date'])
                 week_num = int(latest.get('week_number', 0))
                 if latest_from_date is None or from_date > latest_from_date:
                     latest_from_date = from_date
-                    latest_to_date = to_date
+                    # Always calculate ending date as from_date + 7 days (full week)
+                    latest_to_date = from_date + pd.Timedelta(days=7)
                     latest_week_num = week_num
 
         week_str = f"Week {latest_week_num}: {latest_from_date.strftime('%b %d, %Y')} - {latest_to_date.strftime('%b %d, %Y')}" if latest_from_date else "Last Complete Week"
@@ -901,7 +901,8 @@ class NewInstituteReportsGenerator:
 
         # Get date range for title
         first_date = all_weeks[0].strftime('%b %d, %Y') if all_weeks else 'N/A'
-        last_date = all_weeks[-1].strftime('%b %d, %Y') if all_weeks else 'N/A'
+        # Always calculate ending date as from_date + 7 days (full week)
+        last_date = (all_weeks[-1] + pd.Timedelta(days=7)).strftime('%b %d, %Y') if all_weeks else 'N/A'
         num_weeks = len(all_weeks)
 
         # Calculate colors for the 6 boxes based on metric values

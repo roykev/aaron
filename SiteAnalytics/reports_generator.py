@@ -539,7 +539,9 @@ class NewWeeklyReportsGenerator:
         first_week = self.metrics.iloc[0]
         last_week = self.metrics.iloc[-1]
         first_date = pd.to_datetime(first_week['from_date']).strftime('%b %d, %Y')
-        last_date = pd.to_datetime(last_week['to_date']).strftime('%b %d, %Y')
+        # Always calculate ending date as from_date + 7 days (full week)
+        last_date_dt = pd.to_datetime(last_week['from_date']) + pd.Timedelta(days=7)
+        last_date = last_date_dt.strftime('%b %d, %Y')
         num_weeks = len(self.metrics)
 
         # Calculate colors for the 6 boxes based on metric values
