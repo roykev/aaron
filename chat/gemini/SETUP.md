@@ -98,7 +98,7 @@ registry.register_store(
 )
 
 # Later, retrieve the store name
-store_name = registry.get_store("Hebrew University", "Psychology - Memory Unit")
+store_name = registry.get_store("Hebrew University", "psychology - Memory Unit")
 
 # List all registered stores
 registry.print_registry()
