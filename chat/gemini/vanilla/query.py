@@ -10,21 +10,35 @@ sys.path.insert(0, str(project_root))
 
 from utils.utils import source_key
 
-def query(client, file_search_store, query, filter, max_output_tokens=None, temperature=None):
+
+def query(client, file_search_store, query, filter, max_output_tokens=1500, temperature=0.0, max_sentances=3,
+          system_instruction=None, grounded_only=True):
     """
-    Query the Gemini file search store.
+    Query the Gemini file search store with grounded answers.
 
     Args:
         client: Gemini client
         file_search_store: File search store object
         query: Query string
         filter: Metadata filter string
-        max_output_tokens: Maximum tokens in response (e.g., 100, 500, 2048)
-        temperature: Controls randomness (0.0 to 2.0, default ~1.0)
+        max_output_tokens: Maximum tokens in response (default: 300, range: 1-8192)
+        temperature: Controls randomness (0.0 to 2.0, default 0.0 for grounded answers)
+        system_instruction: Custom system instruction (default: enforces document-only answers)
+        grounded_only: If True, only answer from documents (default: True)
 
     Returns:
-        Gemini API response
+        Gemini API response with grounding_metadata if available
     """
+    # Default system instruction to enforce document-only answers
+    if system_instruction is None and grounded_only:
+        system_instruction = (
+            "You are a helpful assistant that ONLY answers questions based on the provided documents. "
+            f"Provide BRIEF and CONCISE answers - {max_sentances} sentences maximum. "
+            "If the answer is not found in the documents, respond EXACTLY with: "
+            "'לא נמצא מידע זה במסמכים' or 'I cannot find this information in the provided documents.' "
+            "Never use external knowledge or make assumptions beyond what is explicitly stated in the documents."
+        )
+
     config_params = {
         'tools': [
             types.Tool(
@@ -33,15 +47,13 @@ def query(client, file_search_store, query, filter, max_output_tokens=None, temp
                     metadata_filter=filter
                 )
             ),
-        ]
+        ],
+        'temperature': temperature,  # Low temperature (0.0) for document-grounded answers
+        'max_output_tokens': max_output_tokens,
     }
 
-    # Add optional parameters
-    if max_output_tokens is not None:
-        config_params['max_output_tokens'] = max_output_tokens
-
-    if temperature is not None:
-        config_params['temperature'] = temperature
+    if system_instruction:
+        config_params['system_instruction'] = system_instruction
 
     response = client.models.generate_content(
         model="gemini-2.5-flash",
@@ -51,9 +63,14 @@ def query(client, file_search_store, query, filter, max_output_tokens=None, temp
     print(response.text)
     return response
 
-def get_citations(response, top_k=5):
+def get_citations(response, top_k=3, skip_if_no_answer=True):
     """
-    Extract citations from Gemini response with metadata.
+    Extract citations from Gemini response with metadata and confidence scores.
+
+    Args:
+        response: Gemini API response
+        top_k: Number of top citations to return
+        skip_if_no_answer: If True, return empty list when answer not found in documents
 
     Returns:
         list: List of dictionaries, each containing:
@@ -63,14 +80,29 @@ def get_citations(response, top_k=5):
             - timestamp_from: Earliest timestamp (HH:MM:SS.mmm)
             - timestamp_to: Latest timestamp (HH:MM:SS.mmm)
             - metadata: Custom metadata dict (if available)
+            - confidence_score: Grounding support score (if available, 0.0-1.0)
     """
-    gm = response.candidates[0].grounding_metadata
+    # Check if we should skip citations when no answer is found
+    if skip_if_no_answer and not has_grounded_answer(response):
+        print("No grounded answer found in documents - skipping citations")
+        return []
+
+    try:
+        gm = response.candidates[0].grounding_metadata
+    except (AttributeError, IndexError):
+        print("No grounding metadata available")
+        return []
+
     if gm is None:
-        print("no grounding metadata")
+        print("No grounding metadata")
         return []
 
     # List all retrieved chunks
     chunks = gm.grounding_chunks  # list of GroundingChunkRetrievedContext
+    if not chunks:
+        print("No grounding chunks found")
+        return []
+
     top_chunks = chunks[:top_k]
 
     print("### Citations ###########")
@@ -135,6 +167,46 @@ def parse_vtt_timestamps(text):
     latest_end = max(end_times, key=time_to_seconds)
 
     return earliest_start, latest_end
+
+
+def has_grounded_answer(response):
+    """
+    Check if the response has grounded information from documents.
+
+    Args:
+        response: Gemini API response
+
+    Returns:
+        bool: True if response is grounded with citations, False otherwise
+    """
+    # Check for "not found" phrases in Hebrew or English
+    not_found_phrases = [
+        "לא נמצא מידע",
+        "cannot find this information",
+        "not found in",
+        "no information",
+        "אין מידע"
+    ]
+
+    response_text = response.text.lower()
+    for phrase in not_found_phrases:
+        if phrase.lower() in response_text:
+            return False
+
+    # Check if there's grounding metadata
+    try:
+        gm = response.candidates[0].grounding_metadata
+        if gm is None or not hasattr(gm, 'grounding_chunks'):
+            return False
+
+        # Check if there are actual chunks
+        chunks = gm.grounding_chunks
+        return len(chunks) > 0
+    except (AttributeError, IndexError):
+        return False
+
+
+
 
 if __name__ == '__main__':
     api_key = source_key("GEMINI_API_KEY")
