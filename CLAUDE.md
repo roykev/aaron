@@ -95,3 +95,4 @@ python clips_creator.py
 - File paths are often hardcoded for specific use cases
 - Configuration values are mixed between config files and hardcoded constants
 - No formal testing framework is in place - testing appears to be done through manual script execution
+- i think that everything should be in sections . if #3 is simple do it otherwise only section

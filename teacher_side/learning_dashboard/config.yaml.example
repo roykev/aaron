@@ -1,0 +1,100 @@
+# Learning Dashboard Configuration Example
+# Copy this file to config.yaml and adjust paths and parameters
+
+# Data paths
+paths:
+  queries_csv: "/home/roy/Downloads/attachments/queries.csv"
+  quiz_csv: "/home/roy/Downloads/attachments/quiz.csv"
+  eval_csv: "/home/roy/Downloads/attachments/eval.csv"
+  correct_csv: "/home/roy/Downloads/attachments/correct.csv"
+  concepts_json: "/home/roy/Downloads/attachments/concepts.txt"
+  output_txt: "/home/roy/Downloads/attachments/output.txt"
+  output_dir: "/home/roy/Downloads/attachments/output/learning_dashboard"
+  cache_dir: "/home/roy/Downloads/attachments/cache/learning_dashboard"
+
+# Lecture selection (set to null to process all lectures)
+lecture:
+  lecture_id: null  # e.g., "f867f9a3-3bab-41b3-9765-8a091544d13e"
+  lecture_name: null  # e.g., "שיעור 1"
+
+# Clustering parameters
+clustering:
+  model_name: "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+  similarity_threshold: 0.84
+  min_cluster_size: 1
+  batch_size: 64
+  normalize_embeddings: true
+  verbose: true
+
+# Significance thresholds (Layer 2 gates)
+significance:
+  # Issues panel
+  min_corroboration_score: 3.0
+  min_evidence_strength: "moderate"  # "sufficient" | "moderate" | "weak"
+
+  # Worked-well panel
+  max_eval_failure_rate: 0.25
+  min_example_or_time: true
+
+  # Gap panel
+  min_gap_score: 0.15
+
+  # Out-of-scope
+  min_students_out_of_scope: 2
+
+  # Reliability flags
+  min_eval_participants_sufficient: 5
+  min_eval_participants_sparse: 2
+
+# Scoring weights
+scoring:
+  # Teaching investment score (should sum to 1.0)
+  teaching_time_weight: 0.40
+  teaching_assessment_weight: 0.25
+  teaching_example_weight: 0.20
+  teaching_no_friction_weight: 0.15
+
+  # Evidence score
+  evidence_eval_failure_weight: 0.40
+  evidence_query_weight: 0.30
+  evidence_surface_learning_weight: 0.15
+  evidence_misconception_weight: 0.15
+
+  # Corroboration score
+  corroboration_signal_type_multiplier: 1.5
+  corroboration_inclass_bonus: 1.0
+
+  # Combined performance
+  eval_weight: 0.7
+  quiz_weight: 0.3
+
+# Ranking limits (max items per panel)
+ranking:
+  max_issues: 3
+  max_worked_well: 2
+  max_gaps: 3
+  max_out_of_scope: 5
+
+# Noise filter configuration
+noise_filter:
+  keyboard_gibberish_pattern: "^[a-zA-Z,\\.\\s]{1,8}$"
+  session_close_terms:
+    - "ביי"
+    - "bye"
+    - "שלום"
+    - "להתראות"
+    - "תודה"
+    - "thanks"
+  levenshtein_threshold: 2
+  min_query_length: 2
+
+# LLM configuration
+llm:
+  model_name: "claude-3-5-sonnet-20241022"  # Claude 3.5 Sonnet
+  temperature: 0.3
+  max_tokens: 4000
+  output_language: "Hebrew"  # "Hebrew" | "English"
+
+# General settings
+enable_caching: true
+verbose: true
