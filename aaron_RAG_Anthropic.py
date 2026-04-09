@@ -14,9 +14,7 @@ configs['summary_len'] = 500
 configs['num_q']=10
 configs['engine']="claude-3-5-sonnet-20240620"
 #configs['engine']="claude-3-opus-20240229"
-#configs['engine']= "claude-3-sonnet-20240229"
-
-
+configs['engine']= "claude-sonnet-4-5-20250929"
 configs['role']='a teaching assistant'
 # model="claude-3-opus-20240229",
 system_prompt=(f"You are {configs['role']}. Your mission is helping students understand the course and gets ready for the exam."
@@ -94,6 +92,62 @@ tasks = [
     },
 
 ]
+test_task = [
+    {
+        "name": "quiz",
+        "prompt":
+
+      "Create a quiz based on the following lecture transcript."
+     f" Write {configs['num_q']} + {configs['num_q']} multiple choice questions in {configs['lan']} for students to practice."
+     " Each has at least one correct answer."
+     f" {configs['num_q']} should be relatively easy, and will test my listening, and overall understanding."
+     f" {configs['num_q']} should be harder and will help my practice for the exam."
+      f"Make sure we have {configs['num_q']} questions for each difficulty level."
+      f"(multiple choice, multiple answers are allowed)."
+      f"the output should be as follow"
+"""
+      JSON
+
+      --- hard ---
+
+      JSON
+
+ Where each JSON is a JSON dict of "questions" where each "question" contains:
+    - a list of 4 choices
+    - correct answers contain a "correct":"true" element
+    - an "explanation" field that explains why the correct answer(s) are correct
+ e.g.
+    {{"questions": [
+      {{
+        "question": "What is the color of an orange?",
+        "explanation": "Oranges are a citrus fruit known for their distinctive orange-colored skin and flesh.",
+        "answers": [
+          {{"choice": "Red"}},
+          {{"choice": "Blue"}},
+          {{"choice": "Orange", "correct": "true"}},
+          {{"choice": "Green"}}
+        ]
+      }},
+      {{
+        "question": "Who was Albert Einstein?",
+        "explanation": "Albert Einstein was a German-born physicist who developed the special and general theories of relativity and won the Nobel Prize for Physics in 1921 for his explanation of the photoelectric effect.",
+        "answers": [
+          {{"choice": "A chemist"}},
+          {{"choice": "A physicist", "correct": "true"}},
+          {{"choice": "A biologist"}},
+          {{"choice": "A scientist", "correct": "true"}}
+        ]
+      }}
+    ]}}
+    Make sure you use correct quotes for JSON so if the element has a quote " you add it as \" to the JSON.
+    Also make sure to include the "--- hard ---" divider between the 2 sets of JSON dict elements.
+      """
+         f"Make sure the questions and answers are in {configs['lan']}."
+         ,
+
+        "output_file": "quiz.txt",
+    },
+]
 def call_anthropic(system_prompt, task, transcript, long=False):
     # Get the API .
     claude_api_key = source_key("ANTHROPIC_API_KEY")
@@ -132,25 +186,7 @@ def call_anthropic(system_prompt, task, transcript, long=False):
 
     else:
         clean_response = process_transcript(client, configs['engine'], system_prompt, prompt)
-
-        # response = client.messages.create(
-        #     model="claude-3-sonnet-20240229",
-        #     max_tokens=1000,
-        #     system=system_prompt,  # System prompt is now a separate parameter
-        #     messages=[
-        #         {"role": "user", "content": user_message}
-        #     ],
-        #     stream=True
-        # )
-        #
-        # chunk_correction = ""
-        # for event in response:
-        #     if hasattr(event, 'type') and event.type == "content_block_delta":
-        #         if hasattr(event.delta, 'text'):
-        #             chunk_correction += event.delta.text
-        #
-        # full_corrected_transcript.append(chunk_correction)
-    return (clean_response)
+        return (clean_response)
 
 def process_all_tasks(system_prompt, transcript, tasks, out_dir):
     # Create output directory if it doesn't exist
@@ -193,9 +229,9 @@ file_path = f"/home/roy/OneDrive/WORK/ideas/aaron/{configs['name']}/medium_trans
 with open(file_path, "r") as transcript_raw_file:
     transcript = transcript_raw_file.read().strip()
 out_dir = f"/home/roy/OneDrive/WORK/ideas/aaron/{configs['name']}/{configs['num']}/Anthropic"
-out_dir = f"/home/roy/OneDrive/WORK/ideas/aaron/{configs['name']}"
+out_dir = f"/home/roy/OneDrive/WORK/ideas/aaron/{configs['name']}/test"
 
-process_all_tasks(system_prompt,transcript,tasks,out_dir)
+process_all_tasks(system_prompt,transcript,test_task,out_dir)
 
 #print (res)
 results = {}

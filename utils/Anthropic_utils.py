@@ -36,7 +36,7 @@ def process_transcript(client, model, system_prompt, user_message):
     response = client.messages.create(
         model=model,
         system=system_prompt,  # System prompt is now a separate parameter
-        max_tokens=2000,
+        max_tokens=6500,
         messages=[
             {"role": "user", "content": user_message}
         ],

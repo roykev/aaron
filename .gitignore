@@ -1,6 +1,36 @@
+# Python
 venv/
 env/
 __pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# IDE
 .DS_Store
 .idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Environment
 .env
+.env.local
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+*.bak
+*.cache
+
+# Project specific
+store_registry.json.tmp.*
+query_log.json
+
+# OS
+Thumbs.db
+.Spotlight-V100
+.Trashes

@@ -595,9 +595,12 @@ class NewInstituteReportsGenerator:
         # Retention score table
         course_retention_rows = ""
         for course in sorted(course_retention_data, key=lambda x: x['retention'], reverse=True):
+            # Create hyperlink to course dynamics report (use original course name - no sanitization)
+            course_link = f"{course['name']}_dynamics.html"
+
             course_retention_rows += f"""
             <tr>
-                <td>{course['name']}</td>
+                <td><a href="{course_link}" style="color: #764ba2; text-decoration: none; font-weight: 500;">{course['name']}</a></td>
                 <td style="text-align: center;">{course['registered']}</td>
                 <td style="text-align: center;">{course['total_active']}</td>
                 <td style="text-align: center;">{course['repeating_users']}</td>
@@ -616,24 +619,75 @@ class NewInstituteReportsGenerator:
                 cumulative = sum(times)
                 cumulative_students = sum(times_students)
                 cumulative_lecturers = sum(times_lecturers)
+
+                # Calculate addition this week (always positive)
+                addition_this_week = times[-1] if times else 0
+                addition_students = times_students[-1] if times_students else 0
+                addition_lecturers = times_lecturers[-1] if times_lecturers else 0
+
+                # Calculate change vs last week (can be negative)
+                last_week_time = times[-1] if times else 0
+                prev_week_time = times[-2] if len(times) >= 2 else 0
+                weekly_change = last_week_time - prev_week_time
+
+                last_week_students = times_students[-1] if times_students else 0
+                prev_week_students = times_students[-2] if len(times_students) >= 2 else 0
+                weekly_change_students = last_week_students - prev_week_students
+
+                last_week_lecturers = times_lecturers[-1] if times_lecturers else 0
+                prev_week_lecturers = times_lecturers[-2] if len(times_lecturers) >= 2 else 0
+                weekly_change_lecturers = last_week_lecturers - prev_week_lecturers
+
                 course_time_data.append({
                     'name': course_name,
                     'time': cumulative,
                     'time_students': cumulative_students,
-                    'time_lecturers': cumulative_lecturers
+                    'time_lecturers': cumulative_lecturers,
+                    'addition_this_week': addition_this_week,
+                    'addition_students': addition_students,
+                    'addition_lecturers': addition_lecturers,
+                    'weekly_change': weekly_change,
+                    'weekly_change_students': weekly_change_students,
+                    'weekly_change_lecturers': weekly_change_lecturers
                 })
 
         course_time_rows = ""
         for course in sorted(course_time_data, key=lambda x: x['time'], reverse=True):
+            # Format cumulative times
             time_hms = self._format_time_hms(course['time'])
             time_students_hms = self._format_time_hms(course['time_students'])
             time_lecturers_hms = self._format_time_hms(course['time_lecturers'])
+
+            # Format additions (always positive)
+            addition_hms = self._format_time_hms(course['addition_this_week'])
+            addition_students_hms = self._format_time_hms(course['addition_students'])
+            addition_lecturers_hms = self._format_time_hms(course['addition_lecturers'])
+
+            # Format weekly changes with + or - sign and color (can be negative)
+            change_hms = self._format_time_hms(abs(course['weekly_change']))
+            change_sign = '+' if course['weekly_change'] >= 0 else '-'
+            change_color = 'green' if course['weekly_change'] >= 0 else 'red'
+
+            change_students_hms = self._format_time_hms(abs(course['weekly_change_students']))
+            change_students_sign = '+' if course['weekly_change_students'] >= 0 else '-'
+            change_students_color = 'green' if course['weekly_change_students'] >= 0 else 'red'
+
+            change_lecturers_hms = self._format_time_hms(abs(course['weekly_change_lecturers']))
+            change_lecturers_sign = '+' if course['weekly_change_lecturers'] >= 0 else '-'
+            change_lecturers_color = 'green' if course['weekly_change_lecturers'] >= 0 else 'red'
+
+            # Create hyperlink to course dynamics report (use original course name - no sanitization)
+            course_link = f"{course['name']}_dynamics.html"
+
             course_time_rows += f"""
             <tr>
-                <td>{course['name']}</td>
-                <td style="text-align: center;">{time_hms}</td>
-                <td style="text-align: center;">{time_students_hms}</td>
-                <td style="text-align: center;">{time_lecturers_hms}</td>
+                <td><a href="{course_link}" style="color: #764ba2; text-decoration: none; font-weight: 500;">{course['name']}</a></td>
+                <td style="text-align: center;">{time_hms} <span style="color: #666; font-size: 0.85em;">(+{addition_hms})</span></td>
+                <td style="text-align: center;">{time_students_hms} <span style="color: #666; font-size: 0.85em;">(+{addition_students_hms})</span></td>
+                <td style="text-align: center;">{time_lecturers_hms} <span style="color: #666; font-size: 0.85em;">(+{addition_lecturers_hms})</span></td>
+                <td style="text-align: center;"><span style="color: {change_color}; font-weight: 500;">{change_sign}{change_hms}</span></td>
+                <td style="text-align: center;"><span style="color: {change_students_color}; font-weight: 500;">{change_students_sign}{change_students_hms}</span></td>
+                <td style="text-align: center;"><span style="color: {change_lecturers_color}; font-weight: 500;">{change_lecturers_sign}{change_lecturers_hms}</span></td>
             </tr>
             """
 
@@ -1042,6 +1096,9 @@ class NewInstituteReportsGenerator:
                     <th style="text-align: center;">Cumulative Time (h:m:s)</th>
                     <th style="text-align: center;">Students Median (h:m:s)</th>
                     <th style="text-align: center;">Lecturers Median (h:m:s)</th>
+                    <th style="text-align: center;">Δ vs Last Week - Total</th>
+                    <th style="text-align: center;">Δ vs Last Week - Students</th>
+                    <th style="text-align: center;">Δ vs Last Week - Lecturers</th>
                 </tr>
                 {course_time_rows}
             </table>
