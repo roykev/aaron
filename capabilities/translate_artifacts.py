@@ -9,6 +9,7 @@ import os
 import json
 import re
 from typing import Dict, Any, List, Tuple
+from xml.sax.saxutils import escape as xml_escape
 import yaml
 
 from utils.kimi_utils import OpenRouterProxy, AnthropicProxy
@@ -467,8 +468,8 @@ def replace_svg_text_content(svg_content: str, translation_map: Dict[str, str]) 
         # Extract actual text by removing all HTML tags
         original_text = re.sub(r'<[^>]+>', '', text_content).strip()
 
-        # Get translated text
-        translated_text = translation_map.get(original_text, original_text)
+        # Get translated text and XML-escape it for safe SVG embedding
+        translated_text = xml_escape(translation_map.get(original_text, original_text))
 
         # Strategy: Find the first innermost <tspan> tag and replace its content
         # Remove all other text nodes to avoid duplication
