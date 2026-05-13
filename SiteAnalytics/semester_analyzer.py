@@ -1020,8 +1020,9 @@ def run_new_reports(config: dict) -> List[str]:
             from_date = datetime.strptime(from_date_str, '%Y-%m-%d').date()
             to_date = datetime.strptime(to_date_str, '%Y-%m-%d').date()
             week_duration = (to_date - from_date).days + 1
+            semester_start = datetime.strptime(start_date, '%Y-%m-%d').date()
 
-            if to_date < today and week_duration >= 6:
+            if to_date < today and week_duration >= 6 and from_date >= semester_start:
                 weekly_files.append(week_file)
             else:
                 excluded_partial.append(filename)

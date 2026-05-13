@@ -13,20 +13,30 @@ from typing import Optional, Dict
 
 def load_config(config_path: str = 'config.yaml') -> Dict:
     """
-    Load configuration from YAML file
-
-    Args:
-        config_path: Path to the YAML configuration file
-
-    Returns:
-        Dictionary containing configuration
+    Load configuration from YAML file.
+    Relative paths in config are resolved relative to the config file's directory.
     """
-    config_file = Path(config_path)
+    config_file = Path(config_path).resolve()
     if not config_file.exists():
         raise FileNotFoundError(f"Configuration file not found: {config_path}")
 
+    config_dir = config_file.parent
+
     with open(config_file, 'r') as f:
         config = yaml.safe_load(f)
+
+    # Resolve relative paths against config file's directory
+    path_keys = [
+        ('export', 'output_dir'),
+        ('export', 'raw_data_dir'),
+        ('export', 'reports_dir'),
+        ('semester', 'weekly_output_dir'),
+        ('info', 'course_list'),
+    ]
+    for section, key in path_keys:
+        val = config.get(section, {}).get(key)
+        if val and not os.path.isabs(val):
+            config[section][key] = str(config_dir / val)
 
     return config
 

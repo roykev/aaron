@@ -960,7 +960,7 @@ class NewInstituteReportsGenerator:
         num_weeks = len(all_weeks)
 
         # Calculate colors for the 6 boxes based on metric values
-        activity_bg, activity_color = self._get_metric_color('activity_rate', latest_wau_pct)
+        activity_bg, activity_color = self._get_metric_color('activity_rate', latest_wau_pct_of_active)
         engagement_bg, engagement_color = self._get_metric_color('engagement_score', latest_eng_score)
         coverage_bg, coverage_color = self._get_metric_color('coverage', latest_coverage)
         feature_bg, feature_color = self._get_metric_color('engagement_score', latest_feature_score)  # Use same thresholds

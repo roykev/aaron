@@ -9,22 +9,22 @@ mixpanel:
 # Export settings
 export:
   # Snapshot report: specific date range
-  from_date: "2025-12-18"
-  to_date: "2026-01-12"
+  from_date: "2026-03-16"
+  to_date: "2026-07-12"
   output_file: "mixpanel_export.csv"
-  output_dir: "/home/roy/FS/Dropbox/WORK/Ideas/aaron/Analytics/mixpanel_export"
+  output_dir: "data/export"
   chunk_days: null  # Set to a number (e.g., 7) to export in chunks
   event: null  # Optional: Filter by specific event name
 
   # Directory organization
-  raw_data_dir: "/home/roy/FS/Dropbox/WORK/Ideas/aaron/Analytics/raw_data"  # Raw CSV exports
-  reports_dir: "/home/roy/FS/Dropbox/WORK/Ideas/aaron/Analytics/reports"    # HTML reports and analysis
+  raw_data_dir: "data/raw"       # Raw CSV exports
+  reports_dir: "reports"         # HTML reports and analysis
 
 # Semester settings
 semester:
-  start_date: "2025-10-16"  # Semester start date (16/10/2025)
-  end_date: "2026-02-01"    # Semester end date (1/2/2026)
-  weekly_output_dir: "/home/roy/FS/Dropbox/WORK/Ideas/aaron/Analytics/weekly_data"
+
+  end_date: "2026-07-12"    # Semester end date (1/2/2026)
+  weekly_output_dir: "data/weekly"
 
   # Operations to run when using run_all() or no CLI args
   run_data_extraction: true         # Extract only NEW weeks since last extraction
@@ -49,7 +49,7 @@ semester:
 
 # Course information
 info:
-  course_list: "/home/roy/FS/Dropbox/WORK/Ideas/aaron/Analytics/courses.csv"
+  course_list: "data/courses.csv"
 
 # Report settings
 report:

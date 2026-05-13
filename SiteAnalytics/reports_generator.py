@@ -545,7 +545,7 @@ class NewWeeklyReportsGenerator:
         num_weeks = len(self.metrics)
 
         # Calculate colors for the 6 boxes based on metric values
-        activity_bg, activity_color = self._get_metric_color('activity_rate', latest_wau_pct)
+        activity_bg, activity_color = self._get_metric_color('activity_rate', latest_wau_pct_of_active)
         engagement_bg, engagement_color = self._get_metric_color('engagement_score', latest_eng_score)
         coverage_bg, coverage_color = self._get_metric_color('coverage', latest_repeating_from_active)
         retention_bg, retention_color = self._get_metric_color('retention', combined_score)

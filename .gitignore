@@ -34,3 +34,8 @@ query_log.json
 Thumbs.db
 .Spotlight-V100
 .Trashes
+
+# SiteAnalytics - ignore raw/temp dirs, track weekly CSVs and reports
+SiteAnalytics/data/raw/
+SiteAnalytics/data/export/
+SiteAnalytics/tts_env/
