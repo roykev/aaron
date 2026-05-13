@@ -1,0 +1,86 @@
+data:
+  weekly_events_dir: /home/roy/FS/Dropbox/WORK/Ideas/aaron/Analytics/weekly_data
+  user_export_csv: /home/roy/FS/Dropbox/WORK/Ideas/aaron/research/user-export-3456528-2026_05_11_14_23_15.csv
+  output_dir: /home/roy/FS/Dropbox/WORK/Ideas/aaron/research/output
+  federation_dir: /home/roy/FS/Dropbox/WORK/Ideas/aaron/research/federation
+
+# Each entry under 'courses' is a course key you choose (any short identifier).
+# Add one block per course you want to analyse.
+courses:
+  example_course:
+    course_id: 431ccb6f-5f7f-4b59-965a-7a361534be93
+    name: "Math for Business Administration"
+    eval_csv: "/home/roy/FS/Dropbox/WORK/Ideas/aaron/research/math - quiz-eval-search reports/קורס מתמטיקה למנהל עסקים - דוח quiz_eval - evaluation.csv"
+    quiz_csv: "/home/roy/FS/Dropbox/WORK/Ideas/aaron/research/math - quiz-eval-search reports/קורס מתמטיקה למנהל עסקים - דוח quiz_eval - quiz.csv"
+
+  psy:
+    course_id: 0904aae7-8f9a-426a-a4fb-f2f5213b3dfd
+    name: "Introduction to Psychology"
+    eval_csv: "/home/roy/FS/Dropbox/WORK/Ideas/aaron/research/psy/מבוא לפסיכולוגיה - דוח quiz_eval.xlsx"
+    eval_sheet: evaluation
+    quiz_csv: "/home/roy/FS/Dropbox/WORK/Ideas/aaron/research/psy/מבוא לפסיכולוגיה - דוח quiz_eval.xlsx"
+    quiz_sheet: quiz
+    output_dir: /home/roy/FS/Dropbox/WORK/Ideas/aaron/research/psy/output
+    federation_dir: /home/roy/FS/Dropbox/WORK/Ideas/aaron/research/psy/output
+
+  # another_course:
+  #   course_id: <uuid from Mixpanel>
+  #   name: "..."
+  #   eval_csv: /path/to/eval.csv         # or .xlsx with eval_sheet / quiz_sheet
+  #   quiz_csv: /path/to/quiz.csv
+
+session:
+  idle_timeout_minutes: 30
+  max_session_duration_minutes: 120
+  meaningful_session_min_duration_minutes: 5
+  meaningful_session_min_events: 3
+  meaningful_session_min_active_events: 1
+
+events:
+  # Events that count as "active learning"
+  active_event_types:
+    - quiz_start
+    - quiz_complete
+    - evaluation_start
+    - evaluation_complete
+    - concept_select
+  # tab_change to these tabs also counts as active
+  active_tab_changes:
+    - search
+    - concepts
+    - mindmap
+    - short_summary
+    - long_summary
+    - transcript
+    - additional_material
+  # All recognized feature tabs (denominator for diversity score)
+  feature_tabs:
+    - quiz
+    - quiz_eval
+    - short_summary
+    - long_summary
+    - mindmap
+    - search
+    - concepts
+    - transcript
+    - additional_material
+
+active_learning_score:
+  weights:
+    active_weeks_ratio: 0.35
+    active_events: 0.25
+    feature_diversity: 0.20
+    meaningful_sessions: 0.20
+
+target:
+  type: synthetic_formula   # synthetic_random | synthetic_formula | final_grade
+  params:
+    noise_std: 10
+    seed: 42
+    # For final_grade, set:
+    # grades_csv: /path/to/grades.csv  (columns: email, final_grade)
+
+federation:
+  # Teacher needs emails to join their grade file — keep false.
+  # Anonymisation happens on the *results* returned to Aaron Owl, not the features sent out.
+  anonymize_ids: false
