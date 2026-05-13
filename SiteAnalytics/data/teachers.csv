@@ -1,0 +1,60 @@
+$distinct_id,$name,$email,$distinct_id.1,$last_seen,$country_code,$region,$city
+4a8dcd48-1768-48db-b904-13ea608f3647,Yaniv Geier,yanivge@jce.ac.il,4a8dcd48-1768-48db-b904-13ea608f3647,2026-01-08 13:21:01,Israel,Jerusalem,Jerusalem
+fff818f2-1220-49fb-be17-235dd8de0dfe,Maoz Rosenthal,maoz.ro1@gmail.com,fff818f2-1220-49fb-be17-235dd8de0dfe,2025-06-25 20:00:56,Israel,Central District,Rishon LeTsiyyon
+856bda12-f442-4b1b-bd23-a0be4d9b5c66,Aaron Owl,aarontheowl@gmail.com,856bda12-f442-4b1b-bd23-a0be4d9b5c66,2026-01-14 17:15:34,Israel,Tel Aviv,Tel Aviv
+250d4112-ddd1-4715-b9e1-749c6c968383,?? ?????? ??????,taldin@jmc.ac.il,250d4112-ddd1-4715-b9e1-749c6c968383,2025-06-27 17:41:12,Israel,Tel Aviv,Or Yehuda
+8c3dd8ad-ded8-4315-9e90-1f873e77a128,Zur Luria,zurlu@jce.ac.il,8c3dd8ad-ded8-4315-9e90-1f873e77a128,2025-03-27 17:15:33,Israel,Tel Aviv,Tel Aviv
+106f891c-0702-466a-95be-9c1df6233c8a,????? ???,shimonsr@post.jce.ac.il,106f891c-0702-466a-95be-9c1df6233c8a,2025-06-30 00:09:53,Israel,Tel Aviv,Tel Aviv
+83718399-1e94-45ab-9d38-0e7dd37def97,Aaron Demo,demo@aaronowl.com,83718399-1e94-45ab-9d38-0e7dd37def97,2025-12-07 13:17:30,Israel,Tel Aviv,Tel Aviv
+f218a9d7-07da-4cc7-ac9e-29edfab0fd58,Jacob Goldenberg,jgoldenberg@idc.ac.il,f218a9d7-07da-4cc7-ac9e-29edfab0fd58,2024-12-11 11:29:21,Israel,Jerusalem,Jerusalem
+d1bf4ce7-d99c-49ff-bb30-6888de775259,Roni Horowitz,ronih@jce.ac.il,d1bf4ce7-d99c-49ff-bb30-6888de775259,2025-06-26 19:59:52,Israel,Central District,Rosh Ha‘Ayin
+0681dd69-53c2-405b-b4a1-f4425326737e,Aaron Demo3,demo3@aaronowl.com,0681dd69-53c2-405b-b4a1-f4425326737e,2025-12-03 22:46:05,Israel,Tel Aviv,Tel Aviv
+ee901e2a-1574-4da6-bd69-9c01a4600894,Reuven Sherwin,rubale@gmail.com,ee901e2a-1574-4da6-bd69-9c01a4600894,2024-12-11 14:25:15,Israel,Tel Aviv,Kiryat Ono
+009ae856-6484-45c7-9591-89dbdea5bf07,Tamar Raz,tamraz@jce.ac.il,009ae856-6484-45c7-9591-89dbdea5bf07,2025-06-06 10:14:21,Israel,Jerusalem,Jerusalem
+505830f9-54ee-4180-abd4-d9d1811f2624,Shiran German Ben-Hayun,shiranger@gordon.ac.il,505830f9-54ee-4180-abd4-d9d1811f2624,2025-07-29 08:22:23,Israel,Haifa,Haifa
+aed159bf-d396-4f3e-9458-cc271ea85724,Danna Tevet,danna.tevet@gmail.com,aed159bf-d396-4f3e-9458-cc271ea85724,2025-03-27 10:48:45,Israel,Tel Aviv,Tel Aviv
+407d1ece-2a45-4f19-bfa7-4d6ae205c6c4,???? ??????,alon.horovitz@post.runi.ac.il,407d1ece-2a45-4f19-bfa7-4d6ae205c6c4,2025-05-26 12:17:21,Israel,Tel Aviv,Tel Aviv
+951bcef4-c86b-46e6-8842-ffdc4d73d3d2,???? ?????,lilachn@best.ono.ac.il,951bcef4-c86b-46e6-8842-ffdc4d73d3d2,2026-01-07 00:25:48,Israel,Tel Aviv,Tel Aviv
+a9bb383b-7999-44f9-b81b-e40ba0a2b0c1,Eyal Katz,eykatz@iai.co.il,a9bb383b-7999-44f9-b81b-e40ba0a2b0c1,2025-05-12 19:02:03,Israel,Central District,Shoham
+a6cad06d-f1c5-4ed0-9d23-a740f4d65f99,Ono Demo,ono_demo@aaronowl.com,a6cad06d-f1c5-4ed0-9d23-a740f4d65f99,2025-12-03 11:38:42,Israel,Tel Aviv,Or Yehuda
+1897830e-bdb4-4922-826b-2d7db123e6c5,Lavi Sigman,lavis@gordon.ac.il,1897830e-bdb4-4922-826b-2d7db123e6c5,2025-07-29 15:31:17,Israel,Haifa,Haifa
+3b83d0ee-7292-4b26-9c13-e8848e296547,Tali Tavor Re'em,talire@jce.ac.il,3b83d0ee-7292-4b26-9c13-e8848e296547,2025-05-13 19:24:23,Israel,Jerusalem,Jerusalem
+801aa5fe-ce7e-41aa-9057-7b489ec61bce,?? ??? ???????????,gadis@mail.sapir.ac.il,801aa5fe-ce7e-41aa-9057-7b489ec61bce,2026-01-07 19:38:30,Israel,Tel Aviv,Giv‘atayim
+7d322942-72aa-418e-a53c-6442c3363223,?? ??????,noacht@jce.ac.il,7d322942-72aa-418e-a53c-6442c3363223,2025-12-01 09:29:11,Israel,Jerusalem,Jerusalem
+3eff60da-6605-48a2-9f14-186c9a3f61c9,???? ???? ????,einav.amram@ono.ac.il,3eff60da-6605-48a2-9f14-186c9a3f61c9,2026-01-14 17:27:06,Israel,Tel Aviv,Kiryat Ono
+e95a4aa5-e2e1-41aa-9bb2-592c960d2b89,??? ???????,moshezi@jce.ac.il,e95a4aa5-e2e1-41aa-9bb2-592c960d2b89,2026-01-08 20:55:34,Israel,Central District,Petah Tikva
+d7a6f000-a60b-44f8-aa28-727d95a19e98,??? ???? ????,guyrefaelyona@gmail.com,d7a6f000-a60b-44f8-aa28-727d95a19e98,2026-01-07 16:15:05,Israel,Tel Aviv,Kiryat Ono
+abdbd5bc-d132-486f-991e-f11263b70607,Roy,roy@aaronowl.com,abdbd5bc-d132-486f-991e-f11263b70607,2026-01-12 11:57:38,Israel,Tel Aviv,Tel Aviv
+852ffc34-bd59-4496-ae22-0d313bc25271,Kobi Pinto,kobipinto@gmail.com,852ffc34-bd59-4496-ae22-0d313bc25271,2024-12-10 09:21:24,Israel,Tel Aviv,Holon
+c5ec0a9c-02bb-4402-8ba4-f82a2cea91bd,??? ??-?????,kerenka@post.jce.ac.il,c5ec0a9c-02bb-4402-8ba4-f82a2cea91bd,2026-01-12 17:56:23,Israel,Jerusalem,Jerusalem
+d53d29dd-74ef-4205-8bb6-41757c2356dc,Ariel Geva,ariel@aaronowl.com,d53d29dd-74ef-4205-8bb6-41757c2356dc,2026-01-13 07:09:41,Israel,Central District,Petah Tikva
+8b223cb4-40c4-4bd8-8a2a-ca36ceac6f8c,????? ?????? ???????,barbara@jce.ac.il,8b223cb4-40c4-4bd8-8a2a-ca36ceac6f8c,2026-01-14 09:18:53,Israel,Jerusalem,Jerusalem
+0c0c2d19-b549-4c0e-9e14-70fe774d7a39,Aaron Demo3,demo2@aaronowl.com,0c0c2d19-b549-4c0e-9e14-70fe774d7a39,2025-12-03 22:37:03,Israel,Tel Aviv,Tel Aviv
+$device:19310d883026d6-0455c9723cd0e8-b457450-5c094-19310d883026d6,Aaron Owl,aarontheowl@gmail.com,$device:19310d883026d6-0455c9723cd0e8-b457450-5c094-19310d883026d6,2024-11-09 14:14:10,Israel,Tel Aviv,Ramat Gan
+8b1d6f53-398d-493f-ad72-cdb8a85320ca,Moses Miller,moses.miller@runi.ac.il,8b1d6f53-398d-493f-ad72-cdb8a85320ca,2025-06-09 12:00:35,Israel,Tel Aviv,Herzliya
+38306f82-e4bd-46e8-84a6-adee21ca84c3,?????? ??????,marganitco@post.jce.ac.il,38306f82-e4bd-46e8-84a6-adee21ca84c3,2026-01-12 15:48:09,Israel,Jerusalem,Jerusalem
+b278cf92-cae9-439c-a8e3-bfeb5b558cba,Samira Abu-Elhawa,samiraabuelhawa812@gmail.com,b278cf92-cae9-439c-a8e3-bfeb5b558cba,2025-12-15 10:01:55,Israel,Tel Aviv,Tel Aviv
+c114b0de-5f90-4fef-a7c3-929acb1600ba,??? ??? ???? ??????,kerensn@jmc.ac.il,c114b0de-5f90-4fef-a7c3-929acb1600ba,2025-06-26 11:22:01,Israel,Central District,Rishon LeTsiyyon
+aed9e3bc-baae-4136-bda3-626e33bbf00e,Matan Demo,matan_demo@aaronowl.com,aed9e3bc-baae-4136-bda3-626e33bbf00e,2025-10-26 12:07:45,Israel,Central District,Rishon LeTsiyyon
+15817ea2-6197-4cc4-88ac-74b58a16a559,???? ???,harelco@post.jce.ac.il,15817ea2-6197-4cc4-88ac-74b58a16a559,2025-12-29 01:38:50,Israel,Central District,Rishon LeTsiyyon
+83e2fe08-50e4-40da-a430-4b05e7d0ac15,Nasreen Ghadir,nasreenghadir@gmail.com,83e2fe08-50e4-40da-a430-4b05e7d0ac15,2026-01-14 16:56:59,Israel,Tel Aviv,Ramat Gan
+0604cea5-cb4a-4965-89e9-4a6211044d18,????? ????,hassin@jce.ac.il,0604cea5-cb4a-4965-89e9-4a6211044d18,2025-11-17 14:38:44,Israel,Jerusalem,Jerusalem
+e37c7f45-fa14-4b7d-b539-90656bafec52,Michal Gaoni Shoval,gaonimichal@gmail.com,e37c7f45-fa14-4b7d-b539-90656bafec52,2025-05-18 17:13:08,Israel,Central District,Raanana
+GalOz@sapir.ac.il,????? ?? ???,GalOz@sapir.ac.il,,,,,
+yoash.chassidim@gmail.com,???? ??????,yoash.chassidim@gmail.com,,,,,
+zaltsmantatiana@gmail.com,?????? ?????,zaltsmantatiana@gmail.com,,,,,
+Amihai.menuhin@gmail.com,????? ??????,Amihai.menuhin@gmail.com,,,,,
+yanns@mail.sapir.ac.il,??? ??????,yanns@mail.sapir.ac.il,,,,,
+mondacalily@gmail.com,???? ??????,mondacalily@gmail.com,,,,,
+yuvalga@sapir.ac.il,???? ????,yuvalga@sapir.ac.il,,,,,
+aisrael@mail.sapir.ac.il,???? ?????-?????????,aisrael@mail.sapir.ac.il,,,,,
+ronitnadiv@gmail.com,????? ???,ronitnadiv@gmail.com,,,,,
+hagarl@mail.sapir.ac.il,??? ???,hagarl@mail.sapir.ac.il,,,,,
+rakefetof@jce.ac.il,???? ???? ?????,rakefetof@jce.ac.il,,,,,
+danielbb@post.jce.ac.il,????? ??????,danielbb@post.jce.ac.il,,,,,
+elinorza@jce.ac.il,?????? ????? ????,elinorza@jce.ac.il,,,,,
+ruti@jce.ac.il,??? ???,ruti@jce.ac.il,,,,,
+borisge@jce.ac.il,?????,borisge@jce.ac.il,,,,,
+erubin@bgu.ac.il,???? ?????,erubin@bgu.ac.il,,,,,
+yishay.mor@beitberl.ac.il,Yishay Mor,yishay.mor@beitberl.ac.il,,,,,
+oshrat.gazal@beitberl.ac.il,???? ???,oshrat.gazal@beitberl.ac.il,,,,,
