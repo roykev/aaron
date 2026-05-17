@@ -444,8 +444,8 @@ class CourseAnalysis:
             raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
 
         path = os.path.join(output_dir, f"{from_date}_{to_date}_course_analysis.json")
-        with open(path, 'w') as f:
-            json.dump(data, f, indent=2, default=convert_datetime)
+        with open(path, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=2, default=convert_datetime, ensure_ascii=False)
 
         print(f"Exported: {path}")
         return path

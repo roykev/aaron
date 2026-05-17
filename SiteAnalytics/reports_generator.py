@@ -62,7 +62,7 @@ class NewWeeklyReportsGenerator:
 
         html = self._generate_snapshot_html(latest)
 
-        with open(output_path, 'w') as f:
+        with open(output_path, 'w', encoding='utf-8') as f:
             f.write(html)
 
         print(f"Snapshot report generated: {output_path}")
@@ -79,7 +79,7 @@ class NewWeeklyReportsGenerator:
 
         html = self._generate_dynamics_html()
 
-        with open(output_path, 'w') as f:
+        with open(output_path, 'w', encoding='utf-8') as f:
             f.write(html)
 
         print(f"Dynamics report generated: {output_path}")
