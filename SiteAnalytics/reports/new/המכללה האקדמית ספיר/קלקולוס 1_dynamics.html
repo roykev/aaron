@@ -1,0 +1,702 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Dynamics: קלקולוס 1 (Apr 04, 2026 - May 16, 2026)</title>
+    
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 2.5em;
+        }
+        .header p {
+            margin: 5px 0;
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        .section {
+            background: white;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .section h2 {
+            color: #667eea;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+        .section h3 {
+            color: #764ba2;
+            margin-top: 20px;
+        }
+        .chart-container {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            position: relative;
+            height: 400px;
+        }
+        .chart-container canvas {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th {
+            background: #667eea;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        tr:hover {
+            background: #f8f9fa;
+        }
+        details {
+            margin: 20px 0;
+        }
+        summary {
+            cursor: pointer;
+            font-weight: 600;
+            color: #667eea;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        summary:hover {
+            background: #e3f2fd;
+        }
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="header">
+        <h1>📈 Course Dynamics Report</h1>
+        <p><strong>קלקולוס 1 (Registered: 44)</strong></p>
+        <p>2 Complete Weeks: Apr 04, 2026 to May 16, 2026</p>
+    </div>
+
+    <div class="section">
+        <h2>📋 Executive Summary</h2>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px;">
+            <div style="text-align: center; padding: 20px; background: #fff9c4; border-radius: 8px;">
+                <div style="font-size: 2em; font-weight: bold; color: #f57f17;">50.0%</div>
+                <div style="color: #666; font-size: 0.9em;">Current Activity Rate</div>
+                <div style="font-size: 0.75em; color: #888; margin-top: 3px;">% of Active So Far</div>
+                <div style="font-size: 0.8em; color: #888; margin-top: 8px; border-top: 1px solid #ddd; padding-top: 8px;">Total Active So Far: 2</div>
+                <div style="font-size: 0.8em; color: #888; margin-top: 5px;">1/44</div>
+            </div>
+            <div style="text-align: center; padding: 20px; background: #ffcdd2; border-radius: 8px;">
+                <div style="font-size: 2em; font-weight: bold; color: #b71c1c;">0.00</div>
+                <div style="color: #666; font-size: 0.9em;">Consistency Engagement Score</div>
+                <div style="font-size: 0.75em; color: green; margin-top: 5px;">— +0.0 vs last week</div>
+            </div>
+            <div style="text-align: center; padding: 20px; background: #fff3e0; border-radius: 8px;">
+                <div style="font-size: 2em; font-weight: bold; color: #f57c00;">0:10:07</div>
+                <div style="color: #666; font-size: 0.9em;">Cumulative Time</div>
+                <div style="font-size: 0.75em; color: green; margin-top: 5px;">↑ 0:05:00 vs last week</div>
+            </div>
+            <div style="text-align: center; padding: 20px; background: #ffcdd2; border-radius: 8px;">
+                <div style="font-size: 2em; font-weight: bold; color: #b71c1c;">0.0%</div>
+                <div style="color: #666; font-size: 0.9em;">Repeating Users</div>
+                <div style="font-size: 0.75em; color: green; margin-top: 5px;">— +0.0% vs last week</div>
+                <div style="font-size: 0.8em; color: #888; margin-top: 8px; border-top: 1px solid #ddd; padding-top: 8px;">2, 0, 0.0%</div>
+            </div>
+            <div style="text-align: center; padding: 20px; background: #fff9c4; border-radius: 8px;">
+                <div style="font-size: 2em; font-weight: bold; color: #f57f17;">35.0</div>
+                <div style="color: #666; font-size: 0.9em;">Retention Score</div>
+                <div style="font-size: 0.75em; color: red; margin-top: 5px;">↓ -35.0 vs last week</div>
+            </div>
+            <div style="text-align: center; padding: 20px; background: #e8f5e9; border-radius: 8px;">
+                <div style="font-size: 1.3em; font-weight: bold; color: #2e7d32;">⚫ Quiz (0.0%)</div>
+                <div style="font-size: 0.7em; color: green;">— +0.0%</div>
+                <div style="font-size: 1.3em; font-weight: bold; color: #c62828; margin-top: 8px;">⚫ Concepts (0.0%)</div>
+                <div style="font-size: 0.7em; color: green;">— +0.0%</div>
+                <div style="color: #666; font-size: 0.9em; margin-top: 5px;">Top / Bottom Features</div>
+                <div style="font-size: 0.8em; color: #888; margin-top: 8px; border-top: 1px solid #ddd; padding-top: 8px;">Semester Score: 0.00/100 | H:0 M:0 L:7</div>
+            </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+            <div style="padding: 15px; background: #fce4ec; border-radius: 8px;">
+                <div style="font-weight: bold; color: #c2185b; font-size: 1em; margin-bottom: 10px;">📚 Top Concepts This Week</div>
+                <div style="font-size: 0.85em; color: #666;">
+                    No data yet
+                </div>
+            </div>
+            <div style="padding: 15px; background: #f3e5f5; border-radius: 8px;">
+                <div style="font-weight: bold; color: #7b1fa2; font-size: 1em; margin-bottom: 10px;">🎓 Top Concepts This Semester</div>
+                <div style="font-size: 0.85em; color: #666;">
+                    No data yet
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>1. Cumulative Engagement</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+            <div style="text-align: center; padding: 20px; background: #fff3e0; border-radius: 8px;">
+                <div style="font-size: 2.5em; font-weight: bold; color: #f57c00;">0:10:07</div>
+                <div style="color: #666; font-size: 1.1em;">Median Cumulative Time</div>
+            </div>
+            <div style="text-align: center; padding: 20px; background: #e3f2fd; border-radius: 8px;">
+                <div style="font-size: 2.5em; font-weight: bold; color: #667eea;">0.0%</div>
+                <div style="color: #666; font-size: 1.1em;">Repeating Users</div>
+                <div style="font-size: 0.8em; color: #888; margin-top: 8px;">% of Active Users</div>
+            </div>
+        </div>
+        <div class="chart-container">
+            <canvas id="cumulativeEngagementChart"></canvas>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>2. Active Users Trend</h2>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px;">
+            <div style="text-align: center; padding: 20px; background: #e3f2fd; border-radius: 8px;">
+                <div style="font-size: 2em; font-weight: bold; color: #667eea;">1</div>
+                <div style="color: #666; font-size: 0.9em;">Active Users (this week)</div>
+                <div style="font-size: 0.8em; color: #888; margin-top: 5px;">Active So Far: 2</div>
+            </div>
+            <div style="text-align: center; padding: 20px; background: #e3f2fd; border-radius: 8px;">
+                <div style="font-size: 2em; font-weight: bold; color: #667eea;">50.0%</div>
+                <div style="color: #666; font-size: 0.9em;">% of Total Active So Far</div>
+            </div>
+            <div style="text-align: center; padding: 20px; background: #e3f2fd; border-radius: 8px;">
+                <div style="font-size: 2em; font-weight: bold; color: #667eea;">2.3%</div>
+                <div style="color: #666; font-size: 0.9em;">% of Registered (44)</div>
+            </div>
+        </div>
+        <div class="chart-container">
+            <canvas id="wauChart"></canvas>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>3. Top Concepts</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+            <div>
+                <h3>This Week's Top 5</h3>
+                <table>
+                    <tr>
+                        <th>Concept</th>
+                        <th>Popularity</th>
+                        <th style="text-align: center;">Trend</th>
+                    </tr>
+                    
+                <tr>
+                    <td style='color: #999;'>—</td>
+                    <td>—</td>
+                    <td style='text-align: center;'>—</td>
+                </tr>
+            
+                <tr>
+                    <td style='color: #999;'>—</td>
+                    <td>—</td>
+                    <td style='text-align: center;'>—</td>
+                </tr>
+            
+                <tr>
+                    <td style='color: #999;'>—</td>
+                    <td>—</td>
+                    <td style='text-align: center;'>—</td>
+                </tr>
+            
+                <tr>
+                    <td style='color: #999;'>—</td>
+                    <td>—</td>
+                    <td style='text-align: center;'>—</td>
+                </tr>
+            
+                <tr>
+                    <td style='color: #999;'>—</td>
+                    <td>—</td>
+                    <td style='text-align: center;'>—</td>
+                </tr>
+            
+                </table>
+            </div>
+            <div>
+                <h3>Semester Top 5</h3>
+                <table>
+                    <tr>
+                        <th>Concept</th>
+                        <th>Popularity</th>
+                    </tr>
+                    
+                <tr>
+                    <td style='color: #999;'>—</td>
+                    <td>—</td>
+                </tr>
+            
+                <tr>
+                    <td style='color: #999;'>—</td>
+                    <td>—</td>
+                </tr>
+            
+                <tr>
+                    <td style='color: #999;'>—</td>
+                    <td>—</td>
+                </tr>
+            
+                <tr>
+                    <td style='color: #999;'>—</td>
+                    <td>—</td>
+                </tr>
+            
+                <tr>
+                    <td style='color: #999;'>—</td>
+                    <td>—</td>
+                </tr>
+            
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>4. Consistency Engagement Score</h2>
+        <div style="padding: 20px; background: #e3f2fd; border-radius: 8px; margin-bottom: 20px;">
+            <div style="text-align: center;">
+                <div style="font-size: 2.5em; font-weight: bold; color: #667eea;">0.00</div>
+                <div style="color: #1565c0; font-weight: 600; font-size: 1.1em;">Consistency Engagement Score</div>
+                <div style="font-size: 0.85em; color: red; margin-top: 8px;">
+                    0.0/100 (Expected: 50)
+                </div>
+            </div>
+        </div>
+        <div class="chart-container">
+            <canvas id="engagementChart"></canvas>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>5. Feature Usage Trends</h2>
+        <div style="padding: 15px; background: #f3f4f6; border-left: 4px solid #667eea; border-radius: 8px; margin-bottom: 20px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px;">
+                <div>
+                    <div style="font-size: 0.9em; color: #666; margin-bottom: 5px;">Semester Usage Score (≥2 weeks)</div>
+                    <div style="font-size: 2em; font-weight: bold; color: #667eea;">0.00/100</div>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 1.5em; font-weight: bold; color: #2e7d32;">0</div>
+                        <div style="color: #1b5e20; font-weight: 600; font-size: 0.8em;">High</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 1.5em; font-weight: bold; color: #f57c00;">0</div>
+                        <div style="color: #e65100; font-weight: 600; font-size: 0.8em;">Moderate</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 1.5em; font-weight: bold; color: #c62828;">7</div>
+                        <div style="color: #b71c1c; font-weight: 600; font-size: 0.8em;">Low</div>
+                    </div>
+                </div>
+            </div>
+            <div style="border-top: 1px solid #ddd; padding-top: 15px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div>
+                        <div style="font-size: 0.9em; color: #666; margin-bottom: 5px;">Usage % (Status)</div>
+                        <div style="font-size: 2em; font-weight: bold; color: #667eea;">0.00/100</div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 1.5em; font-weight: bold; color: #2e7d32;">0</div>
+                            <div style="color: #1b5e20; font-weight: 600; font-size: 0.8em;">High</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 1.5em; font-weight: bold; color: #f57c00;">0</div>
+                            <div style="color: #e65100; font-weight: 600; font-size: 0.8em;">Moderate</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 1.5em; font-weight: bold; color: #c62828;">7</div>
+                            <div style="color: #b71c1c; font-weight: 600; font-size: 0.8em;">Low</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 20px;">
+            <div>
+                <h3>Latest Week Usage Rates</h3>
+                <table>
+                    <tr>
+                        <th>Feature</th>
+                        <th style="text-align: center;">Usage % (Status)</th>
+                        <th style="text-align: center;">Semester Usage (≥2 weeks)</th>
+                    </tr>
+                    <tr><td>Quiz</td><td style='text-align: center;'>0.0% ⚫</td><td style='text-align: center;'>0.0% ⚫</td></tr><tr><td>Evaluation</td><td style='text-align: center;'>0.0% ⚫</td><td style='text-align: center;'>0.0% ⚫</td></tr><tr><td>Mind Map</td><td style='text-align: center;'>0.0% ⚫</td><td style='text-align: center;'>0.0% ⚫</td></tr><tr><td>Search</td><td style='text-align: center;'>0.0% ⚫</td><td style='text-align: center;'>0.0% ⚫</td></tr><tr><td>Short Summary</td><td style='text-align: center;'>0.0% ⚫</td><td style='text-align: center;'>0.0% ⚫</td></tr><tr><td>Long Summary</td><td style='text-align: center;'>0.0% ⚫</td><td style='text-align: center;'>0.0% ⚫</td></tr><tr><td>Concepts</td><td style='text-align: center;'>0.0% ⚫</td><td style='text-align: center;'>0.0% ⚫</td></tr>
+                </table>
+                <p style="font-size: 0.9em; color: #666; margin-top: 15px;">
+                    🟢 High: >=40% | 🟡 Moderate: 20-39% | ⚫ Low: <20%
+                </p>
+            </div>
+            <div class="chart-container">
+                <canvas id="featureScoreChart"></canvas>
+            </div>
+        </div>
+        <details>
+            <summary>📊 Show Detailed Feature Trends (Click to Expand)</summary>
+            <div class="chart-container" style="margin-top: 15px;">
+                <canvas id="featureDetailChart"></canvas>
+            </div>
+        </details>
+    </div>
+
+    <div class="section">
+        <h2>6. Student Retention Score</h2>
+        <div style="text-align: center; padding: 20px; background: #e8eaf6; border-radius: 8px; margin-bottom: 20px;">
+            <div style="font-size: 2.5em; font-weight: bold; color: #5e35b1;">35.0</div>
+            <div style="color: #666; font-size: 1.1em;">Current Retention Score (out of 100)</div>
+            <div style="font-size: 0.9em; color: #666; margin-top: 10px;">
+                ⚠️ High at-risk % is bad | ⚠️ Low reactivation % is bad
+            </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div class="chart-container">
+                <canvas id="atRiskChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="reactivationChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // WAU Chart (dual-axis: count and percentage)
+    new Chart(document.getElementById('wauChart'), {
+        type: 'line',
+        data: {
+            labels: ["Apr 04", "May 09"],
+            datasets: [
+                {
+                    label: '# WAU (count)',
+                    data: [1, 1],
+                    borderColor: '#f57c00',
+                    backgroundColor: 'rgba(245, 124, 0, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: false,
+                    yAxisID: 'y'
+                },
+                {
+                    label: '% of Total Active So Far',
+                    data: [100.0, 50.0],
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true,
+                    yAxisID: 'y1'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: { display: true, text: 'Weekly Active Users: Count & %' }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    position: 'left',
+                    title: { display: true, text: '# WAU (count)' }
+                },
+                y1: {
+                    beginAtZero: true,
+                    max: 100,
+                    position: 'right',
+                    title: { display: true, text: '% of Total Active So Far' },
+                    grid: {
+                        drawOnChartArea: false
+                    }
+                }
+            }
+        }
+    });
+
+    // Engagement Chart (stacked areas + score line)
+    new Chart(document.getElementById('engagementChart'), {
+        type: 'line',
+        data: {
+            labels: ["Apr 04", "May 09"],
+            datasets: [
+                {
+                    label: 'Consistent ≥60%',
+                    data: [0.0, 0.0],
+                    borderColor: '#81c784',
+                    backgroundColor: 'rgba(129, 199, 132, 0.4)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: true
+                },
+                {
+                    label: 'Moderate 25-59%',
+                    data: [0.0, 0.0],
+                    borderColor: '#ffb74d',
+                    backgroundColor: 'rgba(255, 183, 77, 0.4)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: true
+                },
+                {
+                    label: 'Sporadic <25%',
+                    data: [100.0, 100.0],
+                    borderColor: '#e57373',
+                    backgroundColor: 'rgba(229, 115, 115, 0.4)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: true
+                },
+                {
+                    label: 'Consistency Engagement Score',
+                    data: [0.0, 0.0],
+                    borderColor: '#667eea',
+                    backgroundColor: 'transparent',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: false,
+                    yAxisID: 'y1'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { title: { display: true, text: 'Engagement Persistence & Score' } },
+            scales: {
+                y: {
+                    stacked: true,
+                    beginAtZero: true,
+                    max: 100,
+                    position: 'left',
+                    title: { display: true, text: 'Percentage (%)' }
+                },
+                y1: {
+                    min: 0.0,
+                    max: 100.0,
+                    position: 'right',
+                    title: { display: true, text: 'Consistency Engagement Score (0-100, Expected=50)' },
+                    grid: {
+                        drawOnChartArea: true,
+                        color: ctx => ctx.tick.value === 50 ? '#667eea' : 'rgba(0,0,0,0.05)',
+                        lineWidth: ctx => ctx.tick.value === 50 ? 2 : 1
+                    }
+                },
+                x: { stacked: true }
+            }
+        }
+    });
+
+    // Cumulative Engagement Chart (Dual Y-axes)
+    new Chart(document.getElementById('cumulativeEngagementChart'), {
+        type: 'line',
+        data: {
+            labels: ["Apr 04", "May 09"],
+            datasets: [
+                {
+                    label: 'Cumulative Time (minutes)',
+                    data: [5.116666666666666, 10.116666666666667],
+                    borderColor: '#f57c00',
+                    backgroundColor: 'rgba(245, 124, 0, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true,
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'Repeating Users (% of Active)',
+                    data: [0.0, 0.0],
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: false,
+                    yAxisID: 'y1'
+                },
+                {
+                    label: 'Repeating Users (% of Registered - Potential)',
+                    data: [0.0, 0.0],
+                    borderColor: '#9b59b6',
+                    backgroundColor: 'rgba(155, 89, 182, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: false,
+                    borderDash: [5, 5],
+                    yAxisID: 'y1'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: { display: true, text: 'Cumulative Engagement & Repeating Users' },
+                legend: { display: true, position: 'top' }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    position: 'left',
+                    title: { display: true, text: 'Cumulative Time (minutes)' }
+                },
+                y1: {
+                    beginAtZero: true,
+                    max: 100,
+                    position: 'right',
+                    title: { display: true, text: 'Repeating Users (%)' },
+                    grid: {
+                        drawOnChartArea: false
+                    }
+                }
+            }
+        }
+    });
+
+    // Feature Score Chart
+    new Chart(document.getElementById('featureScoreChart'), {
+        type: 'line',
+        data: {
+            labels: ["Apr 04", "May 09"],
+            datasets: [{
+                label: 'Feature Usage Score (vs Expected)',
+                data: [0.0, 0.0],
+                borderColor: '#667eea',
+                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                borderWidth: 3,
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: { display: true, text: 'Feature Usage Score Over Time' },
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    min: 0.0,
+                    max: 100.0,
+                    title: { display: true, text: 'Feature Score (0-100, Expected=50)' },
+                    grid: {
+                        color: ctx => ctx.tick.value === 50 ? '#667eea' : 'rgba(0,0,0,0.1)',
+                        lineWidth: ctx => ctx.tick.value === 50 ? 2 : 1
+                    }
+                }
+            }
+        }
+    });
+
+    // Feature Detail Chart
+    new Chart(document.getElementById('featureDetailChart'), {
+        type: 'line',
+        data: {
+            labels: ["Apr 04", "May 09"],
+            datasets: [{"label": "Quiz", "data": [0, 0], "borderColor": "#e74c3c", "backgroundColor": "transparent", "borderWidth": 2, "tension": 0.4, "fill": false}, {"label": "Evaluation", "data": [0, 0], "borderColor": "#3498db", "backgroundColor": "transparent", "borderWidth": 2, "tension": 0.4, "fill": false}, {"label": "Mind Map", "data": [0, 0], "borderColor": "#2ecc71", "backgroundColor": "transparent", "borderWidth": 2, "tension": 0.4, "fill": false}, {"label": "Search", "data": [0, 0], "borderColor": "#f39c12", "backgroundColor": "transparent", "borderWidth": 2, "tension": 0.4, "fill": false}, {"label": "Short Summary", "data": [100.0, 0.0], "borderColor": "#9b59b6", "backgroundColor": "transparent", "borderWidth": 2, "tension": 0.4, "fill": false}, {"label": "Long Summary", "data": [100.0, 0.0], "borderColor": "#1abc9c", "backgroundColor": "transparent", "borderWidth": 2, "tension": 0.4, "fill": false}, {"label": "Concepts", "data": [0, 0], "borderColor": "#34495e", "backgroundColor": "transparent", "borderWidth": 2, "tension": 0.4, "fill": false}]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: { display: true, text: 'Individual Feature Usage Rates Over Time' },
+                legend: { display: true, position: 'top' }
+            },
+            scales: {
+                y: { beginAtZero: true, max: 100, title: { display: true, text: 'Usage Rate (%)' } }
+            }
+        }
+    });
+
+    // At-Risk Chart
+    new Chart(document.getElementById('atRiskChart'), {
+        type: 'line',
+        data: {
+            labels: ["Apr 04", "May 09"],
+            datasets: [{
+                label: 'At-Risk %',
+                data: [0.0, 50.0],
+                borderColor: '#c62828',
+                backgroundColor: 'rgba(198, 40, 40, 0.1)',
+                borderWidth: 3,
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { title: { display: true, text: 'At-Risk Students %' } },
+            scales: {
+                y: { beginAtZero: true, max: 100, title: { display: true, text: 'Percentage (%)' } }
+            }
+        }
+    });
+
+    // Reactivation Chart
+    new Chart(document.getElementById('reactivationChart'), {
+        type: 'line',
+        data: {
+            labels: ["Apr 04", "May 09"],
+            datasets: [{
+                label: 'Reactivation Rate',
+                data: [0.0, 0.0],
+                borderColor: '#1565c0',
+                backgroundColor: 'rgba(21, 101, 192, 0.1)',
+                borderWidth: 3,
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { title: { display: true, text: 'Reactivation Rate %' } },
+            scales: {
+                y: { beginAtZero: true, max: 100, title: { display: true, text: 'Percentage (%)' } }
+            }
+        }
+    });
+    </script>
+
+    
+    <div style="text-align: center; color: #666; margin-top: 40px; padding: 20px; border-top: 1px solid #ddd;">
+        <p>Generated with New Weekly Reports Generator</p>
+        <p style="font-size: 0.9em;">Report Date: 2026-05-17 11:28</p>
+    </div>
+
+</body>
+</html>
