@@ -1,0 +1,40 @@
+name: Weekly Reports
+
+on:
+  schedule:
+    - cron: "0 6 * * 0"  # Every Sunday 06:00 UTC
+  workflow_dispatch:       # Allow manual trigger from GitHub UI
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r SiteAnalytics/requirements.txt
+
+      - name: Run semester analyzer
+        env:
+          MIXPANEL_SECRET: ${{ secrets.MIXPANEL_SECRET }}
+        run: |
+          cd SiteAnalytics
+          python semester_analyzer.py
+
+      - name: Commit updated data and reports
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add SiteAnalytics/data/weekly/
+          git add SiteAnalytics/reports/
+          git diff --staged --quiet || git commit -m "Weekly update $(date -u '+%Y-%m-%d')"
+          git push

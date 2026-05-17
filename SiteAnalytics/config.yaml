@@ -23,7 +23,8 @@ export:
 # Semester settings
 semester:
 
-  end_date: "2026-07-12"    # Semester end date (1/2/2026)
+  start_date: "2026-01-03"  # Semester start date (first week in data/weekly/)
+  end_date: "2026-07-12"    # Semester end date
   weekly_output_dir: "data/weekly"
 
   # Operations to run when using run_all() or no CLI args
