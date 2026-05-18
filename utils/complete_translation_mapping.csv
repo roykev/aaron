@@ -1,0 +1,37 @@
+SourceText,Hebrew,Arabic
+# Teaching Snapshot,# מבט חטוף על ההוראה,# لقطة موجزة عن التدريس
+## Outstanding Performance,## ביצועים יוצאי דופן,## أداء متميز
+## Long-Term Growth Opportunity,## הזדמנות לצמיחה לטווח ארוך,## فرصة نمو على المدى الطويل
+## Successful Practices,## פרקטיקות מוצלחות,## ممارسات ناجحة
+## Opportunities for Enhancement,## הזדמנויות לשיפור ושדרוג,## فرص للتحسين والتطوير
+## Recommended Actions for Next Session,## פעולות מומלצות לשיעור הבא,## إجراءات موصى بها للحصّة القادمة
+# Class Analysis Report,## דוח ניתוח השיעור,## تقرير تحليل الحصّة
+"<p style='margin: 10px 0 0 0; color:\n#6b7280;'>Comprehensive class analysis with examples, interactions, and\ninsights</p>","<p style='margin: 10px 0 0 0; color:\n#6b7280;'>ניתוח מפורט של השיעור עם דוגמאות, אינטראקציות ותובנות</p>","<p style='margin: 10px 0 0 0; color:\n#6b7280;'>تحليل شامل للحصّة مع أمثلة، تفاعلات ورؤى</p>"
+## Class Structure,## מבנה השיעור,## بنية الحصّة
+"<th style='padding: 12px; text-align: left;\nborder-bottom: 2px solid #e5e7eb;'>Section</th>","<th style='padding: 12px; text-align: right;\nborder-bottom: 2px solid #e5e7eb;'>חלק / מדור</th>","<th style='padding: 12px; text-align: right;\nborder-bottom: 2px solid #e5e7eb;'>القسم</th>"
+"<th style='padding: 12px; text-align: left;\nborder-bottom: 2px solid #e5e7eb;'>Start</th>","<th style='padding: 12px; text-align: right;\nborder-bottom: 2px solid #e5e7eb;'>התחלה</th>","<th style='padding: 12px; text-align: right;\nborder-bottom: 2px solid #e5e7eb;'>البدء</th>"
+"<th style='padding: 12px; text-align: left;\nborder-bottom: 2px solid #e5e7eb;'>End</th>","<th style='padding: 12px; text-align: right;\nborder-bottom: 2px solid #e5e7eb;'>סיום</th>","<th style='padding: 12px; text-align: right;\nborder-bottom: 2px solid #e5e7eb;'>النهاية</th>"
+"<th style='padding: 12px; text-align: left;\nborder-bottom: 2px solid #e5e7eb;'>Duration</th>","<th style='padding: 12px; text-align: right;\nborder-bottom: 2px solid #e5e7eb;'>משך זמן</th>","<th style='padding: 12px; text-align: right;\nborder-bottom: 2px solid #e5e7eb;'>المدة</th>"
+## Examples from Class,## דוגמאות מהשיעור,## أمثلة من الحصّة
+"<p style='color: #6b7280; font-style: italic;'>Real\nexamples used during instruction</p>","<p style='color: #6b7280; font-style: italic;'>דוגמאות אמיתיות ששימשו במהלך השיעור</p>","<p style='color: #6b7280; font-style: italic;'>أمثلة حقيقية استخدمت أثناء الشرح</p>"
+"<th style='padding: 12px; text-align: left;\nborder-bottom: 2px solid #e5e7eb; width: 20%;'>Topic</th>","<th style='padding: 12px; text-align: right;\nborder-bottom: 2px solid #e5e7eb; width: 20%;'>נושא</th>","<th style='padding: 12px; text-align: right;\nborder-bottom: 2px solid #e5e7eb; width: 20%;'>الموضوع</th>"
+"<th style='padding: 12px; text-align: left;\nborder-bottom: 2px solid #e5e7eb; width: 65%;'>Example</th>","<th style='padding: 12px; text-align: right;\nborder-bottom: 2px solid #e5e7eb; width: 65%;'>דוגמה</th>","<th style='padding: 12px; text-align: right;\nborder-bottom: 2px solid #e5e7eb; width: 65%;'>مثال</th>"
+"<th style='padding: 12px; text-align: left;\nborder-bottom: 2px solid #e5e7eb; width: 15%;'>Reference</th>","<th style='padding: 12px; text-align: right;\nborder-bottom: 2px solid #e5e7eb; width: 15%;'>סימוכין / מקור</th>","<th style='padding: 12px; text-align: right;\nborder-bottom: 2px solid #e5e7eb; width: 15%;'>المرجع</th>"
+## Questions for Students,## שאלות לתלמידים,## أسئلة للطلاب
+"<p style='color: #6b7280; font-style:\nitalic;'>Thought-provoking questions to assess understanding</p>","<p style='color: #6b7280; font-style:\nitalic;'>שאלות מעוררות מחשבה להערכת ההבנה</p>","<p style='color: #6b7280; font-style:\nitalic;'>أسئلة تثير التفكير لتقييم الفهم</p>"
+"<span style='color: #374151;'>Foundational\nQuestions</span>","<span style='color: #374151;'>שאלות יסוד</span>","<span style='color: #374151;'>أسئلة أساسية</span>"
+"<span style='color: #374151;'>Advanced\nQuestions</span>","<span style='color: #374151;'>שאלות מתקדמות</span>","<span style='color: #374151;'>أسئلة متقدمة</span>"
+"<span style='color: #6b7280; font-size: 0.9em;\nfont-weight: normal;'>(3 questions)</span>","<span style='color: #6b7280; font-size: 0.9em;\nfont-weight: normal;'>(3 שאלות)</span>","<span style='color: #6b7280; font-size: 0.9em;\nfont-weight: normal;'>(3 أسئلة)</span>"
+## Class Interactions,## אינטראקציות בשיעור,## تفاعلات الحصّة
+"<p style='color: #6b7280; font-style: italic;'>Student\nengagement and participation moments</p>","<p style='color: #6b7280; font-style: italic;'>רגעים של מעורבות והשתתפות תלמידים</p>","<p style='color: #6b7280; font-style: italic;'>لحظات تفاعل ومشاركة الطلاب</p>"
+## Challenging Topics,## נושאים מאתגרים,## مواضيع صعبة
+"<p style='color: #6b7280; font-style: italic;'>Areas\nwhere students needed additional support</p>","<p style='color: #6b7280; font-style: italic;'>תחומים שבהם תלמידים נזקקו לתמיכה נוספת</p>","<p style='color: #6b7280; font-style: italic;'>المجالات التي احتاج فيها الطلاب إلى دعم إضافي</p>"
+<strong>Suggestion:</strong>,<strong>הצעה:</strong>,<strong>اقتراح:</strong>
+<strong>Evidence:</strong>,<strong>עדות:</strong>,<strong>دليل:</strong>
+<strong>Strategic Vision:</strong>,<strong>חזון אסטרטגי:</strong>,<strong>رؤية استراتيجية:</strong>
+<th style='padding: 12px; text-align: left; border-bottom: 2px solid #e5e7eb;'>#</th>,<th style='padding: 12px; text-align: right; border-bottom: 2px solid #e5e7eb;'>#</th>,<th style='padding: 12px; text-align: right; border-bottom: 2px solid #e5e7eb;'>#</th>
+"<th style='padding: 12px; text-align: left; border-bottom: 2px solid #e5e7eb; width: 12%;'>Time</th>","<th style='padding: 12px; text-align: right; border-bottom: 2px solid #e5e7eb; width: 12%;'>זמן</th>","<th style='padding: 12px; text-align: right; border-bottom: 2px solid #e5e7eb; width: 12%;'>الوقت</th>"
+"<th style='padding: 12px; text-align: left; border-bottom: 2px solid #e5e7eb; width: 20%;'>Type</th>","<th style='padding: 12px; text-align: right; border-bottom: 2px solid #e5e7eb; width: 20%;'>סוג</th>","<th style='padding: 12px; text-align: right; border-bottom: 2px solid #e5e7eb; width: 20%;'>النوع</th>"
+"<th style='padding: 12px; text-align: left; border-bottom: 2px solid #e5e7eb; width: 68%;'>Description</th>","<th style='padding: 12px; text-align: right; border-bottom: 2px solid #e5e7eb; width: 68%;'>תיאור</th>","<th style='padding: 12px; text-align: right; border-bottom: 2px solid #e5e7eb; width: 68%;'>الوصف</th>"
+"<div style='border-left: 3px solid #6b7280; padding: 20px; margin: 20px 0; background: #fafafa;'>","<div style='border-right: 3px solid #6b7280; padding: 20px; margin: 20px 0; background: #fafafa;'>","<div style='border-right: 3px solid #6b7280; padding: 20px; margin: 20px 0; background: #fafafa;'>"
+"<summary style='cursor: pointer; padding: 12px; background: #fafafa; border-left: 3px solid #9ca3af;'>","<summary style='cursor: pointer; padding: 12px; background: #fafafa; border-right: 3px solid #9ca3af;'>","<summary style='cursor: pointer; padding: 12px; background: #fafafa; border-right: 3px solid #9ca3af;'>"
