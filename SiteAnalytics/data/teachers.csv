@@ -1,60 +1,79 @@
-$distinct_id,$name,$email,$distinct_id.1,$last_seen,$country_code,$region,$city
-4a8dcd48-1768-48db-b904-13ea608f3647,Yaniv Geier,yanivge@jce.ac.il,4a8dcd48-1768-48db-b904-13ea608f3647,2026-01-08 13:21:01,Israel,Jerusalem,Jerusalem
-fff818f2-1220-49fb-be17-235dd8de0dfe,Maoz Rosenthal,maoz.ro1@gmail.com,fff818f2-1220-49fb-be17-235dd8de0dfe,2025-06-25 20:00:56,Israel,Central District,Rishon LeTsiyyon
-856bda12-f442-4b1b-bd23-a0be4d9b5c66,Aaron Owl,aarontheowl@gmail.com,856bda12-f442-4b1b-bd23-a0be4d9b5c66,2026-01-14 17:15:34,Israel,Tel Aviv,Tel Aviv
-250d4112-ddd1-4715-b9e1-749c6c968383,טל דינגוט אלכופר,taldin@jmc.ac.il,250d4112-ddd1-4715-b9e1-749c6c968383,2025-06-27 17:41:12,Israel,Tel Aviv,Or Yehuda
-8c3dd8ad-ded8-4315-9e90-1f873e77a128,Zur Luria,zurlu@jce.ac.il,8c3dd8ad-ded8-4315-9e90-1f873e77a128,2025-03-27 17:15:33,Israel,Tel Aviv,Tel Aviv
-106f891c-0702-466a-95be-9c1df6233c8a,שמעון סרף,shimonsr@post.jce.ac.il,106f891c-0702-466a-95be-9c1df6233c8a,2025-06-30 00:09:53,Israel,Tel Aviv,Tel Aviv
-83718399-1e94-45ab-9d38-0e7dd37def97,Aaron Demo,demo@aaronowl.com,83718399-1e94-45ab-9d38-0e7dd37def97,2025-12-07 13:17:30,Israel,Tel Aviv,Tel Aviv
-f218a9d7-07da-4cc7-ac9e-29edfab0fd58,Jacob Goldenberg,jgoldenberg@idc.ac.il,f218a9d7-07da-4cc7-ac9e-29edfab0fd58,2024-12-11 11:29:21,Israel,Jerusalem,Jerusalem
-d1bf4ce7-d99c-49ff-bb30-6888de775259,Roni Horowitz,ronih@jce.ac.il,d1bf4ce7-d99c-49ff-bb30-6888de775259,2025-06-26 19:59:52,Israel,Central District,Rosh Ha‘Ayin
-0681dd69-53c2-405b-b4a1-f4425326737e,Aaron Demo3,demo3@aaronowl.com,0681dd69-53c2-405b-b4a1-f4425326737e,2025-12-03 22:46:05,Israel,Tel Aviv,Tel Aviv
-ee901e2a-1574-4da6-bd69-9c01a4600894,Reuven Sherwin,rubale@gmail.com,ee901e2a-1574-4da6-bd69-9c01a4600894,2024-12-11 14:25:15,Israel,Tel Aviv,Kiryat Ono
-009ae856-6484-45c7-9591-89dbdea5bf07,Tamar Raz,tamraz@jce.ac.il,009ae856-6484-45c7-9591-89dbdea5bf07,2025-06-06 10:14:21,Israel,Jerusalem,Jerusalem
-505830f9-54ee-4180-abd4-d9d1811f2624,Shiran German Ben-Hayun,shiranger@gordon.ac.il,505830f9-54ee-4180-abd4-d9d1811f2624,2025-07-29 08:22:23,Israel,Haifa,Haifa
-aed159bf-d396-4f3e-9458-cc271ea85724,Danna Tevet,danna.tevet@gmail.com,aed159bf-d396-4f3e-9458-cc271ea85724,2025-03-27 10:48:45,Israel,Tel Aviv,Tel Aviv
-407d1ece-2a45-4f19-bfa7-4d6ae205c6c4,אלון הורביץ,alon.horovitz@post.runi.ac.il,407d1ece-2a45-4f19-bfa7-4d6ae205c6c4,2025-05-26 12:17:21,Israel,Tel Aviv,Tel Aviv
-951bcef4-c86b-46e6-8842-ffdc4d73d3d2,לילך נצראל,lilachn@best.ono.ac.il,951bcef4-c86b-46e6-8842-ffdc4d73d3d2,2026-01-07 00:25:48,Israel,Tel Aviv,Tel Aviv
-a9bb383b-7999-44f9-b81b-e40ba0a2b0c1,Eyal Katz,eykatz@iai.co.il,a9bb383b-7999-44f9-b81b-e40ba0a2b0c1,2025-05-12 19:02:03,Israel,Central District,Shoham
-a6cad06d-f1c5-4ed0-9d23-a740f4d65f99,Ono Demo,ono_demo@aaronowl.com,a6cad06d-f1c5-4ed0-9d23-a740f4d65f99,2025-12-03 11:38:42,Israel,Tel Aviv,Or Yehuda
-1897830e-bdb4-4922-826b-2d7db123e6c5,Lavi Sigman,lavis@gordon.ac.il,1897830e-bdb4-4922-826b-2d7db123e6c5,2025-07-29 15:31:17,Israel,Haifa,Haifa
-3b83d0ee-7292-4b26-9c13-e8848e296547,Tali Tavor Re'em,talire@jce.ac.il,3b83d0ee-7292-4b26-9c13-e8848e296547,2025-05-13 19:24:23,Israel,Jerusalem,Jerusalem
-801aa5fe-ce7e-41aa-9057-7b489ec61bce,גד ניר סולוטורבסקי,gadis@mail.sapir.ac.il,801aa5fe-ce7e-41aa-9057-7b489ec61bce,2026-01-07 19:38:30,Israel,Tel Aviv,Giv‘atayim
-7d322942-72aa-418e-a53c-6442c3363223,נח טרייטל,noacht@jce.ac.il,7d322942-72aa-418e-a53c-6442c3363223,2025-12-01 09:29:11,Israel,Jerusalem,Jerusalem
-3eff60da-6605-48a2-9f14-186c9a3f61c9,עינב עמרם אשרב,einav.amram@ono.ac.il,3eff60da-6605-48a2-9f14-186c9a3f61c9,2026-01-14 17:27:06,Israel,Tel Aviv,Kiryat Ono
-e95a4aa5-e2e1-41aa-9bb2-592c960d2b89,משה זילברמן,moshezi@jce.ac.il,e95a4aa5-e2e1-41aa-9bb2-592c960d2b89,2026-01-08 20:55:34,Israel,Central District,Petah Tikva
-d7a6f000-a60b-44f8-aa28-727d95a19e98,גיא רפאל יונה,guyrefaelyona@gmail.com,d7a6f000-a60b-44f8-aa28-727d95a19e98,2026-01-07 16:15:05,Israel,Tel Aviv,Kiryat Ono
-abdbd5bc-d132-486f-991e-f11263b70607,Roy,roy@aaronowl.com,abdbd5bc-d132-486f-991e-f11263b70607,2026-01-12 11:57:38,Israel,Tel Aviv,Tel Aviv
-852ffc34-bd59-4496-ae22-0d313bc25271,Kobi Pinto,kobipinto@gmail.com,852ffc34-bd59-4496-ae22-0d313bc25271,2024-12-10 09:21:24,Israel,Tel Aviv,Holon
-c5ec0a9c-02bb-4402-8ba4-f82a2cea91bd,קרן כץ-בקרמן,kerenka@post.jce.ac.il,c5ec0a9c-02bb-4402-8ba4-f82a2cea91bd,2026-01-12 17:56:23,Israel,Jerusalem,Jerusalem
-d53d29dd-74ef-4205-8bb6-41757c2356dc,Ariel Geva,ariel@aaronowl.com,d53d29dd-74ef-4205-8bb6-41757c2356dc,2026-01-13 07:09:41,Israel,Central District,Petah Tikva
-8b223cb4-40c4-4bd8-8a2a-ca36ceac6f8c,ברברה קזנסקי טראובין,barbara@jce.ac.il,8b223cb4-40c4-4bd8-8a2a-ca36ceac6f8c,2026-01-14 09:18:53,Israel,Jerusalem,Jerusalem
-0c0c2d19-b549-4c0e-9e14-70fe774d7a39,Aaron Demo3,demo2@aaronowl.com,0c0c2d19-b549-4c0e-9e14-70fe774d7a39,2025-12-03 22:37:03,Israel,Tel Aviv,Tel Aviv
-$device:19310d883026d6-0455c9723cd0e8-b457450-5c094-19310d883026d6,Aaron Owl,aarontheowl@gmail.com,$device:19310d883026d6-0455c9723cd0e8-b457450-5c094-19310d883026d6,2024-11-09 14:14:10,Israel,Tel Aviv,Ramat Gan
-8b1d6f53-398d-493f-ad72-cdb8a85320ca,Moses Miller,moses.miller@runi.ac.il,8b1d6f53-398d-493f-ad72-cdb8a85320ca,2025-06-09 12:00:35,Israel,Tel Aviv,Herzliya
-38306f82-e4bd-46e8-84a6-adee21ca84c3,מרגנית אברהמי,marganitco@post.jce.ac.il,38306f82-e4bd-46e8-84a6-adee21ca84c3,2026-01-12 15:48:09,Israel,Jerusalem,Jerusalem
-b278cf92-cae9-439c-a8e3-bfeb5b558cba,Samira Abu-Elhawa,samiraabuelhawa812@gmail.com,b278cf92-cae9-439c-a8e3-bfeb5b558cba,2025-12-15 10:01:55,Israel,Tel Aviv,Tel Aviv
-c114b0de-5f90-4fef-a7c3-929acb1600ba,קרן לוי גנני סניידר,kerensn@jmc.ac.il,c114b0de-5f90-4fef-a7c3-929acb1600ba,2025-06-26 11:22:01,Israel,Central District,Rishon LeTsiyyon
-aed9e3bc-baae-4136-bda3-626e33bbf00e,Matan Demo,matan_demo@aaronowl.com,aed9e3bc-baae-4136-bda3-626e33bbf00e,2025-10-26 12:07:45,Israel,Central District,Rishon LeTsiyyon
-15817ea2-6197-4cc4-88ac-74b58a16a559,הראל כהן,harelco@post.jce.ac.il,15817ea2-6197-4cc4-88ac-74b58a16a559,2025-12-29 01:38:50,Israel,Central District,Rishon LeTsiyyon
-83e2fe08-50e4-40da-a430-4b05e7d0ac15,Nasreen Ghadir,nasreenghadir@gmail.com,83e2fe08-50e4-40da-a430-4b05e7d0ac15,2026-01-14 16:56:59,Israel,Tel Aviv,Ramat Gan
-0604cea5-cb4a-4965-89e9-4a6211044d18,יהודה חסין,hassin@jce.ac.il,0604cea5-cb4a-4965-89e9-4a6211044d18,2025-11-17 14:38:44,Israel,Jerusalem,Jerusalem
-e37c7f45-fa14-4b7d-b539-90656bafec52,Michal Gaoni Shoval,gaonimichal@gmail.com,e37c7f45-fa14-4b7d-b539-90656bafec52,2025-05-18 17:13:08,Israel,Central District,Raanana
-GalOz@sapir.ac.il,נורית גל עוז,GalOz@sapir.ac.il,,,,,
-yoash.chassidim@gmail.com,יואש חסידים,yoash.chassidim@gmail.com,,,,,
-zaltsmantatiana@gmail.com,טטיאנה זלצמן,zaltsmantatiana@gmail.com,,,,,
-Amihai.menuhin@gmail.com,עמיחי מנוחין,Amihai.menuhin@gmail.com,,,,,
-yanns@mail.sapir.ac.il,יאן ספולקר,yanns@mail.sapir.ac.il,,,,,
-mondacalily@gmail.com,לילי מונדקה,mondacalily@gmail.com,,,,,
-yuvalga@sapir.ac.il,יובל גנות,yuvalga@sapir.ac.il,,,,,
-aisrael@mail.sapir.ac.il,עמוס ישראל-פליסהואור,aisrael@mail.sapir.ac.il,,,,,
-ronitnadiv@gmail.com,רונית נדב,ronitnadiv@gmail.com,,,,,
-hagarl@mail.sapir.ac.il,הגר להב,hagarl@mail.sapir.ac.il,,,,,
-rakefetof@jce.ac.il,רקפת אופק אלמוג,rakefetof@jce.ac.il,,,,,
-danielbb@post.jce.ac.il,דניאל בוברוב,danielbb@post.jce.ac.il,,,,,
-elinorza@jce.ac.il,אלינור צדקני נחום,elinorza@jce.ac.il,,,,,
-ruti@jce.ac.il,רות ספז,ruti@jce.ac.il,,,,,
-borisge@jce.ac.il,בוריס,borisge@jce.ac.il,,,,,
-erubin@bgu.ac.il,איתן רובין,erubin@bgu.ac.il,,,,,
-yishay.mor@beitberl.ac.il,Yishay Mor,yishay.mor@beitberl.ac.il,,,,,
-oshrat.gazal@beitberl.ac.il,אשרת גזל,oshrat.gazal@beitberl.ac.il,,,,,
+user_id,name,email,source,last_seen,country_code,region,city,institute_id,institute_name,merge_note
+856bda12-f442-4b1b-bd23-a0be4d9b5c66,Aaron Owl,aarontheowl@gmail.com,both,2026-01-14 17:15,Israel,Tel Aviv,Tel Aviv,696cf9f4-66bc-4263-b7db-91f4b0aa823b,Default,matched-by-email
+0681dd69-53c2-405b-b4a1-f4425326737e,Aaron Demo3,demo3@aaronowl.com,both,2025-12-03 22:46,Israel,Tel Aviv,Tel Aviv,696cf9f4-66bc-4263-b7db-91f4b0aa823b,Default,
+abdbd5bc-d132-486f-991e-f11263b70607,Roy,roy@aaronowl.com,both,2026-01-12 11:57,Israel,Tel Aviv,Tel Aviv,696cf9f4-66bc-4263-b7db-91f4b0aa823b,Default,
+83718399-1e94-45ab-9d38-0e7dd37def97,Aaron Demo,demo@aaronowl.com,both,2025-12-07 13:17,Israel,Tel Aviv,Tel Aviv,696cf9f4-66bc-4263-b7db-91f4b0aa823b,Default,
+0c0c2d19-b549-4c0e-9e14-70fe774d7a39,Aaron Demo2,demo2@aaronowl.com,both,2025-12-03 22:37,Israel,Tel Aviv,Tel Aviv,696cf9f4-66bc-4263-b7db-91f4b0aa823b,Default,
+83e2fe08-50e4-40da-a430-4b05e7d0ac15,Nasreen Ghadir,nasreenghadir@gmail.com,both,2026-01-14 16:56,Israel,Tel Aviv,Ramat Gan,696cf9f4-66bc-4263-b7db-91f4b0aa823b,Default,
+52469ea2-8f4c-44b5-b5f9-a4de920d5ab5,Aaron Demo4,demo4@aaronowl.com,Sheet1,,,,,696cf9f4-66bc-4263-b7db-91f4b0aa823b,Default,
+8d3522ef-faac-4abf-999f-b6a0c7bb355d,Aaron Demo5,demo5@aaronowl.com,Sheet1,,,,,696cf9f4-66bc-4263-b7db-91f4b0aa823b,Default,
+c9391db0-db13-4e50-aa9e-1b6a9ffcf6f0,Yael Erez,yael.erez@gmail.com,Sheet1,,,,,696cf9f4-66bc-4263-b7db-91f4b0aa823b,Default,
+87e24c1d-f91b-4c30-a04d-2dc35455d798,Roie Amir,roieamir@gmail.com,Sheet1,,,,,696cf9f4-66bc-4263-b7db-91f4b0aa823b,Default,
+d53d29dd-74ef-4205-8bb6-41757c2356dc,Ariel Geva,ariel@aaronowl.com,both,2026-01-13 07:09,Israel,Central District,Petah Tikva,696cf9f4-66bc-4263-b7db-91f4b0aa823b,Default,
+af3120ac-cdba-4785-8b60-158eb134f6db,Harel Levi,leharel@gmail.com,Sheet1,,,,,696cf9f4-66bc-4263-b7db-91f4b0aa823b,Default,
+b8f3ac69-ab89-4c93-8226-fb434354052e,Eduardo Berastegui,eduardo.berastegui@gmail.com,Sheet1,,,,,696cf9f4-66bc-4263-b7db-91f4b0aa823b,Default,
+7ffce1b1-feeb-4396-ba83-d22c208b5102,Salvador Pellicer Farreri,spellicer@entornosdeformacion.com,Sheet1,,,,,696cf9f4-66bc-4263-b7db-91f4b0aa823b,Default,
+60538ede-cd13-491b-bbc5-06ab4051a40d,Dor Yerushalmi,dory@wawiwa-tech.com,Sheet1,,,,,12fb79c4-dd37-4250-8a1a-8b7b155272a1,Wawiwa-Tech,
+6edcbeb9-422f-46c6-bfb9-123208045fd1,איתן רובין,erubin@bgu.ac.il,both,,,,,b2523e38-1927-4bc9-a192-11239296302e,אוניברסיטת בן-גוריון,matched-by-email
+8b1d6f53-398d-493f-ad72-cdb8a85320ca,Moses Miller,moses.miller@runi.ac.il,both,2025-06-09 12:00,Israel,Tel Aviv,Herzliya,84748965-369a-40f1-af38-61394db5e3e0,אוניברסיטת רייכמן,
+e37c7f45-fa14-4b7d-b539-90656bafec52,Michal Gaoni Shoval ,gaonimichal@gmail.com,both,2025-05-18 17:13,Israel,Central District,Raanana,84748965-369a-40f1-af38-61394db5e3e0,אוניברסיטת רייכמן,
+aed159bf-d396-4f3e-9458-cc271ea85724,Danna Tevet,danna.tevet@gmail.com,both,2025-03-27 10:48,Israel,Tel Aviv,Tel Aviv,84748965-369a-40f1-af38-61394db5e3e0,אוניברסיטת רייכמן,
+a9bb383b-7999-44f9-b81b-e40ba0a2b0c1,Eyal Katz,eykatz@iai.co.il,both,2025-05-12 19:02,Israel,Central District,Shoham,84748965-369a-40f1-af38-61394db5e3e0,אוניברסיטת רייכמן,
+75e5890a-4fee-4b86-aba3-d2403767d77d,שמעון קוגן,skogan@runi.ac.il,Sheet1,,,,,84748965-369a-40f1-af38-61394db5e3e0,אוניברסיטת רייכמן,
+407d1ece-2a45-4f19-bfa7-4d6ae205c6c4,אלון הורביץ,alon.horovitz@post.runi.ac.il,both,2025-05-26 12:17,Israel,Tel Aviv,Tel Aviv,84748965-369a-40f1-af38-61394db5e3e0,אוניברסיטת רייכמן,
+8573087f-6860-43ea-bf1b-19d73bb99888,אשרת גזל,oshrat.gazal@beitberl.ac.il,both,,,,,99c382ab-22cf-425a-9c59-b924ab6df1de,המכללה האקדמית בית ברל,matched-by-email
+972f49bc-1e97-4564-a0e9-7a8359146ea6,Yishay Mor,yishay.mor@beitberl.ac.il,both,,,,,99c382ab-22cf-425a-9c59-b924ab6df1de,המכללה האקדמית בית ברל,matched-by-email
+97034f8f-739e-4e5e-96c2-7e55babdcc0c,Simcha Aaron,"	simchaa@gordon.ac.il",Sheet1,,,,,e0ca51b3-23f8-437d-b54c-98699c63580c,המכללה האקדמית גורדון,
+1897830e-bdb4-4922-826b-2d7db123e6c5,Lavi Sigman,lavis@gordon.ac.il,both,2025-07-29 15:31,Israel,Haifa,Haifa,e0ca51b3-23f8-437d-b54c-98699c63580c,המכללה האקדמית גורדון,
+505830f9-54ee-4180-abd4-d9d1811f2624,Shiran German Ben-Hayun,shiranger@gordon.ac.il,both,2025-07-29 08:22,Israel,Haifa,Haifa,e0ca51b3-23f8-437d-b54c-98699c63580c,המכללה האקדמית גורדון,
+92e6b914-ceaf-4ad7-8320-7cf17996ad37,עמוס ישראל,aisrael@mail.sapir.ac.il,both,,,,,3fdcc682-6482-4796-8bd6-6b5aee656a29,המכללה האקדמית ספיר,matched-by-email
+bb0f8fc5-cb52-45a2-b51a-4cd1752b3905,Lily Mondaca,mondacalily@gmail.com,both,,,,,3fdcc682-6482-4796-8bd6-6b5aee656a29,המכללה האקדמית ספיר,matched-by-email
+171592c5-d5b1-4bab-9fc0-364fb219a144,יניב טנצר,yaniv.tenzer@gmail.com,Sheet1,,,,,3fdcc682-6482-4796-8bd6-6b5aee656a29,המכללה האקדמית ספיר,
+0bcd4a2f-0251-4f3b-946f-0debcd503546,ילנה צ'ורקין,elenach@mail.sapir.ac.il,Sheet1,,,,,3fdcc682-6482-4796-8bd6-6b5aee656a29,המכללה האקדמית ספיר,
+eeba8bd8-eee3-4083-993f-a008d9a930ac,Tom Zarfaty,tomz@sapir.ac.il,Sheet1,,,,,3fdcc682-6482-4796-8bd6-6b5aee656a29,המכללה האקדמית ספיר,
+e0d1d2d2-66ff-43be-8c9a-d9ac5e3a49ce,Yuval Ganot,yuvalga@sapir.ac.il,both,,,,,3fdcc682-6482-4796-8bd6-6b5aee656a29,המכללה האקדמית ספיר,matched-by-email
+15572f6c-532b-4761-aac7-3c169d9a8941,נורית גל עוז,galoz@sapir.ac.il,both,,,,,3fdcc682-6482-4796-8bd6-6b5aee656a29,המכללה האקדמית ספיר,matched-by-email
+c6979335-d934-407f-b3e9-b42fe2a792da,יאן ספולקר,yanns@mail.sapir.ac.il,both,,,,,3fdcc682-6482-4796-8bd6-6b5aee656a29,המכללה האקדמית ספיר,matched-by-email
+bb56b707-d620-44d2-81e1-abc369da4e6b,Shani Dalyot,shaneedd@gmail.com,Sheet1,,,,,3fdcc682-6482-4796-8bd6-6b5aee656a29,המכללה האקדמית ספיר,
+610eb2ae-5ca6-4af8-a8d5-06365dfe86ab,רונית נדיב,ronitnadiv@gmail.com,both,,,,,3fdcc682-6482-4796-8bd6-6b5aee656a29,המכללה האקדמית ספיר,matched-by-email
+b9594757-db3a-42b7-8c33-1a69e325a117,טטיאנה זלצמן,zaltsmantatiana@gmail.com,both,,,,,3fdcc682-6482-4796-8bd6-6b5aee656a29,המכללה האקדמית ספיר,matched-by-email
+bf601b41-072c-409f-84cf-bedfb946be5e,יואש חסידים,yoash.chassidim@gmail.com,both,,,,,3fdcc682-6482-4796-8bd6-6b5aee656a29,המכללה האקדמית ספיר,matched-by-email
+afbd282b-2f0f-4f4f-b2ef-850396e8d371,Dudu S,dudus@sapir.ac.il,Sheet1,,,,,3fdcc682-6482-4796-8bd6-6b5aee656a29,המכללה האקדמית ספיר,
+3de93fd1-3f35-4c81-b2a9-3a718f20de00,Idan S,idans@sapir.ac.il,Sheet1,,,,,3fdcc682-6482-4796-8bd6-6b5aee656a29,המכללה האקדמית ספיר,
+d2991e5b-22af-4e91-8d47-adb1f209d814,הגר להב,hagarl@mail.sapir.ac.il,both,,,,,3fdcc682-6482-4796-8bd6-6b5aee656a29,המכללה האקדמית ספיר,matched-by-email
+9d2b1969-9274-4dea-8dcb-671e1504acc0,עמיחי מנוחין,amihai.menuhin@gmail.com,both,,,,,3fdcc682-6482-4796-8bd6-6b5aee656a29,המכללה האקדמית ספיר,matched-by-email
+801aa5fe-ce7e-41aa-9057-7b489ec61bce,Gadi Solotorevsky,gadis@mail.sapir.ac.il,both,2026-01-07 19:38,Israel,Tel Aviv,Giv�atayim,3fdcc682-6482-4796-8bd6-6b5aee656a29,המכללה האקדמית ספיר,
+be10b644-e1c1-405e-90c2-dccfc4b1f1b1,Rachel Ben-Shmuel,rachelbe@sapir.ac.il,Sheet1,,,,,3fdcc682-6482-4796-8bd6-6b5aee656a29,המכללה האקדמית ספיר,
+250d4112-ddd1-4715-b9e1-749c6c968383,טל דינגוט אלכופר,taldin@jmc.ac.il,both,2025-06-27 17:41,Israel,Tel Aviv,Or Yehuda,57dc9264-ea27-4f25-afd5-5984bb0da94a,המרכז האקדמי הרב תחומי ירושלים (מכללת הדסה),
+c114b0de-5f90-4fef-a7c3-929acb1600ba,קרן לוי גנני סניידר,kerensn@jmc.ac.il,both,2025-06-26 11:22,Israel,Central District,Rishon LeTsiyyon,57dc9264-ea27-4f25-afd5-5984bb0da94a,המרכז האקדמי הרב תחומי ירושלים (מכללת הדסה),
+fff818f2-1220-49fb-be17-235dd8de0dfe,Maoz Rosenthal,maoz.ro1@gmail.com,both,2025-06-25 20:00,Israel,Central District,Rishon LeTsiyyon,57dc9264-ea27-4f25-afd5-5984bb0da94a,המרכז האקדמי הרב תחומי ירושלים (מכללת הדסה),
+7ae23789-a41d-48e9-b885-3f45e2f69ba4,IllanaT Tesler,ilanat@clb.ac.il,Sheet1,,,,,ccc37851-5bbc-4dbc-96e3-aa729be88943,המרכז האקדמי למשפטים ועסקים,
+3505e153-1dd5-4e87-a74b-954612072619,אורלי אללוף,orly.alalouf@ono.ac.il,Sheet1,,,,,8b963de8-3c16-4c26-80ab-7e51a446936a,הקריה האקדמית אונו,
+a6cad06d-f1c5-4ed0-9d23-a740f4d65f99,Ono Demo,ono_demo@aaronowl.com,both,2025-12-03 11:38,Israel,Tel Aviv,Or Yehuda,8b963de8-3c16-4c26-80ab-7e51a446936a,הקריה האקדמית אונו,
+951bcef4-c86b-46e6-8842-ffdc4d73d3d2,לילך נצראל,lilachn@best.ono.ac.il,both,2026-01-07 00:25,Israel,Tel Aviv,Tel Aviv,8b963de8-3c16-4c26-80ab-7e51a446936a,הקריה האקדמית אונו,
+d7a6f000-a60b-44f8-aa28-727d95a19e98,גיא רפאל יונה,guyrefaelyona@gmail.com,both,2026-01-07 16:15,Israel,Tel Aviv,Kiryat Ono,8b963de8-3c16-4c26-80ab-7e51a446936a,הקריה האקדמית אונו,
+3eff60da-6605-48a2-9f14-186c9a3f61c9,עינב עמרם אשרב,einav.amram@ono.ac.il,both,2026-01-14 17:27,Israel,Tel Aviv,Kiryat Ono,8b963de8-3c16-4c26-80ab-7e51a446936a,הקריה האקדמית אונו,
+b278cf92-cae9-439c-a8e3-bfeb5b558cba,Samira Abu-Elhawa,samiraabuelhawa812@gmail.com,both,2025-12-15 10:01,Israel,Tel Aviv,Tel Aviv,4730468c-0160-4ae9-bcd4-048c695f3317,עזריאלי מכללה אקדמית להנדסה ירושלים,
+009ae856-6484-45c7-9591-89dbdea5bf07,Tamar Raz,tamraz@jce.ac.il,both,2025-06-06 10:14,Israel,Jerusalem,Jerusalem,4730468c-0160-4ae9-bcd4-048c695f3317,עזריאלי מכללה אקדמית להנדסה ירושלים,
+8c3dd8ad-ded8-4315-9e90-1f873e77a128,Zur Luria,zurlu@jce.ac.il,both,2025-03-27 17:15,Israel,Tel Aviv,Tel Aviv,4730468c-0160-4ae9-bcd4-048c695f3317,עזריאלי מכללה אקדמית להנדסה ירושלים,
+3b83d0ee-7292-4b26-9c13-e8848e296547,Tali Tavor Re'em,talire@jce.ac.il,both,2025-05-13 19:24,Israel,Jerusalem,Jerusalem,4730468c-0160-4ae9-bcd4-048c695f3317,עזריאלי מכללה אקדמית להנדסה ירושלים,
+d1bf4ce7-d99c-49ff-bb30-6888de775259,Roni Horowitz,ronih@jce.ac.il,both,2025-06-26 19:59,Israel,Central District,Rosh Ha�Ayin,4730468c-0160-4ae9-bcd4-048c695f3317,עזריאלי מכללה אקדמית להנדסה ירושלים,
+dc027c32-3a2f-4e30-9efe-2c405285e142,דניאל בוברוב,danielbb@post.jce.ac.il,both,,,,,4730468c-0160-4ae9-bcd4-048c695f3317,עזריאלי מכללה אקדמית להנדסה ירושלים,matched-by-email
+c5ec0a9c-02bb-4402-8ba4-f82a2cea91bd,קרן כץ-בקרמן,kerenka@post.jce.ac.il,both,2026-01-12 17:56,Israel,Jerusalem,Jerusalem,4730468c-0160-4ae9-bcd4-048c695f3317,עזריאלי מכללה אקדמית להנדסה ירושלים,
+0604cea5-cb4a-4965-89e9-4a6211044d18,יהודה חסין,hassin@jce.ac.il,both,2025-11-17 14:38,Israel,Jerusalem,Jerusalem,4730468c-0160-4ae9-bcd4-048c695f3317,עזריאלי מכללה אקדמית להנדסה ירושלים,
+38306f82-e4bd-46e8-84a6-adee21ca84c3,מרגנית אברהמי,marganitco@post.jce.ac.il,both,2026-01-12 15:48,Israel,Jerusalem,Jerusalem,4730468c-0160-4ae9-bcd4-048c695f3317,עזריאלי מכללה אקדמית להנדסה ירושלים,
+15817ea2-6197-4cc4-88ac-74b58a16a559,הראל כהן,harelco@post.jce.ac.il,both,2025-12-29 01:38,Israel,Central District,Rishon LeTsiyyon,4730468c-0160-4ae9-bcd4-048c695f3317,עזריאלי מכללה אקדמית להנדסה ירושלים,
+8b223cb4-40c4-4bd8-8a2a-ca36ceac6f8c,ברברה טראובין קזנסקי,barbara@jce.ac.il,both,2026-01-14 09:18,Israel,Jerusalem,Jerusalem,4730468c-0160-4ae9-bcd4-048c695f3317,עזריאלי מכללה אקדמית להנדסה ירושלים,
+e95a4aa5-e2e1-41aa-9bb2-592c960d2b89,משה זילברמן,moshezi@jce.ac.il,both,2026-01-08 20:55,Israel,Central District,Petah Tikva,4730468c-0160-4ae9-bcd4-048c695f3317,עזריאלי מכללה אקדמית להנדסה ירושלים,
+4a8dcd48-1768-48db-b904-13ea608f3647,Yaniv Geier,yanivge@jce.ac.il,both,2026-01-08 13:21,Israel,Jerusalem,Jerusalem,4730468c-0160-4ae9-bcd4-048c695f3317,עזריאלי מכללה אקדמית להנדסה ירושלים,
+94c1ae66-020f-45ac-8d1c-aa844a6bee91,רות ספז,ruti@jce.ac.il,both,,,,,4730468c-0160-4ae9-bcd4-048c695f3317,עזריאלי מכללה אקדמית להנדסה ירושלים,matched-by-email
+f649bfb1-1756-4567-b2fe-edcbbe6a8764,אלינור צדקני נחום,elinorza@jce.ac.il,both,,,,,4730468c-0160-4ae9-bcd4-048c695f3317,עזריאלי מכללה אקדמית להנדסה ירושלים,matched-by-email
+275838a8-257f-4a46-aa68-3369f877ffda,רקפת אופק אלמוג,rakefetof@jce.ac.il,both,,,,,4730468c-0160-4ae9-bcd4-048c695f3317,עזריאלי מכללה אקדמית להנדסה ירושלים,matched-by-email
+0e08f280-d7ce-438c-aaa0-ea5925888505,Yonit,yonitwe@jce.ac.il,Sheet1,,,,,4730468c-0160-4ae9-bcd4-048c695f3317,עזריאלי מכללה אקדמית להנדסה ירושלים,
+106f891c-0702-466a-95be-9c1df6233c8a,Shimon Serf,shimonsr@post.jce.ac.il,both,2025-06-30 00:09,Israel,Tel Aviv,Tel Aviv,4730468c-0160-4ae9-bcd4-048c695f3317,עזריאלי מכללה אקדמית להנדסה ירושלים,
+966a45d7-d0d3-48c1-bc4b-a0af1a526069,בוריס,borisge@jce.ac.il,both,,,,,4730468c-0160-4ae9-bcd4-048c695f3317,עזריאלי מכללה אקדמית להנדסה ירושלים,matched-by-email
+7d322942-72aa-418e-a53c-6442c3363223,נח טרייטל,noacht@jce.ac.il,both,2025-12-01 09:29,Israel,Jerusalem,Jerusalem,4730468c-0160-4ae9-bcd4-048c695f3317,עזריאלי מכללה אקדמית להנדסה ירושלים,
+aed9e3bc-baae-4136-bda3-626e33bbf00e,Matan Demo,matan_demo@aaronowl.com,both,2025-10-26 12:07,Israel,Central District,Rishon LeTsiyyon,b535b744-3f45-4269-911f-a9f25d82f9ac,רוקחות - מתן,
+f218a9d7-07da-4cc7-ac9e-29edfab0fd58,Jacob Goldenberg,jgoldenberg@idc.ac.il,teachers_updated,2024-12-11 11:29,Israel,Jerusalem,Jerusalem,,,
+ee901e2a-1574-4da6-bd69-9c01a4600894,Reuven Sherwin,rubale@gmail.com,teachers_updated,2024-12-11 14:25,Israel,Tel Aviv,Kiryat Ono,,,
+852ffc34-bd59-4496-ae22-0d313bc25271,Kobi Pinto,kobipinto@gmail.com,teachers_updated,2024-12-10 09:21,Israel,Tel Aviv,Holon,,,
