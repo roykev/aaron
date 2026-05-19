@@ -89,12 +89,13 @@ class WeeklyProgressAnalyzer:
                 try:
                     teachers_df = pd.read_csv(teachers_path)
                     # Extract teacher IDs and filter out blacklisted users
-                    if '$distinct_id' in teachers_df.columns:
-                        all_teacher_ids = set(teachers_df['$distinct_id'].dropna().unique())
+                    id_col = '$distinct_id' if '$distinct_id' in teachers_df.columns else 'user_id' if 'user_id' in teachers_df.columns else None
+                    if id_col:
+                        all_teacher_ids = set(teachers_df[id_col].dropna().unique())
                         self.teacher_ids = all_teacher_ids - blacklisted_users
                         print(f"Loaded {len(self.teacher_ids)} teachers from {teachers_path} (filtered {len(all_teacher_ids) - len(self.teacher_ids)} blacklisted)")
                     else:
-                        print(f"Warning: teachers.csv missing '$distinct_id' column")
+                        print(f"Warning: teachers.csv missing '$distinct_id' or 'user_id' column")
                 except Exception as e:
                     print(f"Warning: Could not load teachers.csv from {teachers_path}: {e}")
 
