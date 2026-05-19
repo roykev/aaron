@@ -87,7 +87,7 @@ class WeeklyProgressAnalyzer:
                 import os
                 teachers_path = os.path.join(os.path.dirname(course_list_path), 'teachers.csv')
                 try:
-                    teachers_df = pd.read_csv(teachers_path)
+                    teachers_df = pd.read_csv(teachers_path, encoding='latin1')
                     # Extract teacher IDs and filter out blacklisted users
                     id_col = '$distinct_id' if '$distinct_id' in teachers_df.columns else 'user_id' if 'user_id' in teachers_df.columns else None
                     if id_col:
