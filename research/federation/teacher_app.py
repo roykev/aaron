@@ -71,9 +71,6 @@ tokens = st.secrets.get("tokens", {})
 
 if not token or token not in tokens:
     st.error("❌ Invalid or expired link. Contact the Aaron Owl research team.")
-    with st.expander("🔧 Debug info (for admin)"):
-        st.write("Token in URL:", repr(token))
-        st.write("Tokens loaded from secrets:", list(tokens.keys()) if tokens else "none")
     st.stop()
 
 token_data = tokens[token]
