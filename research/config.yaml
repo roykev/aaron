@@ -23,6 +23,13 @@ courses:
     output_dir: /home/roy/FS/Dropbox/WORK/Ideas/aaron/research/psy/output
     federation_dir: /home/roy/FS/Dropbox/WORK/Ideas/aaron/research/psy/output
 
+  bio:
+    course_id: a3cd714e-cebe-4a48-a16d-937f55de62ea
+    name: "ביולוגיה של התא - חלק א"
+    eval_csv: "/home/roy/FS/Dropbox/WORK/Ideas/aaron/research/bio/ביולוגיה של התא - דוח evaluation.csv"
+    output_dir: /home/roy/FS/Dropbox/WORK/Ideas/aaron/research/bio/output
+    federation_dir: /home/roy/FS/Dropbox/WORK/Ideas/aaron/research/bio/output
+
   # another_course:
   #   course_id: <uuid from Mixpanel>
   #   name: "..."

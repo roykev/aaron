@@ -189,6 +189,8 @@ class StudentFeatureBuilder:
 
 def load_academic_csv(path: str, sheet: str = None) -> Optional[pd.DataFrame]:
     """Load eval or quiz data from CSV or Excel (.xlsx), normalize column names."""
+    if not path:
+        return None
     p = Path(path)
     if not p.exists():
         print(f"Warning: academic file not found: {path}")

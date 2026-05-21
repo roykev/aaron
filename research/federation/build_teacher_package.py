@@ -269,6 +269,9 @@ def main():
     print(f"\nSend this zip to the {config['courses'][args.course]['name']} teacher.")
     print(f"Ask them to return: correlation_report.csv, regression_summary.txt,")
     print(f"                    feature_importance.csv, als_tier_profile.csv")
+    print(f"\n── Web option (zero-effort for teacher) ──────────────────────────")
+    print(f"Generate a unique URL instead of sending a zip:")
+    print(f"  python federation/token_manager.py --course {args.course} --app-url <your-streamlit-url>")
 
 
 if __name__ == '__main__':
