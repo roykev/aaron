@@ -44,7 +44,29 @@ except ImportError:
 
 # ── helpers ───────────────────────────────────────────────────────────────────
 
-def load_and_merge(features_path: str, grades_path: str) -> pd.DataFrame:
+def normalize_grades(grades: pd.DataFrame, fail_score: int = 40) -> pd.DataFrame:
+    """Map fail-word entries to fail_score; leave empty (absent) as NaN."""
+    raw = grades['final_grade'].astype(str).str.strip()
+    is_empty  = raw.isin({'', 'nan', 'NaN', 'None', 'none', '-'})
+    is_number = pd.to_numeric(raw, errors='coerce').notna()
+    is_fail   = ~is_empty & ~is_number
+
+    n_fails  = int(is_fail.sum())
+    n_absent = int(is_empty.sum())
+
+    if n_fails > 0:
+        fail_words = grades.loc[is_fail, 'final_grade'].value_counts().to_dict()
+        print(f"Fail-word entries ({n_fails}): {fail_words} → mapped to {fail_score}")
+        grades = grades.copy()
+        grades.loc[is_fail, 'final_grade'] = fail_score
+    if n_absent > 0:
+        print(f"Absent entries ({n_absent}): empty final_grade → excluded from analysis")
+
+    grades['final_grade'] = pd.to_numeric(grades['final_grade'], errors='coerce')
+    return grades
+
+
+def load_and_merge(features_path: str, grades_path: str, fail_score: int = 40) -> pd.DataFrame:
     features = pd.read_csv(features_path)
     grades = pd.read_csv(grades_path)
     grades.columns = [c.strip().lower() for c in grades.columns]
@@ -62,6 +84,7 @@ def load_and_merge(features_path: str, grades_path: str) -> pd.DataFrame:
     if join_col == 'email':
         grades['email'] = grades['email'].str.lower().str.strip()
 
+    grades = normalize_grades(grades, fail_score)
     merged = features.merge(grades[[join_col, 'final_grade']], on=join_col, how='inner')
     print(f"Matched {len(merged)} students (features: {len(features)}, grades: {len(grades)})")
     return merged
@@ -289,13 +312,15 @@ def main():
     parser.add_argument('--features', required=True, help="Path to student_features CSV")
     parser.add_argument('--grades', required=True, help="Path to grades CSV (email, final_grade)")
     parser.add_argument('--out', default='./results', help="Output directory")
+    parser.add_argument('--fail-score', type=int, default=40,
+                        help="Numeric score to assign to fail-word entries (default: 40)")
     args = parser.parse_args()
 
     out_dir = Path(args.out)
     out_dir.mkdir(parents=True, exist_ok=True)
 
     print("Loading data...")
-    df = load_and_merge(args.features, args.grades)
+    df = load_and_merge(args.features, args.grades, fail_score=args.fail_score)
     X, y, feat_cols = select_numeric_features(df)
     print(f"Running analysis on {len(X)} students × {len(feat_cols)} features")
 

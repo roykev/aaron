@@ -183,16 +183,44 @@ if "email" not in grades_raw.columns or "final_grade" not in grades_raw.columns:
     st.error("הקובץ חייב לכלול עמודות `email` ו-`final_grade`.")
     st.stop()
 
-grades_raw["email"]       = grades_raw["email"].str.lower().str.strip()
+grades_raw["email"] = grades_raw["email"].str.lower().str.strip()
+
+# ── detect fail-word entries ───────────────────────────────────────────────────
+raw_str   = grades_raw["final_grade"].astype(str).str.strip()
+is_empty  = raw_str.isin({"", "nan", "NaN", "None", "none", "-"})
+is_number = pd.to_numeric(raw_str, errors="coerce").notna()
+is_fail   = ~is_empty & ~is_number          # non-empty, non-numeric → fail word
+
+n_fails  = int(is_fail.sum())
+n_absent = int(is_empty.sum())
+
+if n_fails > 0:
+    fail_words = grades_raw.loc[is_fail, "final_grade"].value_counts().to_dict()
+    st.warning(
+        f"⚠️ נמצאו **{n_fails}** סטודנטים עם ציון טקסטואלי (נכשל / fail): "
+        + ", ".join(f'"{w}" ({c})' for w, c in fail_words.items())
+    )
+    fail_score = st.number_input(
+        "איזה ציון לתת להם? (ברירת מחדל: 40)",
+        min_value=0, max_value=100, value=40, step=1,
+        help="סטודנטים עם ציון 'נכשל' יקבלו ציון זה לצורך הניתוח.",
+    )
+    grades_raw.loc[is_fail, "final_grade"] = fail_score
+
+if n_absent > 0:
+    st.info(f"ℹ️ {n_absent} סטודנטים עם ציון ריק (לא ניגשו) — לא ייכללו בניתוח.")
+
 grades_raw["final_grade"] = pd.to_numeric(grades_raw["final_grade"], errors="coerce")
 
 merged   = features_df.merge(grades_raw[["email", "final_grade"]], on="email", how="inner")
-n_valid  = merged["final_grade"].notna().sum()
+n_valid  = int(merged["final_grade"].notna().sum())
 n_missed = len(grades_raw) - len(merged)
 
 st.success(
     f"✅ הותאמו **{len(merged)}** סטודנטים "
     f"({n_valid} עם ציון תקין"
+    + (f", {n_fails} נכשלו" if n_fails > 0 else "")
+    + (f", {n_absent} לא ניגשו" if n_absent > 0 else "")
     + (f", {n_missed} מיילים לא נמצאו בנתוני הפלטפורמה" if n_missed else "")
     + ")"
 )
