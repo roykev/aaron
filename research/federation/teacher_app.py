@@ -212,6 +212,29 @@ if n_absent > 0:
 
 grades_raw["final_grade"] = pd.to_numeric(grades_raw["final_grade"], errors="coerce")
 
+# ── detect multiple sittings (duplicate emails) ───────────────────────────────
+n_dupes = int(grades_raw["email"].duplicated().sum())
+if n_dupes > 0:
+    st.warning(
+        f"⚠️ נמצאו **{n_dupes}** סטודנטים עם יותר ממועד אחד (מועד א + מועד ב)."
+    )
+    dup_strategy = st.radio(
+        "איזה ציון לקחת לניתוח?",
+        options=["min", "max", "last"],
+        format_func=lambda x: {
+            "min":  "הנמוך ביותר — הציון הגרוע מכל המועדים (מומלץ)",
+            "max":  "הגבוה ביותר — הציון הטוב מכל המועדים",
+            "last": "האחרון — השורה האחרונה בקובץ",
+        }[x],
+        index=0,
+    )
+    if dup_strategy == "min":
+        grades_raw = grades_raw.groupby("email", as_index=False)["final_grade"].min()
+    elif dup_strategy == "max":
+        grades_raw = grades_raw.groupby("email", as_index=False)["final_grade"].max()
+    else:
+        grades_raw = grades_raw.drop_duplicates(subset="email", keep="last")[["email", "final_grade"]]
+
 merged   = features_df.merge(grades_raw[["email", "final_grade"]], on="email", how="inner")
 n_valid  = int(merged["final_grade"].notna().sum())
 n_missed = len(grades_raw) - len(merged)
@@ -221,6 +244,7 @@ st.success(
     f"({n_valid} עם ציון תקין"
     + (f", {n_fails} נכשלו" if n_fails > 0 else "")
     + (f", {n_absent} לא ניגשו" if n_absent > 0 else "")
+    + (f", {n_dupes} עם מועד חוזר" if n_dupes > 0 else "")
     + (f", {n_missed} מיילים לא נמצאו בנתוני הפלטפורמה" if n_missed else "")
     + ")"
 )

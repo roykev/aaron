@@ -66,27 +66,50 @@ def normalize_grades(grades: pd.DataFrame, fail_score: int = 40) -> pd.DataFrame
     return grades
 
 
-def load_and_merge(features_path: str, grades_path: str, fail_score: int = 40) -> pd.DataFrame:
+def deduplicate_grades(grades: pd.DataFrame, join_col: str,
+                       strategy: str = 'min') -> pd.DataFrame:
+    """When a student appears more than once (multiple exam sittings), collapse to one row."""
+    dupes = grades[join_col].duplicated(keep=False)
+    n_dupes = int(dupes.sum())
+    if n_dupes == 0:
+        return grades
+
+    n_students = grades[join_col].nunique()
+    print(f"Duplicate {join_col}s: {n_dupes} rows → {n_students} students "
+          f"(strategy: {strategy})")
+
+    if strategy == 'min':
+        agg = grades.groupby(join_col, as_index=False)['final_grade'].min()
+    elif strategy == 'max':
+        agg = grades.groupby(join_col, as_index=False)['final_grade'].max()
+    else:  # last
+        agg = grades.drop_duplicates(subset=join_col, keep='last')[[join_col, 'final_grade']]
+
+    return agg
+
+
+def load_and_merge(features_path: str, grades_path: str,
+                   fail_score: int = 40, duplicate_strategy: str = 'min') -> pd.DataFrame:
     features = pd.read_csv(features_path)
     grades = pd.read_csv(grades_path)
     grades.columns = [c.strip().lower() for c in grades.columns]
 
-    # Accept 'email' or 'student_id' as join key in grades file
     join_col = 'email' if 'email' in grades.columns else 'student_id'
     if join_col not in grades.columns:
         raise ValueError("Grades CSV must have an 'email' or 'student_id' column")
     if 'final_grade' not in grades.columns:
         raise ValueError("Grades CSV must have a 'final_grade' column")
 
-    # Normalize email casing
     if 'email' in features.columns:
         features['email'] = features['email'].str.lower().str.strip()
     if join_col == 'email':
         grades['email'] = grades['email'].str.lower().str.strip()
 
     grades = normalize_grades(grades, fail_score)
+    grades = deduplicate_grades(grades, join_col, strategy=duplicate_strategy)
+
     merged = features.merge(grades[[join_col, 'final_grade']], on=join_col, how='inner')
-    print(f"Matched {len(merged)} students (features: {len(features)}, grades: {len(grades)})")
+    print(f"Matched {len(merged)} students (features: {len(features)}, grades provided: {len(grades)})")
     return merged
 
 
@@ -314,13 +337,18 @@ def main():
     parser.add_argument('--out', default='./results', help="Output directory")
     parser.add_argument('--fail-score', type=int, default=40,
                         help="Numeric score to assign to fail-word entries (default: 40)")
+    parser.add_argument('--duplicate-strategy', choices=['min', 'max', 'last'], default='min',
+                        help="How to handle multiple grades per student: "
+                             "min=lowest sitting (default), max=highest, last=most recent row")
     args = parser.parse_args()
 
     out_dir = Path(args.out)
     out_dir.mkdir(parents=True, exist_ok=True)
 
     print("Loading data...")
-    df = load_and_merge(args.features, args.grades, fail_score=args.fail_score)
+    df = load_and_merge(args.features, args.grades,
+                        fail_score=args.fail_score,
+                        duplicate_strategy=args.duplicate_strategy)
     X, y, feat_cols = select_numeric_features(df)
     print(f"Running analysis on {len(X)} students × {len(feat_cols)} features")
 
