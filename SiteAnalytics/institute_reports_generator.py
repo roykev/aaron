@@ -605,8 +605,11 @@ class NewInstituteReportsGenerator:
 
         # Institute-level cumulative active users (sum across all courses from latest data)
         # Computed here to avoid collision with `cumulative_active` used in the loop above
+        # Use course_retention_data for both numerator AND denominator — total_enrolled only
+        # reflects courses present in the latest week, missing courses active in earlier weeks.
         institute_cumulative_active = sum(c['total_active'] for c in course_retention_data)
-        institute_cumulative_active_pct = (institute_cumulative_active / total_enrolled * 100) if total_enrolled > 0 else 0
+        institute_total_enrolled = sum(c['registered'] for c in course_retention_data)
+        institute_cumulative_active_pct = (institute_cumulative_active / institute_total_enrolled * 100) if institute_total_enrolled > 0 else 0
 
         course_eng_rows = ""
         for course in sorted(course_eng_data, key=lambda x: x['score'], reverse=True):
@@ -1069,7 +1072,7 @@ class NewInstituteReportsGenerator:
                     <div style="font-size: 2em; font-weight: bold; color: {activity_color};">{latest_wau_pct_of_active:.1f}%</div>
                     <div style="color: #666; font-size: 0.9em; font-weight: 600;">Current Activity Rate</div>
                     <div style="font-size: 0.75em; color: #888; margin-top: 3px;">% of Active So Far</div>
-                    <div style="font-size: 0.8em; color: #888; margin-top: 8px; border-top: 1px solid #ddd; padding-top: 8px;">Total Active So Far: {institute_cumulative_active} ({institute_cumulative_active_pct:.1f}% of {total_enrolled})</div>
+                    <div style="font-size: 0.8em; color: #888; margin-top: 8px; border-top: 1px solid #ddd; padding-top: 8px;">Total Active So Far: {institute_cumulative_active} ({institute_cumulative_active_pct:.1f}% of {institute_total_enrolled})</div>
                 </div>
                 <div style="font-size: 0.85em; color: #555; border-top: 1px solid #ddd; padding-top: 8px; margin-top: 8px;">
                     <div style="margin: 3px 0;"><strong>Top:</strong> {top_activity[0]['name']} ({top_activity[0]['activity']:.1f}%)</div>
