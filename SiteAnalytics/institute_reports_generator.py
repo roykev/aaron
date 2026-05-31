@@ -10,6 +10,7 @@ import pandas as pd
 import os
 from typing import Dict, List
 import json
+import base64
 
 
 class NewInstituteReportsGenerator:
@@ -77,6 +78,19 @@ class NewInstituteReportsGenerator:
             return ('#fff9c4', '#f57f17')  # Yellow
         else:
             return ('#ffcdd2', '#b71c1c')  # Red
+
+    def _get_logo_base64(self) -> str:
+        """Load and encode the Aaron Owl logo as a base64 data URI for inline HTML embedding"""
+        candidate_paths = [
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'teacher_side', 'assets', 'aaronowl-logo.png'),
+            os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'teacher_side', 'assets', 'aaronowl-logo.png'),
+        ]
+        for path in candidate_paths:
+            if os.path.exists(path):
+                with open(path, 'rb') as f:
+                    data = base64.b64encode(f.read()).decode('utf-8')
+                return f'data:image/png;base64,{data}'
+        return ''
 
     def generate_snapshot_report(self, output_dir: str):
         """Generate Report B: Institute Weekly Snapshot (Last complete week)"""
@@ -540,6 +554,15 @@ class NewInstituteReportsGenerator:
         # Get latest engagement score (already normalized)
         latest_eng_score = eng_scores[-1] if eng_scores and eng_scores[-1] is not None else 0
 
+        # Average weekly time (weeks with non-zero activity only)
+        nonzero_times = [t for t in median_times if t > 0]
+        avg_weekly_time = sum(nonzero_times) / len(nonzero_times) if nonzero_times else 0
+        avg_weekly_time_hms = self._format_time_hms(avg_weekly_time)
+
+        # Total active users so far (cumulative) and as % of registered
+        cumulative_active = int(latest.get('cumulative_active_users', 0))
+        cumulative_active_pct = (cumulative_active / total_enrolled * 100) if total_enrolled > 0 else 0
+
         # Chart axis ranges use 0-100 scale with expected at 50
         eng_axis_min = 0
         eng_axis_max = 100
@@ -638,6 +661,14 @@ class NewInstituteReportsGenerator:
                 prev_week_lecturers = times_lecturers[-2] if len(times_lecturers) >= 2 else 0
                 weekly_change_lecturers = last_week_lecturers - prev_week_lecturers
 
+                # Average weekly time (weeks with non-zero activity only)
+                active_weeks_count = sum(1 for t in times if t > 0)
+                avg_time = sum(t for t in times if t > 0) / active_weeks_count if active_weeks_count > 0 else 0
+                active_weeks_students = sum(1 for t in times_students if t > 0)
+                avg_time_students = sum(t for t in times_students if t > 0) / active_weeks_students if active_weeks_students > 0 else 0
+                active_weeks_lecturers = sum(1 for t in times_lecturers if t > 0)
+                avg_time_lecturers = sum(t for t in times_lecturers if t > 0) / active_weeks_lecturers if active_weeks_lecturers > 0 else 0
+
                 course_time_data.append({
                     'name': course_name,
                     'time': cumulative,
@@ -648,8 +679,28 @@ class NewInstituteReportsGenerator:
                     'addition_lecturers': addition_lecturers,
                     'weekly_change': weekly_change,
                     'weekly_change_students': weekly_change_students,
-                    'weekly_change_lecturers': weekly_change_lecturers
+                    'weekly_change_lecturers': weekly_change_lecturers,
+                    'avg_time': avg_time,
+                    'avg_time_students': avg_time_students,
+                    'avg_time_lecturers': avg_time_lecturers,
+                    'active_weeks': active_weeks_count,
                 })
+
+        course_avg_time_rows = ""
+        for course in sorted(course_time_data, key=lambda x: x['avg_time'], reverse=True):
+            avg_hms = self._format_time_hms(course['avg_time'])
+            avg_students_hms = self._format_time_hms(course['avg_time_students'])
+            avg_lecturers_hms = self._format_time_hms(course['avg_time_lecturers'])
+            course_link = f"{course['name']}_dynamics.html"
+            course_avg_time_rows += f"""
+            <tr>
+                <td><a href="{course_link}" style="color: #764ba2; text-decoration: none; font-weight: 500;">{course['name']}</a></td>
+                <td style="text-align: center;">{avg_hms}</td>
+                <td style="text-align: center;">{avg_students_hms}</td>
+                <td style="text-align: center;">{avg_lecturers_hms}</td>
+                <td style="text-align: center;">{course['active_weeks']}</td>
+            </tr>
+            """
 
         course_time_rows = ""
         for course in sorted(course_time_data, key=lambda x: x['time'], reverse=True):
@@ -966,6 +1017,10 @@ class NewInstituteReportsGenerator:
         feature_bg, feature_color = self._get_metric_color('engagement_score', latest_feature_score)  # Use same thresholds
         retention_bg, retention_color = self._get_metric_color('retention', institute_retention_score)
 
+        # Logo for header
+        logo_src = self._get_logo_base64()
+        logo_html = f'<img src="{logo_src}" alt="Aaron Owl Logo" style="height: 60px; border-radius: 6px;">' if logo_src else ''
+
         # JSON data
         date_labels_json = json.dumps(date_labels)
         wau_counts_json = json.dumps(wau_counts)
@@ -994,9 +1049,14 @@ class NewInstituteReportsGenerator:
 </head>
 <body>
     <div class="header">
-        <h1>🏛️ Institute Dynamics Report</h1>
-        <p><strong>{self.institute_name}</strong></p>
-        <p>{num_weeks} Complete Weeks: {first_date} to {last_date}</p>
+        <div style="display: flex; align-items: center; gap: 20px;">
+            {logo_html}
+            <div>
+                <h1>🏛️ Institute Dynamics Report</h1>
+                <p><strong>{self.institute_name}</strong></p>
+                <p>{num_weeks} Complete Weeks: {first_date} to {last_date}</p>
+            </div>
+        </div>
     </div>
 
     <div class="executive-summary">
@@ -1007,7 +1067,7 @@ class NewInstituteReportsGenerator:
                     <div style="font-size: 2em; font-weight: bold; color: {activity_color};">{latest_wau_pct_of_active:.1f}%</div>
                     <div style="color: #666; font-size: 0.9em; font-weight: 600;">Current Activity Rate</div>
                     <div style="font-size: 0.75em; color: #888; margin-top: 3px;">% of Active So Far</div>
-                    <div style="font-size: 0.8em; color: #888; margin-top: 8px; border-top: 1px solid #ddd; padding-top: 8px;">Total Active So Far: {int(latest.get('cumulative_active_users', 0))}</div>
+                    <div style="font-size: 0.8em; color: #888; margin-top: 8px; border-top: 1px solid #ddd; padding-top: 8px;">Total Active So Far: {cumulative_active} ({cumulative_active_pct:.1f}% of {total_enrolled})</div>
                 </div>
                 <div style="font-size: 0.85em; color: #555; border-top: 1px solid #ddd; padding-top: 8px; margin-top: 8px;">
                     <div style="margin: 3px 0;"><strong>Top:</strong> {top_activity[0]['name']} ({top_activity[0]['activity']:.1f}%)</div>
@@ -1039,7 +1099,8 @@ class NewInstituteReportsGenerator:
             <div style="padding: 20px; background: #fff3e0; border-radius: 8px;">
                 <div style="text-align: center; margin-bottom: 10px;">
                     <div style="font-size: 2em; font-weight: bold; color: #f57c00;">{latest_time_hms}</div>
-                    <div style="color: #666; font-size: 0.9em; font-weight: 600;">Time Spent</div>
+                    <div style="color: #666; font-size: 0.9em; font-weight: 600;">Time Spent (Cumulative)</div>
+                    <div style="font-size: 0.85em; color: #f57c00; margin-top: 4px; font-weight: 600;">Avg/Week: {avg_weekly_time_hms}</div>
                     {'<div style="font-size: 0.75em; color: ' + ('green' if delta_time >= 0 else 'red') + '; margin-top: 5px;">' + ('↑' if delta_time > 0 else '↓' if delta_time < 0 else '—') + f' {delta_time_hms} vs last week</div>' if has_prev_week else ''}
                 </div>
                 <div style="font-size: 0.85em; color: #555; border-top: 1px solid #ddd; padding-top: 8px; margin-top: 8px;">
@@ -1105,6 +1166,24 @@ class NewInstituteReportsGenerator:
         </details>
 
         <details style="margin-top: 20px;">
+            <summary>📊 Per-Course Average Time Breakdown (Click to Expand)</summary>
+            <div style="padding: 10px 0; color: #555; font-size: 0.9em;">
+                Institute average: <strong>{avg_weekly_time_hms}</strong> per week (over active weeks only)
+            </div>
+            <table style="margin-top: 8px;">
+                <tr>
+                    <th>Course</th>
+                    <th style="text-align: center;">Avg Weekly Time (h:m:s)</th>
+                    <th style="text-align: center;">Avg Students (h:m:s)</th>
+                    <th style="text-align: center;">Avg Lecturers (h:m:s)</th>
+                    <th style="text-align: center;">Active Weeks</th>
+                </tr>
+                {course_avg_time_rows}
+            </table>
+            <p style="font-size: 0.85em; color: #888; margin-top: 8px;">Average computed over weeks with non-zero activity only.</p>
+        </details>
+
+        <details style="margin-top: 20px;">
             <summary>📊 Per-Course Retention (Coverage) Breakdown (Click to Expand)</summary>
             <table style="margin-top: 15px;">
                 <tr>
@@ -1122,11 +1201,10 @@ class NewInstituteReportsGenerator:
 
     <div class="section">
         <h2>2. Institute Active Users Trend</h2>
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px;">
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px;">
             <div style="text-align: center; padding: 20px; background: #e3f2fd; border-radius: 8px;">
                 <div style="font-size: 2em; font-weight: bold; color: #667eea;">{latest.get('wau', 0)}</div>
                 <div style="color: #666; font-size: 0.9em;">Active Users (this week)</div>
-                <div style="font-size: 0.8em; color: #888; margin-top: 5px;">Active So Far: {int(latest.get('cumulative_active_users', 0))}</div>
             </div>
             <div style="text-align: center; padding: 20px; background: #e3f2fd; border-radius: 8px;">
                 <div style="font-size: 2em; font-weight: bold; color: #667eea;">{latest_wau_pct_of_active:.1f}%</div>
@@ -1135,6 +1213,11 @@ class NewInstituteReportsGenerator:
             <div style="text-align: center; padding: 20px; background: #e3f2fd; border-radius: 8px;">
                 <div style="font-size: 2em; font-weight: bold; color: #667eea;">{latest_wau_pct:.1f}%</div>
                 <div style="color: #666; font-size: 0.9em;">% of Registered ({total_enrolled})</div>
+            </div>
+            <div style="text-align: center; padding: 20px; background: #c8e6c9; border-radius: 8px;">
+                <div style="font-size: 2em; font-weight: bold; color: #2e7d32;">{cumulative_active}</div>
+                <div style="color: #1b5e20; font-size: 0.9em; font-weight: 600;">Total Active So Far</div>
+                <div style="font-size: 0.8em; color: #388e3c; margin-top: 3px;">{cumulative_active_pct:.1f}% of registered</div>
             </div>
         </div>
         <div class="chart-container">
