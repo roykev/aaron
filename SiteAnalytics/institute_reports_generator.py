@@ -611,6 +611,11 @@ class NewInstituteReportsGenerator:
         institute_total_enrolled = sum(c['registered'] for c in course_retention_data)
         institute_cumulative_active_pct = (institute_cumulative_active / institute_total_enrolled * 100) if institute_total_enrolled > 0 else 0
 
+        # Institute-level repeating users — same fix: sum from course_retention_data,
+        # not from weekly coverage which only includes courses present in the latest week.
+        institute_repeating_users = sum(c['repeating_users'] for c in course_retention_data)
+        institute_repeating_pct = (institute_repeating_users / institute_cumulative_active * 100) if institute_cumulative_active > 0 else 0
+
         course_eng_rows = ""
         for course in sorted(course_eng_data, key=lambda x: x['score'], reverse=True):
             course_eng_rows += f"""
@@ -1018,7 +1023,7 @@ class NewInstituteReportsGenerator:
         # Calculate colors for the 6 boxes based on metric values
         activity_bg, activity_color = self._get_metric_color('activity_rate', latest_wau_pct_of_active)
         engagement_bg, engagement_color = self._get_metric_color('engagement_score', latest_eng_score)
-        coverage_bg, coverage_color = self._get_metric_color('coverage', latest_coverage)
+        coverage_bg, coverage_color = self._get_metric_color('coverage', institute_repeating_pct)
         feature_bg, feature_color = self._get_metric_color('engagement_score', latest_feature_score)  # Use same thresholds
         retention_bg, retention_color = self._get_metric_color('retention', institute_retention_score)
 
@@ -1081,9 +1086,9 @@ class NewInstituteReportsGenerator:
             </div>
             <div style="padding: 20px; background: {coverage_bg}; border-radius: 8px;">
                 <div style="text-align: center; margin-bottom: 10px;">
-                    <div style="font-size: 2em; font-weight: bold; color: {coverage_color};">{latest_coverage:.1f}%</div>
+                    <div style="font-size: 2em; font-weight: bold; color: {coverage_color};">{institute_repeating_pct:.1f}%</div>
                     <div style="color: #666; font-size: 0.9em; font-weight: 600;">Retention (Coverage)</div>
-                    {'<div style="font-size: 0.75em; color: ' + ('green' if delta_coverage >= 0 else 'red') + '; margin-top: 5px;">' + ('↑' if delta_coverage > 0 else '↓' if delta_coverage < 0 else '—') + f' {delta_coverage:+.1f}% vs last week</div>' if has_prev_week else ''}
+                    <div style="font-size: 0.75em; color: #888; margin-top: 3px;">{institute_repeating_users} of {institute_cumulative_active} active users</div>
                 </div>
                 <div style="font-size: 0.85em; color: #555; border-top: 1px solid #ddd; padding-top: 8px; margin-top: 8px;">
                     <div style="margin: 3px 0;"><strong>Top:</strong> {top_coverage[0]['name']} ({top_coverage[0]['retention']:.1f}%)</div>
@@ -1146,8 +1151,8 @@ class NewInstituteReportsGenerator:
                 <div style="color: #666; font-size: 1.1em;">Median Cumulative Time</div>
             </div>
             <div style="text-align: center; padding: 20px; background: #e3f2fd; border-radius: 8px;">
-                <div style="font-size: 2.5em; font-weight: bold; color: #667eea;">{latest_coverage:.1f}%</div>
-                <div style="color: #666; font-size: 1.1em;">Repeating Users</div>
+                <div style="font-size: 2.5em; font-weight: bold; color: #667eea;">{institute_repeating_pct:.1f}%</div>
+                <div style="color: #666; font-size: 1.1em;">Repeating Users ({institute_repeating_users}/{institute_cumulative_active})</div>
             </div>
         </div>
         <div class="chart-container">
