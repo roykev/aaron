@@ -560,10 +560,6 @@ class NewInstituteReportsGenerator:
         avg_weekly_time = sum(nonzero_times) / len(nonzero_times) if nonzero_times else 0
         avg_weekly_time_hms = self._format_time_hms(avg_weekly_time)
 
-        # Total active users so far (cumulative) and as % of registered
-        cumulative_active = int(latest.get('cumulative_active_users', 0))
-        cumulative_active_pct = (cumulative_active / total_enrolled * 100) if total_enrolled > 0 else 0
-
         # Chart axis ranges use 0-100 scale with expected at 50
         eng_axis_min = 0
         eng_axis_max = 100
@@ -606,6 +602,11 @@ class NewInstituteReportsGenerator:
                         'active_pct': (cumulative_active / enr * 100) if enr > 0 else 0,
                         'repeating_from_active_pct': repeating_from_active_pct
                     })
+
+        # Institute-level cumulative active users (sum across all courses from latest data)
+        # Computed here to avoid collision with `cumulative_active` used in the loop above
+        institute_cumulative_active = sum(c['total_active'] for c in course_retention_data)
+        institute_cumulative_active_pct = (institute_cumulative_active / total_enrolled * 100) if total_enrolled > 0 else 0
 
         course_eng_rows = ""
         for course in sorted(course_eng_data, key=lambda x: x['score'], reverse=True):
@@ -1020,7 +1021,7 @@ class NewInstituteReportsGenerator:
 
         # Logo for header
         logo_src = self._get_logo_base64()
-        logo_html = f'<img src="{logo_src}" alt="Aaron Owl Logo" style="height: 60px; border-radius: 6px;">' if logo_src else ''
+        logo_html = f'<img src="{logo_src}" alt="Aaron Owl Logo" style="height: 90px; border-radius: 8px;">' if logo_src else ''
 
         # JSON data
         date_labels_json = json.dumps(date_labels)
@@ -1050,13 +1051,13 @@ class NewInstituteReportsGenerator:
 </head>
 <body>
     <div class="header">
-        <div style="display: flex; align-items: center; gap: 20px;">
-            {logo_html}
+        <div style="display: flex; align-items: center; justify-content: space-between;">
             <div>
                 <h1>🏛️ Institute Dynamics Report</h1>
                 <p><strong>{self.institute_name}</strong></p>
                 <p>{num_weeks} Complete Weeks: {first_date} to {last_date}</p>
             </div>
+            {logo_html}
         </div>
     </div>
 
@@ -1068,7 +1069,7 @@ class NewInstituteReportsGenerator:
                     <div style="font-size: 2em; font-weight: bold; color: {activity_color};">{latest_wau_pct_of_active:.1f}%</div>
                     <div style="color: #666; font-size: 0.9em; font-weight: 600;">Current Activity Rate</div>
                     <div style="font-size: 0.75em; color: #888; margin-top: 3px;">% of Active So Far</div>
-                    <div style="font-size: 0.8em; color: #888; margin-top: 8px; border-top: 1px solid #ddd; padding-top: 8px;">Total Active So Far: {cumulative_active} ({cumulative_active_pct:.1f}% of {total_enrolled})</div>
+                    <div style="font-size: 0.8em; color: #888; margin-top: 8px; border-top: 1px solid #ddd; padding-top: 8px;">Total Active So Far: {institute_cumulative_active} ({institute_cumulative_active_pct:.1f}% of {total_enrolled})</div>
                 </div>
                 <div style="font-size: 0.85em; color: #555; border-top: 1px solid #ddd; padding-top: 8px; margin-top: 8px;">
                     <div style="margin: 3px 0;"><strong>Top:</strong> {top_activity[0]['name']} ({top_activity[0]['activity']:.1f}%)</div>
@@ -1216,9 +1217,9 @@ class NewInstituteReportsGenerator:
                 <div style="color: #666; font-size: 0.9em;">% of Registered ({total_enrolled})</div>
             </div>
             <div style="text-align: center; padding: 20px; background: #c8e6c9; border-radius: 8px;">
-                <div style="font-size: 2em; font-weight: bold; color: #2e7d32;">{cumulative_active}</div>
+                <div style="font-size: 2em; font-weight: bold; color: #2e7d32;">{institute_cumulative_active}</div>
                 <div style="color: #1b5e20; font-size: 0.9em; font-weight: 600;">Total Active So Far</div>
-                <div style="font-size: 0.8em; color: #388e3c; margin-top: 3px;">{cumulative_active_pct:.1f}% of registered</div>
+                <div style="font-size: 0.8em; color: #388e3c; margin-top: 3px;">{institute_cumulative_active_pct:.1f}% of registered</div>
             </div>
         </div>
         <div class="chart-container">
