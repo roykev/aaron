@@ -82,6 +82,7 @@ class NewInstituteReportsGenerator:
     def _get_logo_base64(self) -> str:
         """Load and encode the Aaron Owl logo as a base64 data URI for inline HTML embedding"""
         candidate_paths = [
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets', 'aaronowl-logo.png'),
             os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'teacher_side', 'assets', 'aaronowl-logo.png'),
             os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'teacher_side', 'assets', 'aaronowl-logo.png'),
         ]
