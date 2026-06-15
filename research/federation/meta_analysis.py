@@ -29,6 +29,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from scipy import stats
 
 
 # ── loaders ───────────────────────────────────────────────────────────────────
@@ -94,6 +95,43 @@ def fisher_pool(rs: list[float], ns: list[int]) -> tuple[float, float, float]:
     return r_pool, ci_lo, ci_hi
 
 
+# ── Cochran's Q heterogeneity ─────────────────────────────────────────────────
+
+def cochran_q(rs: list[float], ns: list[int]) -> tuple[float, int, float, float]:
+    """
+    Cochran's Q test for between-course heterogeneity of a correlation, computed
+    on Fisher-z transformed r's with weights w_i = n_i - 3 (same weighting the
+    fixed-effect pool uses).
+
+    Q   = Σ w_i (z_i - z̄)²      ~ χ²(k-1) under the null "all courses share one true r"
+    I²  = max(0, (Q - df) / Q) · 100   — % of variance due to real between-course
+                                          difference rather than sampling error.
+
+    Returns (Q, df, p_value, I2_percent). Needs ≥2 courses; else NaNs.
+    """
+    if len(rs) < 2:
+        return (np.nan, 0, np.nan, np.nan)
+    zs = np.arctanh(np.clip(rs, -0.9999, 0.9999))
+    ws = np.array([max(n - 3, 1) for n in ns], dtype=float)
+    z_bar = np.average(zs, weights=ws)
+    Q = float(np.sum(ws * (zs - z_bar) ** 2))
+    df = len(rs) - 1
+    p = float(stats.chi2.sf(Q, df)) if df > 0 else np.nan
+    I2 = float(max(0.0, (Q - df) / Q) * 100.0) if Q > 0 else 0.0
+    return (Q, df, p, I2)
+
+
+def het_flag(n_courses: int, p: float, I2: float) -> str:
+    """Classify a feature's cross-course consistency."""
+    if n_courses < 2:
+        return 'single'
+    if p is not None and not np.isnan(p) and p < 0.05:
+        return 'disagree'        # significant heterogeneity — courses genuinely differ
+    if I2 >= 50.0:
+        return 'substantial'     # large I² but not significant (often few courses)
+    return 'consistent'
+
+
 # ── combined correlation ───────────────────────────────────────────────────────
 
 def combined_correlations(courses: list[dict]) -> pd.DataFrame:
@@ -121,6 +159,9 @@ def combined_correlations(courses: list[dict]) -> pd.DataFrame:
         ns = [e['n'] for e in entries]
         r_pool, ci_lo, ci_hi = fisher_pool(rs, ns)
         sr_pool, _, _ = fisher_pool(srs, ns)
+        Q, df_q, p_q, I2 = cochran_q(rs, ns)
+        flag = het_flag(len(entries), p_q, I2)
+        per_course_r = '; '.join(f"{e['course']}: {e['r']:+.2f}" for e in entries)
         rows.append({
             'feature': feat,
             'pearson_r_pooled': round(r_pool, 4),
@@ -129,6 +170,12 @@ def combined_correlations(courses: list[dict]) -> pd.DataFrame:
             'spearman_r_pooled': round(sr_pool, 4),
             'n_total': sum(ns),
             'n_courses': len(entries),
+            'het_Q': round(Q, 3) if not np.isnan(Q) else np.nan,
+            'het_df': df_q,
+            'het_p': round(p_q, 4) if not np.isnan(p_q) else np.nan,
+            'het_I2': round(I2, 1) if not np.isnan(I2) else np.nan,
+            'het_flag': flag,
+            'per_course_r': per_course_r,
             'courses': ', '.join(e['course'] for e in entries),
         })
 
@@ -287,6 +334,20 @@ def render_html(corr_df: pd.DataFrame, fi_df: pd.DataFrame,
           Cohen's d: effect size of High vs Low ALS on final grade (≥0.8 = large effect).
         </p>"""
 
+    # Heterogeneity badge styling
+    FLAG_STYLE = {
+        'disagree':    ('#c62828', 'courses disagree'),
+        'substantial': ('#ef6c00', 'substantial'),
+        'consistent':  ('#2e7d32', 'consistent'),
+        'single':      ('#9e9e9e', '1 course'),
+    }
+
+    def het_badge(flag, I2):
+        color, label = FLAG_STYLE.get(flag, ('#9e9e9e', flag))
+        i2_txt = '' if (I2 is None or pd.isna(I2)) else f' I²={I2:.0f}%'
+        return (f'<span style="background:{color};color:#fff;padding:1px 8px;'
+                f'border-radius:10px;font-size:0.8em;white-space:nowrap">{label}{i2_txt}</span>')
+
     # Top correlations
     top_corr = corr_df.head(12)
     corr_rows = ''.join(
@@ -295,9 +356,45 @@ def render_html(corr_df: pd.DataFrame, fi_df: pd.DataFrame,
         f'<td>[{r.pearson_ci_lo:+.3f}, {r.pearson_ci_hi:+.3f}]</td>'
         f'<td style="color:{"#2e7d32" if r.spearman_r_pooled>0 else "#c62828"}">{r.spearman_r_pooled:+.3f}</td>'
         f'<td style="color:#666">{r.n_total}</td>'
-        f'<td style="color:#888;font-size:0.85em">{r.n_courses}/{len(course_names)}</td></tr>'
+        f'<td>{het_badge(r.het_flag, r.het_I2)}</td></tr>'
         for r in top_corr.itertuples()
     )
+
+    # Dedicated heterogeneity section — features measured in ≥2 courses, most divergent first
+    multi = corr_df[corr_df['n_courses'] >= 2].copy()
+    het_block = ''
+    if not multi.empty:
+        multi = multi.sort_values('het_I2', ascending=False)
+        n_disagree = int((multi['het_flag'] == 'disagree').sum())
+        het_rows = ''.join(
+            f'<tr>'
+            f'<td>{r.feature}</td>'
+            f'<td>{het_badge(r.het_flag, r.het_I2)}</td>'
+            f'<td style="color:#666">{("–" if pd.isna(r.het_Q) else f"{r.het_Q:.1f}")} '
+            f'(df={r.het_df})</td>'
+            f'<td style="color:#666">{("–" if pd.isna(r.het_p) else f"{r.het_p:.3f}")}</td>'
+            f'<td style="color:#888;font-size:0.85em">{r.per_course_r}</td>'
+            f'</tr>'
+            for r in multi.head(15).itertuples()
+        )
+        het_block = f"""
+        <h2>Cross-Course Heterogeneity (Cochran's Q)</h2>
+        <p style="color:#555">
+          Tests whether each feature's correlation with grade is <em>the same</em> across courses.
+          <b>{n_disagree}</b> of {len(multi)} multi-course features show <span style="color:#c62828">
+          significant disagreement</span> (Q-test p&lt;0.05). High I² means the differences are real,
+          not sampling noise — pooling those features hides a course-specific story.
+        </p>
+        <table>
+          <tr><th>Feature</th><th>Verdict</th><th>Cochran's Q</th><th>p-value</th>
+              <th>Per-course Pearson r</th></tr>
+          {het_rows}
+        </table>
+        <p style="color:#888;font-size:0.85em">
+          I² guide: &lt;25% low · 25–50% moderate · 50–75% substantial · &gt;75% considerable heterogeneity.
+          A sign flip in "per-course r" (e.g. +0.30 vs −0.30) is the strongest signal a feature does not
+          generalise across courses.
+        </p>"""
 
     # Feature importance bar chart
     fi_rows = ''
@@ -358,9 +455,13 @@ th{{background:#f5f5f5;font-weight:600}}tr:hover{{background:#fafafa}}
 
 <h2>Pooled Feature Correlations with Final Grade</h2>
 <table>
-  <tr><th>Feature</th><th>Pearson r (pooled)</th><th>95% CI</th><th>Spearman r (pooled)</th><th>N (total)</th><th>Courses</th></tr>
+  <tr><th>Feature</th><th>Pearson r (pooled)</th><th>95% CI</th><th>Spearman r (pooled)</th><th>N (total)</th><th>Consistency</th></tr>
   {corr_rows}
 </table>
+<p style="color:#888;font-size:0.85em">"Consistency" = Cochran's Q verdict (see heterogeneity section). A pooled r with a
+  "courses disagree" badge should be read with caution — it averages over courses that genuinely differ.</p>
+
+{het_block}
 
 <h2>Per-Course Model Performance (Ridge Regression, 5-fold CV)</h2>
 <table>
@@ -444,6 +545,15 @@ def main():
     print(corr_df.head(8)[['feature','pearson_r_pooled','pearson_ci_lo','pearson_ci_hi','n_total']].to_string(index=False))
     print(f"\nTop 8 pooled feature importances:")
     print(fi_df.head(8)[['feature','importance_pooled','n_total']].to_string(index=False))
+
+    multi = corr_df[corr_df['n_courses'] >= 2]
+    disagree = multi[multi['het_flag'] == 'disagree'].sort_values('het_I2', ascending=False)
+    print(f"\nCross-course heterogeneity (Cochran's Q): "
+          f"{len(disagree)}/{len(multi)} multi-course features disagree (p<0.05)")
+    if not disagree.empty:
+        print("Most heterogeneous (courses genuinely differ):")
+        print(disagree.head(8)[['feature','het_I2','het_p','per_course_r']].to_string(index=False))
+
     print(f"\nResults saved to {out_dir}/")
 
 

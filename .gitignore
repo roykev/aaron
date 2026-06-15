@@ -39,3 +39,8 @@ Thumbs.db
 SiteAnalytics/data/raw/
 SiteAnalytics/data/export/
 SiteAnalytics/tts_env/
+.streamlit/secrets.toml
+
+# federation analysis outputs (data lives in Dropbox, never in git)
+research/federation/results*/
+research/federation/*_demo/

@@ -20,13 +20,19 @@ courses:
     eval_sheet: evaluation
     quiz_csv: "/home/roy/FS/Dropbox/WORK/Ideas/aaron/research/psy/מבוא לפסיכולוגיה - דוח quiz_eval.xlsx"
     quiz_sheet: quiz
+    moed_a_date: 2026-03-19
+    # moed_b_date: <pending — psy has retakers; add to enable psy Model B>
     output_dir: /home/roy/FS/Dropbox/WORK/Ideas/aaron/research/psy/output
     federation_dir: /home/roy/FS/Dropbox/WORK/Ideas/aaron/research/psy/output
 
   bio:
     course_id: a3cd714e-cebe-4a48-a16d-937f55de62ea
     name: "ביולוגיה של התא - חלק א"
-    eval_csv: "/home/roy/FS/Dropbox/WORK/Ideas/aaron/research/bio/ביולוגיה של התא - דוח evaluation.csv"
+    # Detailed eval export carries REAL per-interaction timestamps (the aggregate
+    # "דוח evaluation" file had placeholder noon dates → unusable for windowing).
+    eval_csv: "/home/roy/FS/Dropbox/WORK/Ideas/aaron/research/bio/output/ביולוגיה של התא - חלק א - eval_detailed_results.csv"
+    moed_a_date: 2026-01-29
+    moed_b_date: 2026-02-19
     output_dir: /home/roy/FS/Dropbox/WORK/Ideas/aaron/research/bio/output
     federation_dir: /home/roy/FS/Dropbox/WORK/Ideas/aaron/research/bio/output
 
@@ -80,12 +86,9 @@ active_learning_score:
     meaningful_sessions: 0.20
 
 target:
-  type: synthetic_formula   # synthetic_random | synthetic_formula | final_grade
+  type: final_grade
   params:
-    noise_std: 10
-    seed: 42
-    # For final_grade, set:
-    # grades_csv: /path/to/grades.csv  (columns: email, final_grade)
+    grades_csv: /home/roy/FS/Dropbox/WORK/Ideas/aaron/research/psy/output/grades_clean.csv
 
 federation:
   # Teacher needs emails to join their grade file — keep false.

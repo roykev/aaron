@@ -120,10 +120,41 @@ Meaningful session: duration ≥ 5 min AND ≥ 3 events AND ≥ 1 active event.
 3. Run `meta_analysis.py --courses "..." --out federated_results/meta/`
 4. Open `meta_report.html` for the combined view.
 
+## Exam-window models & Federated Questions v2 (2026-06-15)
+
+Two-sitting courses (Moed A + Moed B retake) caused a Simpson's-paradox sign-flip when
+all activity was pooled. Fix: **window activity by exam date and model A/B separately.**
+
+- **Windowing** (`pipeline.py`): per-course `moed_a_date` / `moed_b_date` in `config.yaml`
+  produce a `preA` feature block (activity < Moed A) + a `postA_`-prefixed block
+  (Moed A → Moed B retake/cram window; open-ended if no `moed_b_date`). No dates → single
+  `all` window (backward-compatible; math unchanged). `--cutoff none` forces baseline.
+- **Grade schema**: `email, moed_a, moed_b` (blank = absent; strip fail-words). No more `min()`.
+- **The contract**: `federation/FEDERATED_QUESTIONS_SPEC.md` — read first. All scores
+  standardized within course; only aggregated effect sizes leave a teacher.
+
+New federation scripts (outputs go to Dropbox `…/research/federated_v2_demo/`, never git):
+
+| Script | Role |
+|---|---|
+| `analysis_script_v2.py` | teacher-local: Q1 (ALS~moed_a), Q2 (ALS~improvement), Q3 (within-person ΔRate→grade), **risk** (R1 fail-A, R2 no-show-A), **predictive** (Ridge/RF + ALS audit). Emits `results.json` (grades never leave). |
+| `meta_analysis_v2.py` | DerSimonian-Laird random-effects pooling + Cochran's Q; `meta.json` + `meta_report.html` (overview, plain-language verdicts ✅/🟡/◻️, per-course detail). |
+| `churn_analysis.py` | R3 churn — grade-FREE, Aaron-Owl-side; course-length-relative windows; N/A for cram courses (<8wk span). |
+| `simulate_course.py` / `simulate_grades.py` | synthetic course / synthetic grades-from-real-activity for dry-runs. |
+| `build_teacher_package_v2.py` | bundles features + `grades_template` (moed_a/moed_b) + script + spec + Hebrew HOW_TO; teacher returns `results.json`. |
+
+```bash
+python pipeline.py --course bio                          # windowed two-block features
+python federation/analysis_script_v2.py --features <fed.csv> --grades <moed_ab.csv> --course "<name>" --out <dir>
+python federation/churn_analysis.py --course <key> --out <dir>
+python federation/meta_analysis_v2.py --results <dirA> <dirB> ... --out <meta_dir>
+python federation/build_teacher_package_v2.py --course bio
+```
+
 ## What comes next (not yet built)
 
 - Real grades: set `target.type: final_grade` and provide `grades_csv` in config — pipeline ready.
 - More courses: add to config.yaml, re-run pipeline, rebuild teacher package, re-run meta.
-- Heterogeneity test (Cochran's Q): flag features where courses disagree — discussed, not coded.
+- Heterogeneity test (Cochran's Q): **DONE** (2026-06-14) in `meta_analysis.py`. Per-feature Q/df/p/I² on Fisher-z correlations; `het_flag` ∈ {disagree, substantial, consistent, single}; columns added to `meta_correlation.csv`; "Cross-Course Heterogeneity" section + consistency badges in `meta_report.html`. With 3 courses (psy+math+bio, n=211), 8/35 features significantly disagree (p<0.05) — all driven by Cell Biology's inverted correlations (e.g. total_events I²=88%, p=0.0002).
 - Clustering / student archetypes: local k-means + centroid sharing — discussed, not coded.
 - Subgroup analysis by ALS tier — discussed, not coded.

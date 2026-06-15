@@ -35,6 +35,61 @@ def load_config(path: str = 'config.yaml') -> dict:
         return yaml.safe_load(f)
 
 
+def _resolve_windows(config: dict, course_cfg: dict):
+    """Return the activity windows for a course as [(name, start_date|None, end_date|None), ...].
+
+    Driven by per-course exam dates:
+      - moed_a_date present            -> 'preA'  window [start, moed_a_date)
+                                          + 'postA' window [moed_a_date, moed_b_date)
+                                            (open-ended if moed_b_date is absent)
+      - no moed_a_date (e.g. math)     -> single 'all' window [None, None]
+    --cutoff none (config['_cutoff_override']=='none') forces a single 'all' window (baseline).
+
+    'postA' is the retake/cram window (activity after Moed A). The upper bound is
+    moed_b_date when known (excludes post-retake noise) but is OPTIONAL: the retake
+    subgroup is identified downstream by a non-null `moed_b` grade, not by the date,
+    so an open-ended postA window is equivalent for Model B (e.g. psy).
+    Boundaries partition cleanly: preA = date < A, postA = A <= date (< B if set).
+    """
+    if str(config.get('_cutoff_override', '')).lower() == 'none':
+        return [('all', None, None)]
+    a_raw, b_raw = course_cfg.get('moed_a_date'), course_cfg.get('moed_b_date')
+    a = pd.Timestamp(a_raw).date() if a_raw else None
+    b = pd.Timestamp(b_raw).date() if b_raw else None
+    if a is None:
+        return [('all', None, None)]
+    return [('preA', None, a), ('postA', a, b)]  # b may be None -> open-ended postA
+
+
+def _window(df, col: str, start, end, label: str = ''):
+    """Keep rows whose `col` date is in [start, end): start/end are dates or None.
+    No-op if df is None or column absent."""
+    if df is None or col not in getattr(df, 'columns', []):
+        return df
+    d = pd.to_datetime(df[col], utc=True, errors='coerce').dt.date
+    keep = pd.Series(True, index=df.index)
+    if start is not None:
+        keep &= d >= start
+    if end is not None:
+        keep &= d < end
+    if label and (start is not None or end is not None):
+        print(f"    window[{label}] {start}..{end}: {len(df)} -> {int(keep.sum())} rows")
+    return df[keep.values]
+
+
+def _build_block(config, course_key, events, eval_df, quiz_df, start, end, label):
+    """Build one windowed feature block (events+eval+quiz sliced to [start,end)) with ALS."""
+    ev = _window(events, 'datetime', start, end, f'{label}:events')
+    ses = SessionBuilder(config).build(ev)
+    ed = _window(eval_df, 'time', start, end, f'{label}:eval')
+    qd = _window(quiz_df, 'time', start, end, f'{label}:quiz')
+    block = StudentFeatureBuilder(config, course_key).build(ev, ses, ed, qd)
+    als_weights = config.get('active_learning_score', {}).get('weights')
+    block['active_learning_score'] = als.compute(block, als_weights)
+    block['active_learning_level'] = als.classify(block['active_learning_score'])
+    return block
+
+
 def run_course(config: dict, course_key: str) -> pd.DataFrame:
     course_cfg = config['courses'][course_key]
     course_id = course_cfg['course_id']
@@ -42,32 +97,31 @@ def run_course(config: dict, course_key: str) -> pd.DataFrame:
     print(f"Course: {course_cfg['name']} ({course_key})")
     print(f"{'='*60}")
 
-    # 1. Load events
+    windows = _resolve_windows(config, course_cfg)
+    print(f"Activity windows: {[(n, str(s), str(e)) for n, s, e in windows]}")
+
+    # 1. Load events + resolve identities (done once; windows slice afterwards)
     loader = EventLoader(config)
     events = loader.load(course_id)
-
-    # 2. Resolve identities
     resolver = IdentityResolver(config)
     events = resolver.resolve(events)
-
-    # 3. Build sessions
-    session_builder = SessionBuilder(config)
-    sessions = session_builder.build(events)
 
     # 4. Load academic data (CSV or Excel sheet)
     eval_df = load_academic_csv(course_cfg.get('eval_csv', ''), sheet=course_cfg.get('eval_sheet'))
     quiz_df  = load_academic_csv(course_cfg.get('quiz_csv', ''),  sheet=course_cfg.get('quiz_sheet'))
 
-    # 5. Build student feature table
-    feature_builder = StudentFeatureBuilder(config, course_key)
-    features = feature_builder.build(events, sessions, eval_df, quiz_df)
+    # 5. Build the primary feature block (preA, or the single 'all' window)
+    primary_name, p_start, p_end = windows[0]
+    features = _build_block(config, course_key, events, eval_df, quiz_df, p_start, p_end, primary_name)
 
-    # 6. Active Learning Score
-    als_weights = config.get('active_learning_score', {}).get('weights')
-    features['active_learning_score'] = als.compute(features, als_weights)
-    features['active_learning_level'] = als.classify(features['active_learning_score'])
+    # 5b. Build & graft any secondary window blocks (e.g. AtoB cram window), prefixed
+    for name, s, e in windows[1:]:
+        blk = _build_block(config, course_key, events, eval_df, quiz_df, s, e, name)
+        blk = blk.add_prefix(f'{name}_')
+        features = features.join(blk, how='left')
+        print(f"Grafted {name}_ block: +{blk.shape[1]} cols ({blk.shape[0]} students with {name} activity)")
 
-    # 7. Normalize
+    # 7. Normalize (primary block only — secondary blocks carry raw + ALS)
     features = normalization.add_zscore(features)
     features = normalization.add_percentile(features)
 
@@ -166,12 +220,16 @@ def main():
     parser.add_argument('--config', default='config.yaml')
     parser.add_argument('--target', default=None,
                         help="Override target type: synthetic_random | synthetic_formula | final_grade")
+    parser.add_argument('--cutoff', default=None,
+                        help="'none' forces a single all-activity window (baseline, ignores moed dates)")
     args = parser.parse_args()
 
     config = load_config(args.config)
 
     if args.target:
         config['target']['type'] = args.target
+    if args.cutoff:
+        config['_cutoff_override'] = args.cutoff
 
     course_keys = [args.course] if args.course else list(config['courses'].keys())
 
