@@ -46,7 +46,6 @@ def source_key(param="OPENAI_API_KEY"):
                 os.environ[variable] = value.strip('"')
 
     # Now you can access the environment variables as if they were set in the shell
-    print(os.environ[param])
     return  (os.environ[param])
 
 
