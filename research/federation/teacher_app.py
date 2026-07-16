@@ -1,26 +1,31 @@
 #!/usr/bin/env python3
 """
-Aaron Owl — Teacher Analysis Web App
-=====================================
-Deployed on Streamlit Community Cloud.
-Teacher opens a unique URL, uploads grades, hits Run, then sends results back.
+Aaron Owl — Teacher Analysis Web App (v3)
+=========================================
+Deployed on Streamlit Community Cloud. A teacher opens a private URL
+(`…/?token=<secret code>`), confirms course metadata, fills grades, runs the v3
+analysis in-session, and returns `results.json` (aggregates only).
 
-Secrets structure (set in Streamlit dashboard):
+Secrets structure (Streamlit dashboard → Secrets, TOML):
 
-  [tokens.bio_abc123]
-  course_name  = "ביולוגיה של התא - חלק א"
-  features_b64 = "<base64-encoded federation CSV>"
-  usage_b64    = "<base64-encoded usage_report HTML>"  # optional
+  [tokens.ceramics_ab12cd34ef56]
+  course_name  = "חומרים קרמיים"
+  grade_mode   = "full_ab"          # full_ab | single_a | final | pass_fail | components
+  pass_mark    = 60
+  features_b64 = "<base64 federation CSV (with warmup + cluster_id)>"
+  usage_b64    = "<base64 usage_report HTML>"           # optional
+  meta_b64     = "<base64 course_meta_<key>.json>"       # optional (pre-fills the metadata form)
 
   [email]
-  sender    = "aaron.owl.noreply@gmail.com"
-  password  = "<Gmail app password>"
-  recipient = "roy.varshavsky@mail.huji.ac.il"
+  sender="…"  password="…"  recipient="…"
 """
 import base64
 import io
+import json
+import random
 import smtplib
 import sys
+import tempfile
 import zipfile
 from email import encoders
 from email.mime.base import MIMEBase
@@ -28,384 +33,262 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 import streamlit as st
 import streamlit.components.v1 as components
+import yaml
 from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).parent))
-from analysis_script import (
-    als_tier_profile,
-    correlation_report,
-    feature_importance,
-    regression_summary,
-    render_html,
-    select_numeric_features,
-)
+import analysis_script_v2 as A
+from match_roster import build_index, match_one
 
 # ── page config ───────────────────────────────────────────────────────────────
-
 _logo = Image.open(Path(__file__).parent / "assets" / "aaronowl-logo.png")
+st.set_page_config(page_title="Aaron Owl — Teacher Analysis", page_icon=_logo, layout="centered")
+st.markdown("""<style>
+  .block-container { max-width: 840px; padding-top: 2rem; }
+  h1 { color: #3f51b5; } h2 { color: #5c6bc0; border-bottom: 2px solid #e8eaf6; padding-bottom: 4px; margin-top: 1.6em; }
+</style>""", unsafe_allow_html=True)
 
-st.set_page_config(
-    page_title="Aaron Owl — Teacher Analysis",
-    page_icon=_logo,
-    layout="centered",
-)
-
-st.markdown("""
-<style>
-  .block-container { max-width: 820px; padding-top: 2rem; }
-  h1 { color: #3f51b5; }
-  h2 { color: #5c6bc0; border-bottom: 2px solid #e8eaf6; padding-bottom: 4px; margin-top: 2em; }
-  h3 { color: #7986cb; }
-</style>
-""", unsafe_allow_html=True)
-
-
-# ── token validation ──────────────────────────────────────────────────────────
-
+# ── token (secret code) ───────────────────────────────────────────────────────
 token = st.query_params.get("token", "")
 tokens = st.secrets.get("tokens", {})
-
 if not token or token not in tokens:
-    st.error("❌ Invalid or expired link. Contact the Aaron Owl research team.")
+    st.error("❌ קישור לא תקין או שפג תוקפו. אנא פנה/י לצוות המחקר של Aaron Owl.\n\n"
+             "Invalid or expired link — contact the Aaron Owl research team.")
     st.stop()
 
-token_data = tokens[token]
-course_name  = token_data["course_name"]
-features_b64 = token_data["features_b64"]
-usage_b64    = token_data.get("usage_b64", "")
+td = tokens[token]
+course_name = td["course_name"]
+grade_mode = td.get("grade_mode", "full_ab")
+pass_mark = int(td.get("pass_mark", 60))
+known_meta = {}
+if td.get("meta_b64"):
+    try:
+        known_meta = json.loads(base64.b64decode(td["meta_b64"]))
+    except Exception:
+        known_meta = {}
 
-features_df = pd.read_csv(io.BytesIO(base64.b64decode(features_b64)))
-features_df["email"] = features_df["email"].str.lower().str.strip()
+work = Path(tempfile.mkdtemp())
+feat_path = work / "features.csv"
+feat_path.write_bytes(base64.b64decode(td["features_b64"]))
+features_df = pd.read_csv(feat_path)
+features_df["email"] = features_df["email"].astype(str).str.lower().str.strip()
 
-
-# ── header ────────────────────────────────────────────────────────────────────
-
-col_logo, col_title = st.columns([1, 5])
-with col_logo:
+# ── header + privacy ──────────────────────────────────────────────────────────
+c1, c2 = st.columns([1, 5])
+with c1:
     st.image(_logo, width=90)
-with col_title:
+with c2:
     st.title("Aaron Owl — ניתוח למידה")
-st.markdown(f"**קורס:** {course_name} &nbsp;|&nbsp; **סטודנטים:** {len(features_df)}")
-
-# ── privacy banner (Hebrew) ───────────────────────────────────────────────────
-
-st.markdown("""
-<div style="background:#e8f5e9;border-right:4px solid #4caf50;padding:16px 20px;
-            border-radius:0 6px 6px 0;margin:1.2em 0;direction:rtl;text-align:right">
-<b style="font-size:1.05em">🔒 הציונים שלך לא נשמרים — אף פעם.</b><br><br>
-כל הניתוח מתבצע בזיכרון של הדפדפן בלבד ונמחק ברגע שסוגרים את הדף.
-Aaron Owl <b>אינה מאחסנת ציוני סטודנטים</b> — לא בשרת, לא בקובץ, לא בשום מקום.<br><br>
-מה כן נשלח? <b>4 קבצי סטטיסטיקות מצטברות בלבד</b> — ממוצעים, מתאמים ומקדמי מודל.
-לא ניתן לשחזר ציון של אף סטודנט מהנתונים האלה. זה עיצוב מכוון, לא רק מדיניות.
-</div>
-""", unsafe_allow_html=True)
-
+st.markdown(f"**קורס:** {course_name} &nbsp;|&nbsp; **סטודנטים בפלטפורמה:** {len(features_df)}")
+st.markdown("""<div style="background:#e8f5e9;border-right:4px solid #4caf50;padding:14px 18px;
+ border-radius:0 6px 6px 0;margin:1em 0;direction:rtl;text-align:right">
+<b>🔒 הציונים לא נשמרים.</b> הניתוח רץ באופן חד-פעמי ונמחק בסגירת הדף. חוזרות רק
+<b>סטטיסטיקות מצרפיות</b> (מתאמים, גדלי-אפקט) — לא ניתן לשחזר ציון של אף סטודנט.</div>""",
+            unsafe_allow_html=True)
 
 # ── usage report ──────────────────────────────────────────────────────────────
-
-st.header("📊 דוח שימוש — סקירת המעורבות בפלטפורמה")
-st.markdown("כיצד הסטודנטים שלך השתמשו ב-Aaron Owl השנה.")
-
-if usage_b64:
-    usage_html = base64.b64decode(usage_b64).decode("utf-8")
-    with st.expander("הצג דוח שימוש מלא", expanded=True):
+if td.get("usage_b64"):
+    st.header("📊 דוח שימוש")
+    usage_html = base64.b64decode(td["usage_b64"]).decode("utf-8")
+    with st.expander("הצג דוח שימוש מלא", expanded=False):
         components.html(usage_html, height=520, scrolling=True)
-    st.download_button(
-        "⬇️ הורד דוח שימוש (HTML)",
-        data=usage_html.encode("utf-8"),
-        file_name=f"usage_report_{token}.html",
-        mime="text/html",
-    )
+
+# ── step 1: course metadata form ──────────────────────────────────────────────
+st.header("שלב 1 — פרטי הקורס / Course metadata")
+st.caption("אשר/י או השלם/י את הפרטים. משפר את הניתוח ומאפשר השוואה בין קורסים.")
+
+
+def _sel(label, opts, cur):
+    idx = opts.index(cur) if cur in opts else 0
+    return st.selectbox(label, opts, index=idx)
+
+
+m1, m2 = st.columns(2)
+with m1:
+    grading_type = _sel("אופן ההערכה / grading type",
+                        ["exam", "coursework", "mixed", "project", "pass_fail"],
+                        known_meta.get("course_type") or "exam")
+    delivery_mode = _sel("אופן הוראה / delivery", ["frontal", "online", "hybrid"],
+                         known_meta.get("delivery_mode") or "frontal")
+    attendance = _sel("חובת נוכחות / attendance", ["optional", "mandatory", "partial"],
+                      known_meta.get("attendance_required") or "optional")
+with m2:
+    discipline = st.text_input("תחום / discipline", known_meta.get("discipline") or "engineering")
+    moed_a = st.text_input("מועד א' (YYYY-MM-DD)", str(known_meta.get("moed_a_date") or ""))
+    moed_b = st.text_input("מועד ב' (אם יש)", str(known_meta.get("moed_b_date") or ""))
+
+meta_out = {"course_type": grading_type, "grading_type": grading_type, "delivery_mode": delivery_mode,
+            "attendance_required": attendance, "discipline": discipline,
+            "moed_a_date": moed_a or None, "moed_b_date": moed_b or None,
+            "milestones": known_meta.get("milestones", [])}
+
+# ── step 2: how is the gradebook keyed? → grades ──────────────────────────────
+st.header("שלב 2 — ציונים")
+GRADE_COLS = {"full_ab": ["moed_a", "moed_b"], "single_a": ["moed_a"],
+              "final": ["final"], "pass_fail": ["passed"], "components": ["moed_a", "moed_b"]}
+cols = GRADE_COLS.get(grade_mode, ["moed_a", "moed_b"])
+grade_col = cols[0]                                   # primary outcome column (for adoption)
+
+has_names = bool(td.get("name_email_b64"))
+key_by = "email"
+if has_names:
+    key_by = st.radio("איך רשומים הציונים שלך? / How is your gradebook keyed?",
+                      ["email", "name"], horizontal=True,
+                      format_func=lambda x: "לפי אימייל / by email" if x == "email" else "לפי שם / by name")
+
+_idx = None
+if key_by == "name":
+    ne_map = pd.read_csv(io.BytesIO(base64.b64decode(td["name_email_b64"])))
+    _idx = build_index(ne_map, "name", "email")
+    id_col, id_vals = "name", list(ne_map["name"])
+    nu = "סטודנט לא-משתמש"
+    st.markdown(f"מלא/י את העמודות **{', '.join(cols)}** לכל סטודנט (לפי **שם**). נתאים שמות→אימיילים אוטומטית.")
 else:
-    st.info("דוח שימוש לא זמין לקורס זה.")
+    id_col, id_vals = "email", list(features_df["email"])
+    nu = "demo_nonuser"
+    st.markdown(f"מלא/י את העמודות **{', '.join(cols)}** לכל סטודנט (לפי **אימייל**). קורס עם מטלות — עמודה לכל מטלה.")
 
-# Download usage data as CSV (the features, without grades)
-st.download_button(
-    "⬇️ הורד נתוני שימוש (CSV)",
-    data=base64.b64decode(features_b64),
-    file_name=f"student_usage_{token}.csv",
-    mime="text/csv",
-    help="קובץ CSV עם נתוני השימוש של כל סטודנט — ללא ציונים.",
-)
+random.seed(0)
+tmpl = pd.DataFrame({id_col: id_vals, **{c: "" for c in cols}})
+_demo = [{id_col: v, **{c: ("" if (c == "moed_b" and random.random() > 0.15) else random.randint(52, 96)) for c in cols}}
+         for v in id_vals]
+for i in range(4):                                   # a few non-users so adoption also demos
+    _demo.append({id_col: f"{nu} {i}", **{c: ("" if c == "moed_b" else random.randint(45, 78)) for c in cols}})
+demo_csv = pd.DataFrame(_demo).to_csv(index=False).encode("utf-8")
 
-st.divider()
-
-
-# ── step 1: grade template ────────────────────────────────────────────────────
-
-st.header("שלב 1 — הורד תבנית ציונים")
-st.markdown(
-    "הורד את הקובץ, מלא את עמודת `final_grade` לכל סטודנט (מספר 0–100), "
-    "ושמור כ-CSV."
-)
-
-template_df = pd.DataFrame({"email": features_df["email"], "final_grade": ""})
-st.download_button(
-    "⬇️ הורד grades_template.csv",
-    data=template_df.to_csv(index=False).encode("utf-8"),
-    file_name="grades_template.csv",
-    mime="text/csv",
-)
-
-with st.expander("📋 דוגמה — כך ייראה הקובץ לאחר מילוי"):
-    st.markdown("""
-| email | final_grade |
-|---|---|
-| student1@post.bgu.ac.il | 87 |
-| student2@post.bgu.ac.il | 74 |
-| student3@post.bgu.ac.il | *(ריק — לא ניגש/ה)* |
-
-✔ המייל חייב להתאים בדיוק לעמודה שקיבלת (אותיות קטנות, ללא רווחים).<br>
-✔ שמור מ-Excel: **קובץ → שמור בשם → CSV UTF-8**.
-    """, unsafe_allow_html=True)
-
-
-# ── step 2: upload grades ─────────────────────────────────────────────────────
-
-st.header("שלב 2 — העלה את הציונים שלך")
-uploaded = st.file_uploader(
-    "העלה את grades_template.csv לאחר המילוי",
-    type=["csv"],
-    key="grades_upload",
-)
-
+d1, d2 = st.columns(2)
+with d1:
+    st.download_button("⬇️ הורד תבנית ריקה / template", tmpl.to_csv(index=False).encode("utf-8"),
+                       "grades_template.csv", "text/csv", use_container_width=True)
+with d2:
+    st.download_button("🧪 הורד דוגמה מלאה (dry run)", demo_csv, "demo_grades.csv",
+                       "text/csv", use_container_width=True,
+                       help="ציונים אקראיים לבדיקה — הורד/י והעלה/י אותם למטה.")
+st.caption("💡 הוסף/י שורות גם לנבחנים שלא השתמשו באפליקציה — כך נקבל גם ניתוח אימוץ, אוטומטית. "
+           "לבדיקה מהירה — השתמש/י בקובץ הדוגמה.")
+uploaded = st.file_uploader("העלה/י את הקובץ (או את קובץ הדוגמה)", type=["csv"], key="grades")
 if not uploaded:
     st.stop()
 
-grades_raw = pd.read_csv(uploaded)
-grades_raw.columns = [c.strip().lower() for c in grades_raw.columns]
-
-if "email" not in grades_raw.columns or "final_grade" not in grades_raw.columns:
-    st.error("הקובץ חייב לכלול עמודות `email` ו-`final_grade`.")
-    st.stop()
-
-grades_raw["email"] = grades_raw["email"].str.lower().str.strip()
-
-# ── detect fail-word entries ───────────────────────────────────────────────────
-raw_str   = grades_raw["final_grade"].astype(str).str.strip()
-is_empty  = raw_str.isin({"", "nan", "NaN", "None", "none", "-"})
-is_number = pd.to_numeric(raw_str, errors="coerce").notna()
-is_fail   = ~is_empty & ~is_number          # non-empty, non-numeric → fail word
-
-n_fails  = int(is_fail.sum())
-n_absent = int(is_empty.sum())
-
-if n_fails > 0:
-    fail_words = grades_raw.loc[is_fail, "final_grade"].value_counts().to_dict()
-    st.warning(
-        f"⚠️ נמצאו **{n_fails}** סטודנטים עם ציון טקסטואלי (נכשל / fail): "
-        + ", ".join(f'"{w}" ({c})' for w, c in fail_words.items())
-    )
-    fail_score = st.number_input(
-        "איזה ציון לתת להם? (ברירת מחדל: 40)",
-        min_value=0, max_value=100, value=40, step=1,
-        help="סטודנטים עם ציון 'נכשל' יקבלו ציון זה לצורך הניתוח.",
-    )
-    grades_raw.loc[is_fail, "final_grade"] = fail_score
-
-if n_absent > 0:
-    st.info(f"ℹ️ {n_absent} סטודנטים עם ציון ריק (לא ניגשו) — לא ייכללו בניתוח.")
-
-grades_raw["final_grade"] = pd.to_numeric(grades_raw["final_grade"], errors="coerce")
-
-# ── detect multiple sittings (duplicate emails) ───────────────────────────────
-n_dupes = int(grades_raw["email"].duplicated().sum())
-if n_dupes > 0:
-    st.warning(
-        f"⚠️ נמצאו **{n_dupes}** סטודנטים עם יותר ממועד אחד (מועד א + מועד ב)."
-    )
-    dup_strategy = st.radio(
-        "איזה ציון לקחת לניתוח?",
-        options=["min", "max", "last"],
-        format_func=lambda x: {
-            "min":  "הנמוך ביותר — הציון הגרוע מכל המועדים (מומלץ)",
-            "max":  "הגבוה ביותר — הציון הטוב מכל המועדים",
-            "last": "האחרון — השורה האחרונה בקובץ",
-        }[x],
-        index=0,
-    )
-    if dup_strategy == "min":
-        grades_raw = grades_raw.groupby("email", as_index=False)["final_grade"].min()
-    elif dup_strategy == "max":
-        grades_raw = grades_raw.groupby("email", as_index=False)["final_grade"].max()
-    else:
-        grades_raw = grades_raw.drop_duplicates(subset="email", keep="last")[["email", "final_grade"]]
-
-merged   = features_df.merge(grades_raw[["email", "final_grade"]], on="email", how="inner")
-n_valid  = int(merged["final_grade"].notna().sum())
-n_missed = len(grades_raw) - len(merged)
-
-st.success(
-    f"✅ הותאמו **{len(merged)}** סטודנטים "
-    f"({n_valid} עם ציון תקין"
-    + (f", {n_fails} נכשלו" if n_fails > 0 else "")
-    + (f", {n_absent} לא ניגשו" if n_absent > 0 else "")
-    + (f", {n_dupes} עם מועד חוזר" if n_dupes > 0 else "")
-    + (f", {n_missed} מיילים לא נמצאו בנתוני הפלטפורמה" if n_missed else "")
-    + ")"
-)
-
-if n_valid < 10:
-    st.warning(
-        f"רק {n_valid} סטודנטים הותאמו. "
-        "בדוק שכתובות המייל זהות בדיוק לאלה שבתבנית."
-    )
-    st.dataframe(merged[["email", "final_grade"]].head(10))
-    st.stop()
-
-
-# ── step 3: run analysis ──────────────────────────────────────────────────────
-
-st.header("שלב 3 — הרץ ניתוח")
-
+# ── step 3: run ───────────────────────────────────────────────────────────────
+st.header("שלב 3 — הרצת הניתוח")
 if st.button("▶️ הרץ ניתוח", type="primary", use_container_width=True):
-    with st.spinner("מחשב מתאמים, רגרסיה, Random Forest…"):
-        X, y, _ = select_numeric_features(merged)
-        target_stats = {
-            "mean": float(y.mean()), "std": float(y.std()),
-            "min": float(y.min()),   "max": float(y.max()),
-        }
+    meta_path = work / "course_metadata.yaml"
+    meta_path.write_text(yaml.safe_dump(meta_out, allow_unicode=True), encoding="utf-8")
+    rdf = pd.read_csv(io.BytesIO(uploaded.getvalue()))
+    rdf.columns = [c.strip().lower() for c in rdf.columns]
+    adoption_override = None
+    if key_by == "name":
+        ncol = next((c for c in rdf.columns if c in ("name", "שם", "student", "full_name")), rdf.columns[0])
+        rdf["email"] = rdf[ncol].map(lambda n: match_one(n, _idx))
+        gcol = grade_col if grade_col in rdf.columns else rdf.columns[-1]
+        gd = pd.DataFrame({"email": rdf["email"], "grade": pd.to_numeric(rdf[gcol], errors="coerce"),
+                           "is_app_user": rdf["email"].isin(set(features_df["email"]))})
+        adoption_override = A.adoption_from_grades(gd)
+        rdf = rdf[rdf["email"].notna()]              # matched app-users feed the main analysis
+    grades_path = work / "grades.csv"
+    rdf.to_csv(grades_path, index=False)
+    with st.spinner("מחשב… Q1, סיכון, ערך-מוסף, אימוץ"):
+        try:
+            res = A.analyze(str(feat_path), str(grades_path), course_name,
+                            pass_mark=pass_mark, grade_mode=grade_mode if grade_mode != "components" else None,
+                            course_meta_path=str(meta_path))
+            if adoption_override is not None:
+                res["adoption"] = adoption_override
+                if adoption_override.get("available") and not adoption_override.get("suppressed"):
+                    res.setdefault("answered", [])
+                    if "adoption" not in res["answered"]:
+                        res["answered"].append("adoption")
+            st.session_state["res"] = res
+            st.session_state["meta_yaml"] = meta_path.read_text(encoding="utf-8")
+        except Exception as exc:
+            st.error(f"הניתוח נכשל: {exc}")
+            st.stop()
 
-        corr_df = correlation_report(X, y)
-        reg     = regression_summary(X, y)
-        fi_df   = feature_importance(X, y)
-        tier_df = als_tier_profile(merged)
-        html    = render_html(corr_df, reg, fi_df, len(y), target_stats, tier_df)
-
-        reg_txt = ""
-        if reg:
-            reg_txt = (
-                f"Cross-validated R²: {reg['cv_r2_mean']:.4f} ± {reg['cv_r2_std']:.4f}\n"
-                f"N students: {reg['n_students']}, N features: {reg['n_features']}\n\n"
-                "Coefficients (standardized):\n"
-            )
-            for feat, coef in reg["coefficients"].items():
-                reg_txt += f"  {feat:<45} {coef:+.4f}\n"
-
-        st.session_state["results"] = {
-            "corr_df": corr_df, "reg": reg, "fi_df": fi_df,
-            "tier_df": tier_df, "html": html, "reg_txt": reg_txt,
-            "n_students": len(y), "target_stats": target_stats,
-        }
-
-if "results" not in st.session_state:
+if "res" not in st.session_state:
     st.stop()
+res = st.session_state["res"]
 
-r = st.session_state["results"]
-st.success(f"✅ הניתוח הושלם — {r['n_students']} סטודנטים נותחו.")
-
-if r["tier_df"] is not None and not r["tier_df"].empty:
-    st.subheader("ציון לפי רמת למידה פעילה (ALS)")
-    st.dataframe(r["tier_df"], use_container_width=True, hide_index=True)
-
-st.subheader("מתאמים חזקים עם הציון הסופי")
-st.dataframe(r["corr_df"].head(10), use_container_width=True, hide_index=True)
-
-if r["reg"]:
-    cv  = r["reg"]["cv_r2_mean"]
-    std = r["reg"]["cv_r2_std"]
-    color = "#4caf50" if cv > 0.15 else "#ff9800" if cv > 0 else "#f44336"
-    st.markdown(
-        f'Ridge CV R²: <b style="color:{color}">{cv:.3f}</b> ± {std:.3f}',
-        unsafe_allow_html=True,
-    )
-
-with st.expander("הצג דוח HTML מלא (לעיונך בלבד — אינו נשלח)"):
-    components.html(r["html"], height=600, scrolling=True)
+# ── findings ──────────────────────────────────────────────────────────────────
+st.success(f"✅ הניתוח הושלם · שאלות שנענו: {', '.join(res.get('answered', []))}")
 
 
-# ── build zip ─────────────────────────────────────────────────────────────────
+def _fmt_ci(p, key="estimate", cikey="ci"):
+    return f"{p[key]:+.2f} [{p[cikey][0]:+.2f}, {p[cikey][1]:+.2f}]" if p else "—"
 
-def _build_zip(r: dict) -> bytes:
+
+q1 = (res.get("Q1") or {}).get("r_ALS_score")
+va = (res.get("value_added") or {})
+ad = (res.get("adoption") or {})
+r1 = ((res.get("risk") or {}).get("R1_fail_a") or {})
+r2 = ((res.get("risk") or {}).get("R2_no_show_a") or {})
+pp = (res.get("pre_post_a") or {})
+
+st.subheader("ממצאים עיקריים")
+if q1:
+    st.markdown(f"**Q1 · קשר בין למידה פעילה (ALS) לציון:** r = **{q1['r']:+.2f}** (n={q1['n']})")
+if va.get("available") and not va.get("suppressed"):
+    b = va.get("als_partial") or {}
+    st.markdown(f"**ערך מוסף (סיבתיות):** גם בבקרה על פעילות מוקדמת + ביצועים בפלטפורמה, "
+                f"ALS מנבא את הציון — β = **{b.get('beta'):+.2f} ± {b.get('se')}** "
+                f"(ΔR² = {va.get('delta_r2_als'):+})")
+if ad.get("available") and not ad.get("suppressed"):
+    st.markdown(f"**אימוץ:** משתמשי האפליקציה {ad['mean_grade_app_users']} מול "
+                f"לא-משתמשים {ad['mean_grade_non_users']} "
+                f"(d = {(_ad := ad.get('cohens_d_user_minus_non') or {}).get('d')}, p = {ad.get('welch_p')})")
+if not r1.get("suppressed") and r1.get("n_pos") is not None:
+    st.markdown(f"**סיכון כישלון (R1):** {r1['n_pos']}/{r1['n']} נכשלו")
+if pp.get("available") and not pp.get("suppressed"):
+    st.markdown(f"**שינוי מעורבות אחרי הבחינה:** {pp['pre_mean']:.0f}→{pp['post_mean']:.0f} "
+                f"(dz = {pp.get('cohens_dz')}, p = {pp.get('p')})")
+
+with st.expander("results.json המלא (לעיונך — זה מה שנשלח)"):
+    st.json(res)
+
+# ── step 4: return ────────────────────────────────────────────────────────────
+st.header("שלב 4 — שליחה / הורדה")
+results_bytes = json.dumps(res, indent=2, ensure_ascii=False).encode("utf-8")
+meta_bytes = st.session_state.get("meta_yaml", "").encode("utf-8")
+
+
+def _zip():
     buf = io.BytesIO()
-    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
-        zf.writestr("correlation_report.csv", r["corr_df"].to_csv(index=False))
-        if r["reg_txt"]:
-            zf.writestr("regression_summary.txt", r["reg_txt"])
-        if r["fi_df"] is not None and not r["fi_df"].empty:
-            zf.writestr("feature_importance.csv", r["fi_df"].to_csv(index=False))
-        if r["tier_df"] is not None and not r["tier_df"].empty:
-            zf.writestr("als_tier_profile.csv", r["tier_df"].to_csv(index=False))
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("results.json", results_bytes)
+        z.writestr("course_metadata.yaml", meta_bytes)
     return buf.getvalue()
 
 
-zip_bytes = _build_zip(r)
-
-
-# ── step 4: send / download ───────────────────────────────────────────────────
-
-st.header("שלב 4 — שלח תוצאות ל-Aaron Owl")
-
-st.markdown("""
-<div style="background:#e8eaf6;border-right:4px solid #3f51b5;padding:12px 16px;
-            border-radius:0 6px 6px 0;direction:rtl;text-align:right;margin-bottom:1em">
-הקובץ שיישלח מכיל <b>4 קבצי סטטיסטיקות מצטברות בלבד</b> — ממוצעי קבוצות, מתאמים ומקדמי מודל.
-<b>אין בו ציון של אף סטודנט בודד.</b>
-</div>
-""", unsafe_allow_html=True)
-
-
-def _send_email(course_name: str, zip_bytes: bytes, r: dict) -> None:
+def _send_email():
     cfg = st.secrets["email"]
     msg = MIMEMultipart()
-    msg["From"]    = cfg["sender"]
-    msg["To"]      = cfg["recipient"]
-    msg["Subject"] = f"Aaron Owl Results — {course_name}"
-    msg.attach(MIMEText(
-        f"Results for: {course_name}\n"
-        f"Students: {r['n_students']}\n"
-        f"Grade mean: {r['target_stats']['mean']:.1f}, std: {r['target_stats']['std']:.1f}\n"
-        + (f"CV R²: {r['reg']['cv_r2_mean']:.3f}\n" if r["reg"] else "")
-        + "\nAttached: correlation_report.csv, regression_summary.txt, "
-          "feature_importance.csv, als_tier_profile.csv",
-        "plain", "utf-8",
-    ))
-    part = MIMEBase("application", "zip")
-    part.set_payload(zip_bytes)
-    encoders.encode_base64(part)
-    safe = course_name.replace(" ", "_").replace("/", "-")
-    part.add_header("Content-Disposition", f'attachment; filename="results_{safe}.zip"')
+    msg["From"], msg["To"] = cfg["sender"], cfg["recipient"]
+    msg["Subject"] = f"Aaron Owl v3 Results — {course_name}"
+    msg.attach(MIMEText(f"Results for {course_name}. answered={res.get('answered')}", "plain", "utf-8"))
+    part = MIMEBase("application", "zip"); part.set_payload(_zip()); encoders.encode_base64(part)
+    part.add_header("Content-Disposition", f'attachment; filename="results_{token}.zip"')
     msg.attach(part)
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as srv:
-        srv.login(cfg["sender"], cfg["password"])
-        srv.send_message(msg)
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as s:
+        s.login(cfg["sender"], cfg["password"]); s.send_message(msg)
 
 
-col1, col2 = st.columns(2)
-
-with col1:
-    if st.button("📧 שלח תוצאות ל-Aaron Owl", type="primary", use_container_width=True):
+st.markdown("""<div style="background:#e8eaf6;border-right:4px solid #3f51b5;padding:10px 14px;
+ border-radius:0 6px 6px 0;direction:rtl;text-align:right;margin-bottom:.8em">
+מה שנשלח: <b>results.json</b> (סטטיסטיקות מצרפיות) + <b>course_metadata.yaml</b>. אין ציונים אישיים.</div>""",
+            unsafe_allow_html=True)
+b1, b2 = st.columns(2)
+with b1:
+    if st.button("📧 שלח ל-Aaron Owl", type="primary", use_container_width=True):
         if "email" not in st.secrets:
-            st.error("שליחת מייל לא מוגדרת. השתמש בכפתור ההורדה ושלח ידנית.")
+            st.error("שליחת מייל לא מוגדרת — השתמש/י בכפתור ההורדה.")
         else:
-            with st.spinner("שולח…"):
-                try:
-                    _send_email(course_name, zip_bytes, r)
-                    st.success("✅ התוצאות נשלחו! תודה רבה.")
-                    st.balloons()
-                except Exception as exc:
-                    st.error(
-                        f"שליחת המייל נכשלה ({exc}). "
-                        "אנא הורד את הקובץ ושלח אותו ידנית."
-                    )
-
-with col2:
-    st.download_button(
-        "⬇️ הורד תוצאות (גיבוי)",
-        data=zip_bytes,
-        file_name=f"results_{token}.zip",
-        mime="application/zip",
-        use_container_width=True,
-    )
-
-st.markdown("""
----
-<p style="font-size:0.8em;color:#aaa;text-align:center">
-Aaron Owl Learning Analytics — הנתונים שנשלחים מכילים סטטיסטיקות מצטברות בלבד,
-ללא ציוני פרט. שום מידע לא נשמר לאחר סגירת הדף.
-</p>
-""", unsafe_allow_html=True)
+            try:
+                _send_email(); st.success("✅ נשלח! תודה."); st.balloons()
+            except Exception as exc:
+                st.error(f"שליחה נכשלה ({exc}). הורד/י ושלח/י ידנית.")
+with b2:
+    st.download_button("⬇️ הורד תוצאות (zip)", _zip(), f"results_{token}.zip",
+                       "application/zip", use_container_width=True)

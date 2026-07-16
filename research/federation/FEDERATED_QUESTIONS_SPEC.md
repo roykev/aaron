@@ -81,8 +81,36 @@ DerSimonian-Laird random-effects pooling per effect; correlations via Fisher-z;
 Cochran's Q + I² heterogeneity; forest-plot HTML (`meta_report.html`). Pools any
 number of courses; new courses auto-ingested by dropping a `results.json` in.
 
+## Self-describing grade modes (2026-06-24)
+Teachers don't all have the same grade data. The analyzer **auto-detects** the mode
+from the grades CSV (override `--grade-mode`) and answers the maximal subset, stamping
+`grade_mode`, `outcome_semantics`, `has_exam_windows`, and an `answered` list into
+`results.json`. Unanswerable blocks are emitted as `{available:false, reason:…}` — never
+a fake `n:0` — so meta can tell "structurally absent" from "computed null".
+
+| Question | full_ab | single_a | final | pass_fail |
+|---|:--:|:--:|:--:|:--:|
+| Q1 ALS→outcome | ✅ | ✅ vs A | ✅ vs final | ⚠️ logOR |
+| Q2 A→B improvement | ✅ | ❌ | ❌ | ❌ |
+| Q3 within-person ΔRate (needs dates) | ✅ | ❌ | ❌ | ❌ |
+| R1 fail / R2 no-show | ✅ | ✅ | ✅* | ✅ / ❌ |
+| predictive (ALS audit) | ✅ | ✅ | ✅ | ⚠️ AUC |
+| subgroups (post-A segments; needs dates) | ✅ | ✅ | ✅ | ✅ |
+
+*FINAL R2 "no-show" = missing final grade — weaker than a true Moed-A absence (noted in output).
+
+**Two capability axes:** grade mode (above) **and** exam-window features (`postA_` block,
+present only when `moed_*_date` is configured). No dates → Q3 + subgroups self-disable;
+everything else still runs. **Subgroups** split on post-A activity but relate *pre-A* ALS to
+the outcome, to limit the retake-leakage tautology (auto-caveated in FINAL mode).
+
+`meta_analysis_v2.py` reads each course's `answered` list, pools every question only over the
+courses that can answer it, and renders a **course × question coverage matrix** + `coverage_k`.
+Legacy results predating this contract are inferred from block presence.
+
 ## Status
 - ✅ Q1/Q2/Q3 (`analysis_script_v2.py`), DL meta + HTML (`meta_analysis_v2.py`),
   simulator (`simulate_course.py`). Validated: psy (real) + 2 sims; Q1/Q2/Q3 recover planted signal.
-- ⏳ B (predictive block), C-R3 (churn) — next. C-R1/R2 after.
+- ✅ Grade modes (full_ab/single_a/final) + post-A subgroups + coverage-aware meta (2026-06-24).
+- ⏳ pass_fail mode reserved (interface in place, not yet emitted).
 - Outputs live in Dropbox `…/research/federated_v2_demo/`; never in git.

@@ -3,6 +3,18 @@ data:
   user_export_csv: /home/roy/FS/Dropbox/WORK/Ideas/aaron/research/user-export-3456528-2026_05_11_14_23_15.csv
   output_dir: /home/roy/FS/Dropbox/WORK/Ideas/aaron/research/output
   federation_dir: /home/roy/FS/Dropbox/WORK/Ideas/aaron/research/federation
+  # Non-student accounts (lecturers/TAs/admins) — dropped before features/ALS/percentiles
+  # so they never pollute the cohort. Applies to all courses.
+  exclude_emails:
+    - barbara@jce.ac.il           # ceramics lecturer
+    - yanivge@jce.ac.il           # staff
+    - guyrefaelyona@gmail.com     # psy staff
+    - lilachn@best.ono.ac.il      # psy staff
+  # Exact-match domains treated as staff. JCE students use the @post.jce.ac.il
+  # sub-domain; bare @jce.ac.il is staff. (Sub-domains like post.jce.ac.il do NOT match.)
+  exclude_email_domains:
+    - jce.ac.il
+    - aaronowl.com          # internal Aaron Owl accounts — never students (all courses)
 
 # Each entry under 'courses' is a course key you choose (any short identifier).
 # Add one block per course you want to analyse.
@@ -35,6 +47,53 @@ courses:
     moed_b_date: 2026-02-19
     output_dir: /home/roy/FS/Dropbox/WORK/Ideas/aaron/research/bio/output
     federation_dir: /home/roy/FS/Dropbox/WORK/Ideas/aaron/research/bio/output
+
+  # --- Azrieli (עזריאלי) batch: usage-only federation packages, single-window
+  #     (no moed dates yet -> Q3 + subgroups self-disable). Add moed_*_date later
+  #     to enable the exam-window axis, then re-run pipeline + rebuild package.
+  az_alg1:
+    course_id: 9e3bc3ec-08eb-4244-9ffc-26947fb7f893
+    name: "אלגוריתמיקה 1"
+    output_dir: /home/roy/FS/Dropbox/WORK/Ideas/aaron/research/azrieli/output
+    federation_dir: /home/roy/FS/Dropbox/WORK/Ideas/aaron/research/azrieli/output
+
+  az_yesodot:
+    course_id: 5625f759-688d-499c-906c-586501b9cdf0
+    name: "קורס אב - יסודות התכנות"
+    output_dir: /home/roy/FS/Dropbox/WORK/Ideas/aaron/research/azrieli/output
+    federation_dir: /home/roy/FS/Dropbox/WORK/Ideas/aaron/research/azrieli/output
+
+  az_chem_intro:
+    course_id: dbb49091-a801-4c8e-ab5f-05ae9e84f627
+    name: "מבוא לכימיה"
+    output_dir: /home/roy/FS/Dropbox/WORK/Ideas/aaron/research/azrieli/output
+    federation_dir: /home/roy/FS/Dropbox/WORK/Ideas/aaron/research/azrieli/output
+
+  az_nano:
+    course_id: 01e0c8ea-b191-4792-87d5-8f0b3dbe087b
+    name: "ננוטכנולוגיה -חומרים ותהליכים"
+    output_dir: /home/roy/FS/Dropbox/WORK/Ideas/aaron/research/azrieli/output
+    federation_dir: /home/roy/FS/Dropbox/WORK/Ideas/aaron/research/azrieli/output
+
+  az_exp_meas:
+    course_id: 95d47ac8-6e05-44c0-b8bf-d7514e94d23a
+    name: "תורת הניסוי והמדידה"
+    output_dir: /home/roy/FS/Dropbox/WORK/Ideas/aaron/research/azrieli/output
+    federation_dir: /home/roy/FS/Dropbox/WORK/Ideas/aaron/research/azrieli/output
+
+  az_chem_anal2:
+    course_id: 31a6e90c-297a-48bd-8620-177c236d1c31
+    name: "כימיה אנליטית 2"
+    output_dir: /home/roy/FS/Dropbox/WORK/Ideas/aaron/research/azrieli/output
+    federation_dir: /home/roy/FS/Dropbox/WORK/Ideas/aaron/research/azrieli/output
+
+  az_ceramics:
+    course_id: e0e83296-4d12-457c-995d-3088ee36c0da
+    name: "חומרים קרמיים"
+    moed_a_date: 2026-01-29
+    moed_b_date: 2026-05-29   # long cram window; needs weekly data through 2026-05-29
+    output_dir: /home/roy/FS/Dropbox/WORK/Ideas/aaron/research/azrieli/output
+    federation_dir: /home/roy/FS/Dropbox/WORK/Ideas/aaron/research/azrieli/output
 
   # another_course:
   #   course_id: <uuid from Mixpanel>

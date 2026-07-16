@@ -130,6 +130,16 @@ all activity was pooled. Fix: **window activity by exam date and model A/B separ
   (Moed A → Moed B retake/cram window; open-ended if no `moed_b_date`). No dates → single
   `all` window (backward-compatible; math unchanged). `--cutoff none` forces baseline.
 - **Grade schema**: `email, moed_a, moed_b` (blank = absent; strip fail-words). No more `min()`.
+- **Self-describing grade modes (2026-06-24)**: a teacher may only have some of the grades.
+  `analysis_script_v2.py` auto-detects the mode from the grades CSV (override `--grade-mode`):
+  `full_ab` (moed_a+moed_b → all questions) · `single_a` (moed_a only) · `final` (one `final`
+  col; `--final-rule max|last`) · `pass_fail` (reserved). It stamps `grade_mode` /
+  `outcome_semantics` / `has_exam_windows` / `answered` into `results.json`; unanswerable blocks
+  are `{available:false, reason}` not fake `n:0`. Second axis = exam-window features (`postA_`,
+  needs `moed_*_date`); no dates → Q3 + `subgroups` self-disable. **subgroups** = post-A activity
+  segments (ALS→outcome within each; pre-A ALS vs post-A split to limit retake leakage).
+  `meta_analysis_v2.py` pools each question only over courses whose `answered` lists it and
+  renders a coverage matrix + `coverage_k`. Full capability matrix in `FEDERATED_QUESTIONS_SPEC.md`.
 - **The contract**: `federation/FEDERATED_QUESTIONS_SPEC.md` — read first. All scores
   standardized within course; only aggregated effect sizes leave a teacher.
 
@@ -141,15 +151,56 @@ New federation scripts (outputs go to Dropbox `…/research/federated_v2_demo/`,
 | `meta_analysis_v2.py` | DerSimonian-Laird random-effects pooling + Cochran's Q; `meta.json` + `meta_report.html` (overview, plain-language verdicts ✅/🟡/◻️, per-course detail). |
 | `churn_analysis.py` | R3 churn — grade-FREE, Aaron-Owl-side; course-length-relative windows; N/A for cram courses (<8wk span). |
 | `simulate_course.py` / `simulate_grades.py` | synthetic course / synthetic grades-from-real-activity for dry-runs. |
-| `build_teacher_package_v2.py` | bundles features + `grades_template` (moed_a/moed_b) + script + spec + Hebrew HOW_TO; teacher returns `results.json`. |
+| `build_teacher_package_v2.py` | bundles features + `grades_template` (moed_a/moed_b) + `analysis_script_v2.py` + `match_roster.py` + spec + bilingual HOW_TO; teacher returns `results.json`. |
+| `match_roster.py` | teacher-local, **bilingual EN/HE**: token-set name↔email match of the full exam roster → flags app-users vs **non-users** (sat exam, never used app) → `roster_matched.csv`. |
+| `adapt_v1_to_v2.py` | converts a legacy 4-file v1 teacher return → v2 `results.json` (Q1 + tier profile poolable; rest `available:false`); optional `--external` course-specific correlates passthrough. |
+| `program_dashboard.py` | portfolio view over ALL configured courses: status/dates/students, what's missing, forest-bar findings + colored expandable Q&A, links to per-course usage reports **and timelines** (`--timelines <dir>`). |
+| `weekly_timeline.py` | per-course weekly engagement curves by ALS tier (absolute calendar), Moed A/B marked. Grade-free; uses `EventLoader`+`IdentityResolver`. |
+| `combined_timeline.py` | cross-course timelines **aligned to Moed A** (x=weeks relative, week 0=exam); one line per course + the 3 ALS tiers pooled. Grade-free. |
 
 ```bash
 python pipeline.py --course bio                          # windowed two-block features
-python federation/analysis_script_v2.py --features <fed.csv> --grades <moed_ab.csv> --course "<name>" --out <dir>
+python federation/analysis_script_v2.py --features <fed.csv> --grades <moed_ab.csv> --course "<name>" [--roster roster_matched.csv] --out <dir>
 python federation/churn_analysis.py --course <key> --out <dir>
 python federation/meta_analysis_v2.py --results <dirA> <dirB> ... --out <meta_dir>
 python federation/build_teacher_package_v2.py --course bio
+python federation/program_dashboard.py --config config.yaml --results psy:<dir> ... --meta <dir> --out program_dashboard.html
 ```
+
+## 2026-07 additions (branch `federated-questions-v2`)
+
+- **Non-student exclusion** (`config.yaml data.exclude_emails` + `exclude_email_domains`,
+  applied in `pipeline.py::_drop_excluded_accounts` BEFORE features/ALS/percentiles).
+  JCE rule: students `@post.jce.ac.il`, staff bare `@jce.ac.il`; `aaronowl.com` always internal.
+  Every excluded email is logged.
+- **Phase-1 early-warning** (`analysis_script_v2.py::_oof_early_warning`, wired into R1/R2):
+  pre-A-only compact feature set, leave-one-out OOF AUC + confusion + standardized logistic
+  coefficient signs + `low_power` flag. Pooled in `meta_analysis_v2.py::pool_early_warning`
+  (DL OOF-AUC via Hanley–McNeil SE, summed confusion, coef sign-consistency).
+- **Grade-FREE `pre_post_a` block**: paired within-student pre-A vs post-A activity change
+  (Cohen's dz + t/Wilcoxon). Pooled → `meta['prepostA_dz']`. Real finding: engagement
+  collapses ~90% after Moed A, **dz≈−0.93 [−1.09,−0.76] k=3** (ceramics+bio+psy).
+  ⚠️ Compare pre/post on **raw activity or a fixed (preA) scale** — the stored
+  `postA_active_learning_score` is percentile-ranked *within* its window (mean≈50 always),
+  so it can't show the drop.
+- **Adoption contrast** (`adoption_block`, `--roster`): app-users vs **non-users** (sat exam,
+  never used app) grade gap (Cohen's d). Needs the full roster via `match_roster.py`.
+  psy has ~100% adoption (0 non-users) → suppressed; tool is for lower-adoption courses.
+- **Azrieli/JCE batch**: 7 courses in config (`az_ceramics` + 6 `az_*`). Ceramics package
+  shipped (16 students, Moed A 2026-01-29 / B 2026-05-29; needed 2 downloaded weeks via
+  `SiteAnalytics/mixpanel_export.py`). Other 6 await exam dates.
+- **`usage_report.py`**: added grade-free **Post-Moed-A / retake-window** section + retake-prep
+  watchlist, and a **tier-dynamics** transition matrix (pre-A tier → post-A tier scored on the
+  **fixed pre-A scale**, so the drop is real — psy: 86/107 dropped ≥1 tier, 0/36 High stayed High).
+- **Grade-free activity suite**: `weekly_timeline.py` (per-tier weekly curves) + `combined_timeline.py`
+  (courses aligned to Moed A). Real finding: aligned on Moed A, all courses share one shape — spike at
+  week 0/−1, ~90% collapse after; tiers keep a ~6–8× separation all semester (High floor ≫ Low).
+- **`program_dashboard.py`** findings render as **forest bars** + an expandable **Q&A** table colored
+  green/yellow/red/gray by significance; links per-course reports + timelines.
+- **Real findings so far** (real grades: psy full A/B, math v1 final-only via adapter):
+  pooled **Q1 ALS→grade r=0.27 [0.10,0.42]✅, d=0.77✅** (psy+math). math external correlate
+  (teacher spreadsheet): assignment-score→grade **r=0.52** (not pooled). Early-warning meta
+  still awaits a real course with enough fails (psy/math high-passing).
 
 ## What comes next (not yet built)
 

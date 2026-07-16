@@ -63,6 +63,61 @@ def fisher_pool(rs, ns):
     return pooled
 
 
+def _auc_se(auc, n_pos, n_neg):
+    """Hanley–McNeil analytic SE for a single AUC, so per-course OOF-AUCs can be
+    inverse-variance pooled (the early-warning block reports one OOF AUC, no folds)."""
+    if auc is None or n_pos < 1 or n_neg < 1:
+        return None
+    a = min(max(float(auc), 1e-6), 1 - 1e-6)
+    q1 = a / (2 - a)
+    q2 = 2 * a * a / (1 + a)
+    var = (a * (1 - a) + (n_pos - 1) * (q1 - a * a) + (n_neg - 1) * (q2 - a * a)) / (n_pos * n_neg)
+    return math.sqrt(var) if var > 0 else None
+
+
+def pool_early_warning(R, which):
+    """Pool the Phase-1 early_warning block (R1_fail_a / R2_no_show_a) across courses:
+    DL random-effects OOF-AUC (Hanley–McNeil SE), summed confusion -> pooled
+    sensitivity/specificity/precision, and N-weighted coefficient sign-consistency.
+    Turns per-course `low_power` runs into one pooled verdict. Returns None if no course
+    produced an early-warning model."""
+    aucs, ses = [], []
+    conf = {'tp': 0, 'fp': 0, 'tn': 0, 'fn': 0}
+    coef_acc = {}   # feature -> [weighted_sum, w_total, n_pos_sign, n_neg_sign]
+    k = 0
+    for r in R:
+        ew = (((r.get('risk') or {}).get(which) or {}).get('early_warning') or {})
+        if not ew.get('available'):
+            continue
+        k += 1
+        n, npos = ew.get('n', 0), ew.get('n_pos', 0)
+        se = _auc_se(ew.get('auc_oof'), npos, n - npos)
+        if ew.get('auc_oof') is not None and se:
+            aucs.append(ew['auc_oof']); ses.append(se)
+        for kk in conf:
+            conf[kk] += int((ew.get('confusion') or {}).get(kk, 0))
+        for f, v in (ew.get('coef_std_logistic') or {}).items():
+            acc = coef_acc.setdefault(f, [0.0, 0, 0, 0])
+            acc[0] += v * n; acc[1] += n
+            acc[2 if v > 0 else 3] += 1
+    if k == 0:
+        return None
+    tp, fp, tn, fn = conf['tp'], conf['fp'], conf['tn'], conf['fn']
+    coefs = {}
+    for f, (s, w, npos_s, nneg_s) in coef_acc.items():
+        if w <= 0:
+            continue
+        tot = npos_s + nneg_s
+        coefs[f] = {'mean': round(s / w, 4), 'pos': npos_s, 'neg': nneg_s,
+                    'consistency': round(max(npos_s, nneg_s) / tot, 2) if tot else None}
+    coefs = dict(sorted(coefs.items(), key=lambda kv: -abs(kv[1]['mean']))[:8])
+    return {'k': k, 'auc': dl_pool(aucs, ses) if aucs else None, 'confusion': conf,
+            'sensitivity': round(tp / (tp + fn), 4) if (tp + fn) else None,
+            'specificity': round(tn / (tn + fp), 4) if (tn + fp) else None,
+            'precision': round(tp / (tp + fp), 4) if (tp + fp) else None,
+            'coef_consistency': coefs}
+
+
 def collect(results, *keys):
     """Pull a nested value from each course's json; returns list aligned to courses."""
     out = []
@@ -140,9 +195,10 @@ def write_html(meta, R, out):
     Q3 = [('β (ΔRate_z → grade | moed_a)', 'Q3_beta_dRate', 1.0, 0.0)]
     PRED = [('CV R² — full model', 'pred_r2_full', 1.0, 0.0),
             ('CV R² — ALS only', 'pred_r2_als', 1.0, 0.0)]
-    RISK = [('R1 fail-A — model AUC', 'R1_fail_AUC', 0.5, 0.5),
+    VA = [('ALS partial β (above baseline)', 'value_added_beta', 1.0, 0.0)]
+    RISK = [('R1 fail-A — early-warning AUC (OOF)', 'R1_ew_AUC', 0.5, 0.5),
             ('R1 fail-A — logOR(ALS H/L)', 'R1_fail_logOR_ALS', 3.0, 0.0),
-            ('R2 no-show — model AUC', 'R2_noshow_AUC', 0.5, 0.5)]
+            ('R2 no-show — early-warning AUC (OOF)', 'R2_ew_AUC', 0.5, 0.5)]
     head = ('<th>effect</th><th>pooled</th><th>95% CI</th><th>sig</th>'
             '<th>forest (RE)</th><th>k</th><th>I²</th><th>p_het</th>')
 
@@ -171,6 +227,22 @@ def write_html(meta, R, out):
     else:
         churn_v = 'no applicable courses (all cram-style or single-window).'
 
+    def ew_summary(key, label):
+        """Render the pooled early-warning block (confusion + coef sign-consistency)."""
+        ew = meta.get(key)
+        if not ew:
+            return ''
+        cm = ew['confusion']
+        parts = []
+        for f, v in list(ew['coef_consistency'].items())[:5]:
+            sign = '+' if v['mean'] > 0 else '−'
+            cons = '' if v['consistency'] is None else f" {int(v['consistency'] * 100)}%"
+            parts.append(f"{f} ({sign}{cons})")
+        return (f"<p class='q'><b>{label}</b> — pooled over k={ew['k']} course(s): "
+                f"sens {ew['sensitivity']}, spec {ew['specificity']}, prec {ew['precision']} · "
+                f"confusion tp={cm['tp']} fp={cm['fp']} tn={cm['tn']} fn={cm['fn']}. "
+                f"Consistent pre-A signals (sign · agreement): {', '.join(parts) or '—'}.</p>")
+
     # ── overview row per course (the orientation table, now at the TOP) ────────
     def ov_row(r):
         rk = r.get('risk', {})
@@ -182,6 +254,20 @@ def write_html(meta, R, out):
                 f"<td class='num'>{_g(r,'Q1','r_ALS_score','r')}</td>"
                 f"<td class='num'>{_g(r,'predictive','cv_r2_full','mean')}</td></tr>")
     overview = ''.join(ov_row(r) for r in R)
+
+    # ── coverage matrix: which course feeds which pooled estimate ──────────────
+    QS_COV = [('Q1', 'Q1'), ('Q2', 'Q2'), ('Q3', 'Q3'), ('R1', 'R1'), ('R2', 'R2'),
+              ('predictive', 'pred'), ('subgroups', 'subgrp'), ('value_added', 'value+')]
+    cov = meta.get('coverage', {}); modes = meta.get('grade_modes', {})
+    wins = meta.get('has_exam_windows', {})
+
+    def cov_row(r):
+        c = cov.get(r['course'], {})
+        cells = ''.join(f"<td class='ctr'>{'✓' if c.get(q) else '·'}</td>" for q, _ in QS_COV)
+        return (f"<tr><td>{r['course']}</td><td class='ctr'>{modes.get(r['course'], '—')}</td>"
+                f"<td class='ctr'>{'yes' if wins.get(r['course']) else 'no'}</td>{cells}</tr>")
+    cov_head = ''.join(f"<th class='ctr'>{lbl}</th>" for _, lbl in QS_COV)
+    coverage = ''.join(cov_row(r) for r in R)
 
     # ── per-course detail (collapsible, at the BOTTOM) ─────────────────────────
     # Each value coloured by AGREEMENT WITH THE EXPECTED TREND:
@@ -239,7 +325,22 @@ def write_html(meta, R, out):
             row('R1 logOR(ALS High/Low)', col(_g(r1, 'logOR_ALS_high_low', 'logOR'), '-')),
             row('R2 no-show-A', f"{_g(r2,'n_pos')}/{_g(r2,'n')}{r2auc}"),
         ])
-        cap = (f"Moed-A mean {_g(r,'standardization','moed_a_mean')}, "
+        # course-specific external correlates (e.g. math: assignment/tutor) — NOT pooled
+        ec = r.get('external_correlates')
+        if ec:
+            extra = [grp('External correlates · course-specific, NOT pooled')]
+            cor = ec.get('correlates_vs_exam', {})
+            for lbl, key in [('assignment score → exam', 'assignment_score_0_100'),
+                             ('tutor use → exam', 'tutor_use_1_3_5')]:
+                c = cor.get(key)
+                if c:
+                    extra.append(row(lbl, f"{col(c['pearson_r'], '+')} (n={c['n']})"))
+            for kf in ec.get('key_findings', [])[:2]:
+                extra.append(row('finding', f"<span class='muted'>{kf}</span>"))
+            body += ''.join(extra)
+        cap = (f"mode {_g(r,'grade_mode',default='legacy')} · "
+               f"outcome {_g(r,'standardization','outcome',default='moed_a')} · "
+               f"mean {_g(r,'standardization','moed_a_mean')}, "
                f"sd {_g(r,'standardization','moed_a_sd')}, high-cut {_g(r,'standardization','high_cut')}")
         return (f"<details><summary>{r['course']} &middot; n={_g(r,'Q1','n')}, "
                 f"retakers={_g(r,'Q2','n_retakers')}</summary>"
@@ -271,6 +372,11 @@ def write_html(meta, R, out):
 <table class="ovr"><tr><th>course</th><th>students</th><th>retakers</th><th>fails (A)</th>
 <th>no-shows</th><th>r(ALS,score)</th><th>pred R²</th></tr>{overview}</table>
 
+<h2>Coverage <span class="muted" style="font-weight:400">(which course can answer each question)</span></h2>
+<table class="ovr"><tr><th>course</th><th>grade mode</th><th>windows</th>{cov_head}</tr>{coverage}</table>
+<p class="legend">✓ = course contributes to that pooled estimate · · = mode/dates can't answer it.
+Pooled k per question reflects only the ✓ courses — a thin column is honest, not broken.</p>
+
 <h2>Findings (pooled across courses)</h2>
 
 <div class="card"><h3>Q1 · Does ALS correlate with the Moed-A outcome?</h3>
@@ -293,10 +399,25 @@ def write_html(meta, R, out):
 <p class="q">Data-driven Ridge on all pre-A features vs ALS alone — does a free model beat the construct?</p>
 <table><tr>{head}</tr>{rows(PRED)}</table></div>
 
+<div class="card"><h3>Causal robustness · value-added</h3>
+<div class="verdict">{verdict('value_added_beta', 'Engagement predicts the outcome ABOVE baseline (early activity + in-platform performance)', 'No value-added beyond baseline', direction='+')}</div>
+<p class="q">OLS <code>outcome ~ (early-weeks activity + in-platform performance) + ALS</code>. A positive
+ALS partial coefficient means engagement predicts the grade <em>beyond</em> baseline ability/motivation
+— the "it's not just good students" test. Conservative: the baseline can absorb some mediated effect,
+so the pooled β is a lower bound.</p>
+<table><tr>{head}</tr>{rows(VA)}</table></div>
+
 <div class="card"><h3>Risk / early-warning</h3>
-<div class="verdict">{verdict('R1_fail_AUC', 'Failing Moed A is predictable from early activity', 'Fail-A not yet predictable', null=0.5)}</div>
-<p class="q">Classification from pre-exam activity. AUC null = 0.5; logOR null = 0. <b>Churn:</b> {churn_v}</p>
-<table><tr>{head}</tr>{rows(RISK)}</table></div>
+<div class="verdict">{verdict('R1_ew_AUC', 'Failing Moed A is predictable from early (pre-A) activity', 'Fail-A not yet predictable', null=0.5)}</div>
+<p class="q">Pre-A-only classification, out-of-fold. AUC null = 0.5; logOR null = 0. <b>Churn:</b> {churn_v}</p>
+<table><tr>{head}</tr>{rows(RISK)}</table>
+{ew_summary('R1_early_warning', 'R1 fail-A')}{ew_summary('R2_early_warning', 'R2 no-show-A')}</div>
+
+<div class="card"><h3>Activity dynamics &amp; adoption</h3>
+<div class="verdict">{verdict('prepostA_dz', 'Platform engagement drops sharply after Moed A', 'No detectable pre/post-A change', direction='-')}</div>
+<div class="verdict">{verdict('adoption_d', 'App-users outperform non-users on the exam', 'No app-user vs non-user gap', direction='+')}</div>
+<p class="q">Pre→post-A change is <b>grade-free</b> (paired within-student activity). Adoption compares
+app-users vs students who sat the exam but never used the app (needs the full roster). Standardized effects (dz / d).</p></div>
 
 <p class="legend"><b>Verdict states:</b> <span class="vgood">✅ significant</span> (95% CI excludes the null — 0 for effect sizes, 0.5 for AUC) ·
 <span class="vtrend">🟡 trend</span> (point estimate in the expected direction but CI still spans the null — directional, underpowered) ·
@@ -363,6 +484,11 @@ def main():
     r2a = [(x or {}) for x in collect(R, 'risk', 'R2_no_show_a', 'auc')]
     meta['R2_noshow_AUC'] = dl_pool([x.get('mean', np.nan) for x in r2a],
                                     [x.get('se', np.nan) for x in r2a])
+    # Phase-1 early-warning: pooled OOF-AUC + summed confusion + coef sign-consistency
+    meta['R1_early_warning'] = pool_early_warning(R, 'R1_fail_a')
+    meta['R2_early_warning'] = pool_early_warning(R, 'R2_no_show_a')
+    meta['R1_ew_AUC'] = (meta['R1_early_warning'] or {}).get('auc')
+    meta['R2_ew_AUC'] = (meta['R2_early_warning'] or {}).get('auc')
 
     # ── Predictive block + ALS audit ─────────────────────────────────────────
     pf = [(x or {}) for x in collect(R, 'predictive', 'cv_r2_full')]
@@ -395,8 +521,51 @@ def main():
             'AUC': dl_pool([x.get('mean', np.nan) for x in cauc],
                            [x.get('se', np.nan) for x in cauc])}
 
+    # ── Grade-FREE blocks: pre→post-A paired activity change + adoption ───────
+    pp = [(x or {}) for x in collect(R, 'pre_post_a')]
+    ok = lambda x: x.get('available') and not x.get('suppressed')
+    meta['prepostA_dz'] = dl_pool([x.get('cohens_dz', np.nan) if ok(x) else np.nan for x in pp],
+                                  [x.get('se', np.nan) if ok(x) else np.nan for x in pp])
+    ad = [(x or {}) for x in collect(R, 'adoption')]
+    adc = [(x.get('cohens_d_user_minus_non') or {}) if ok(x) else {} for x in ad]
+    meta['adoption_d'] = dl_pool([x.get('d', np.nan) for x in adc],
+                                 [x.get('se', np.nan) for x in adc])
+
+    # ── Value-added (causal robustness): pooled ALS partial coef above baseline ─
+    va = [(x or {}) for x in collect(R, 'value_added')]
+    vb = [(x.get('als_partial') or {}) if ok(x) else {} for x in va]
+    meta['value_added_beta'] = dl_pool([x.get('beta', np.nan) for x in vb],
+                                       [x.get('se', np.nan) for x in vb])
+
+    # ── Coverage: which course answered which question (self-describing) ──────
+    QS = ['Q1', 'Q2', 'Q3', 'R1', 'R2', 'predictive', 'subgroups', 'pre_post_a', 'adoption',
+          'value_added']
+
+    def answered_set(r):
+        a = r.get('answered')
+        if a is not None:
+            return set(a)
+        # legacy results predating grade-mode declaration: infer from presence
+        s = {'Q1', 'predictive'}
+        if (r.get('Q2') or {}).get('available') is not False:
+            s |= {'Q2', 'Q3'}
+        rk = r.get('risk') or {}
+        if rk.get('R1_fail_a'):
+            s.add('R1')
+        if (rk.get('R2_no_show_a') or {}).get('available') is not False:
+            s.add('R2')
+        return s
+
+    meta['grade_modes'] = {r['course']: r.get('grade_mode', 'legacy') for r in R}
+    meta['has_exam_windows'] = {r['course']: r.get('has_exam_windows', True) for r in R}
+    meta['coverage'] = {r['course']: {q: (q in answered_set(r)) for q in QS} for r in R}
+    # how many courses actually fed each pooled question (k for honesty)
+    meta['coverage_k'] = {q: sum(meta['coverage'][c][q] for c in meta['coverage']) for q in QS}
+
     (out / 'meta.json').write_text(json.dumps(meta, indent=2, ensure_ascii=False))
     write_html(meta, R, out)
+    print("\nCoverage (courses answering each question): "
+          + ", ".join(f"{q}={meta['coverage_k'][q]}/{len(R)}" for q in QS))
 
     # ── console forest report ────────────────────────────────────────────────
     def line(label, p, null=0.0):
@@ -430,15 +599,26 @@ def main():
     if meta.get('pred_rf_importance'):
         top = list(meta['pred_rf_importance'])[:5]
         print(f"  {'pooled top RF features':30s} {top}")
-    print("Risk / early-warning   (AUC null = 0.5)")
-    line('R1 fail-A  AUC', meta['R1_fail_AUC'], null=0.5)
+    print("Risk / early-warning   (pre-A only, OOF AUC null = 0.5)")
+    line('R1 fail-A  AUC (OOF)', meta['R1_ew_AUC'], null=0.5)
     line('R1 fail-A  logOR(ALS H/L)', meta['R1_fail_logOR_ALS'])
-    line('R2 no-show AUC', meta['R2_noshow_AUC'], null=0.5)
+    line('R2 no-show AUC (OOF)', meta['R2_ew_AUC'], null=0.5)
+    for key, lbl in (('R1_early_warning', 'R1 fail-A'), ('R2_early_warning', 'R2 no-show-A')):
+        ew = meta.get(key)
+        if ew:
+            cm = ew['confusion']
+            print(f"    {lbl}: pooled k={ew['k']}  sens={ew['sensitivity']} spec={ew['specificity']} "
+                  f"prec={ew['precision']}  (tp={cm['tp']} fp={cm['fp']} tn={cm['tn']} fn={cm['fn']})")
     if meta['churn']:
         c = meta['churn']
         print(f"Churn (grade-free)  mean rate={c['mean_churn_rate']*100:.1f}%  "
               f"applicable={c['k_applicable']} N/A={c['k_na']}")
         line('  churn AUC', c['AUC'], null=0.5)
+    print("Grade-free activity dynamics")
+    line('pre->post-A change (dz)', meta['prepostA_dz'])
+    line('adoption users-nonusers (d)', meta['adoption_d'])
+    print("Causal robustness (value-added)")
+    line('ALS partial beta (above baseline)', meta['value_added_beta'])
     print("="*78)
     print(f"wrote {out/'meta.json'}")
 

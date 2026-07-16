@@ -135,7 +135,7 @@ def main():
     config = load_config(a.config)
     res = analyze(config, a.course)
     out = Path(a.out); out.mkdir(parents=True, exist_ok=True)
-    (out / 'churn_results.json').write_text(json.dumps(res, indent=2, ensure_ascii=False))
+    (out / 'churn_results.json').write_text(json.dumps(res, indent=2, ensure_ascii=False), encoding='utf-8')
     if not res.get('applicable', True):
         print(f"[{res['course']}] churn N/A — {res['reason']}")
     else:

@@ -11,6 +11,8 @@ Usage:
 """
 import argparse
 import hashlib
+import json
+import re
 import sys
 from pathlib import Path
 
@@ -27,6 +29,9 @@ from targets.synthetic import create as create_target
 from federation.usage_report import generate as generate_usage_report
 
 
+WARMUP_DAYS = 21   # length of the early-engagement 'warmup' baseline window (first N days)
+
+
 def load_config(path: str = 'config.yaml') -> dict:
     cfg_path = Path(path)
     if not cfg_path.is_absolute():
@@ -35,24 +40,54 @@ def load_config(path: str = 'config.yaml') -> dict:
         return yaml.safe_load(f)
 
 
+def _san(s) -> str:
+    """Sanitize a milestone name into a column-safe token."""
+    return re.sub(r'[^a-z0-9]+', '_', str(s).strip().lower()).strip('_') or 'm'
+
+
+def _infer_course_type(course_cfg: dict) -> str:
+    """Declared `course_type` if present, else inferred from config STRUCTURE
+    (v3 self-describing, §1). Grade-content refinement (e.g. pass_fail when the grade file
+    is pass/fail-only) happens teacher-side in analysis_script; this is the config-level guess.
+    Types: exam | coursework | mixed | project | pass_fail."""
+    if course_cfg.get('course_type'):
+        return course_cfg['course_type']
+    ms = [m for m in (course_cfg.get('milestones') or []) if m.get('date')]
+    has_exam = any(m.get('type') == 'exam' for m in ms) or bool(course_cfg.get('moed_a_date'))
+    if len(ms) >= 2:
+        return 'mixed' if has_exam else 'coursework'
+    if len(ms) == 1:
+        return 'exam' if ms[0].get('type') == 'exam' else 'project'
+    return 'exam'                                   # default: a single exam/score
+
+
 def _resolve_windows(config: dict, course_cfg: dict):
-    """Return the activity windows for a course as [(name, start_date|None, end_date|None), ...].
+    """Return activity windows as [(name, start_date|None, end_date|None), ...].
 
-    Driven by per-course exam dates:
-      - moed_a_date present            -> 'preA'  window [start, moed_a_date)
-                                          + 'postA' window [moed_a_date, moed_b_date)
-                                            (open-ended if moed_b_date is absent)
-      - no moed_a_date (e.g. math)     -> single 'all' window [None, None]
-    --cutoff none (config['_cutoff_override']=='none') forces a single 'all' window (baseline).
-
-    'postA' is the retake/cram window (activity after Moed A). The upper bound is
-    moed_b_date when known (excludes post-retake noise) but is OPTIONAL: the retake
-    subgroup is identified downstream by a non-null `moed_b` grade, not by the date,
-    so an open-ended postA window is equivalent for Model B (e.g. psy).
-    Boundaries partition cleanly: preA = date < A, postA = A <= date (< B if set).
+    Priority (v3 milestone-anchored, back-compatible with v2 exams):
+      1. --cutoff none                 -> single 'all' window (baseline).
+      2. `milestones: [{name,date}]`   -> interval windows 'pre_<name>' leading up to each
+         dated milestone (sorted) + a trailing 'post_<last>'. Generalizes coursework/mixed;
+         each 'pre_<task>' block is the run-up features for predicting that task.
+      3. `moed_a_date` [+`moed_b_date`] -> legacy exam windows 'preA' [start, A) + 'postA'
+         [A, B) (open-ended if no B). UNCHANGED from v2 so existing outputs are byte-identical.
+      4. none of the above             -> single 'all' window.
+    Windows partition cleanly on [start, end); the first window is the primary (unprefixed)
+    feature block, the rest are grafted with their name as prefix (see run_course).
     """
     if str(config.get('_cutoff_override', '')).lower() == 'none':
         return [('all', None, None)]
+    ms = course_cfg.get('milestones')
+    if ms:
+        dated = sorted(((m['name'], pd.Timestamp(m['date']).date())
+                        for m in ms if m.get('date')), key=lambda kv: kv[1])
+        if dated:
+            wins, prev = [], None
+            for name, d in dated:
+                wins.append((f'pre_{_san(name)}', prev, d))
+                prev = d
+            wins.append((f'post_{_san(dated[-1][0])}', prev, None))
+            return wins
     a_raw, b_raw = course_cfg.get('moed_a_date'), course_cfg.get('moed_b_date')
     a = pd.Timestamp(a_raw).date() if a_raw else None
     b = pd.Timestamp(b_raw).date() if b_raw else None
@@ -90,6 +125,24 @@ def _build_block(config, course_key, events, eval_df, quiz_df, start, end, label
     return block
 
 
+def _drop_excluded_accounts(events: pd.DataFrame, config: dict) -> pd.DataFrame:
+    """Remove non-student accounts (lecturers/TAs/admins) before any feature/ALS
+    computation, so they never enter the cohort or shift percentile ranks.
+    Driven by data.exclude_emails (exact) + data.exclude_email_domains (exact domain)."""
+    d = config.get('data', {})
+    emails = {e.lower().strip() for e in (d.get('exclude_emails') or [])}
+    domains = {s.lower().strip() for s in (d.get('exclude_email_domains') or [])}
+    if not emails and not domains or 'email' not in events.columns:
+        return events
+    em = events['email'].astype(str).str.lower()
+    mask = em.isin(emails) | em.str.split('@').str[-1].isin(domains)
+    if mask.any():
+        dropped = sorted(events.loc[mask, 'email'].dropna().unique())
+        print(f"Excluded {int(mask.sum())} events from {len(dropped)} non-student "
+              f"account(s): {dropped}")
+    return events[~mask]
+
+
 def run_course(config: dict, course_key: str) -> pd.DataFrame:
     course_cfg = config['courses'][course_key]
     course_id = course_cfg['course_id']
@@ -98,6 +151,9 @@ def run_course(config: dict, course_key: str) -> pd.DataFrame:
     print(f"{'='*60}")
 
     windows = _resolve_windows(config, course_cfg)
+    course_type = _infer_course_type(course_cfg)
+    print(f"Course type: {course_type}"
+          + (f" (declared)" if course_cfg.get('course_type') else " (inferred)"))
     print(f"Activity windows: {[(n, str(s), str(e)) for n, s, e in windows]}")
 
     # 1. Load events + resolve identities (done once; windows slice afterwards)
@@ -105,6 +161,7 @@ def run_course(config: dict, course_key: str) -> pd.DataFrame:
     events = loader.load(course_id)
     resolver = IdentityResolver(config)
     events = resolver.resolve(events)
+    events = _drop_excluded_accounts(events, config)
 
     # 4. Load academic data (CSV or Excel sheet)
     eval_df = load_academic_csv(course_cfg.get('eval_csv', ''), sheet=course_cfg.get('eval_sheet'))
@@ -121,6 +178,20 @@ def run_course(config: dict, course_key: str) -> pd.DataFrame:
         features = features.join(blk, how='left')
         print(f"Grafted {name}_ block: +{blk.shape[1]} cols ({blk.shape[0]} students with {name} activity)")
 
+    # 5c. Warm-up block: first WARMUP_DAYS of activity — an EARLY-engagement baseline for the
+    # value-added / causal-robustness analysis (early activity is a propensity confounder, not
+    # a mediator like in-platform performance). Overlaps the primary window by design.
+    warmup_win = None
+    if str(config.get('_cutoff_override', '')).lower() != 'none' and len(events):
+        w_days = int(config.get('data', {}).get('warmup_days', WARMUP_DAYS))
+        w_start = (pd.Timestamp(course_cfg['course_start_date']).date()
+                   if course_cfg.get('course_start_date') else events['datetime'].min().date())
+        w_end = w_start + pd.Timedelta(days=w_days)
+        wblk = _build_block(config, course_key, events, eval_df, quiz_df, w_start, w_end, 'warmup')
+        features = features.join(wblk.add_prefix('warmup_'), how='left')
+        warmup_win = (str(w_start), str(w_end), w_days)
+        print(f"Grafted warmup_ block [{w_start}..{w_end}] ({w_days}d): +{wblk.shape[1]} cols")
+
     # 7. Normalize (primary block only — secondary blocks carry raw + ALS)
     features = normalization.add_zscore(features)
     features = normalization.add_percentile(features)
@@ -135,6 +206,23 @@ def run_course(config: dict, course_key: str) -> pd.DataFrame:
     out_path = out_dir / f'student_features_{course_key}.csv'
     features.to_csv(out_path)
     print(f"\nSaved: {out_path}  ({len(features)} students × {len(features.columns)} columns)")
+
+    # 9b. Stamp course metadata (v3) — course_type, windows, milestones, moderators.
+    # Rides to the teacher alongside the feature CSV; consumed by analysis + meta later.
+    (fed_dir / f'course_meta_{course_key}.json').write_text(json.dumps({
+        'course_key': course_key, 'name': course_cfg.get('name'),
+        'course_type': course_type,
+        'course_type_source': 'declared' if course_cfg.get('course_type') else 'inferred',
+        'windows': [w[0] for w in windows],
+        'milestones': [{'name': m.get('name'), 'type': m.get('type'),
+                        'date': str(m.get('date')), 'weight': m.get('weight')}
+                       for m in (course_cfg.get('milestones') or [])],
+        'delivery_mode': course_cfg.get('delivery_mode'),
+        'attendance_required': course_cfg.get('attendance_required'),
+        'discipline': course_cfg.get('discipline'), 'level': course_cfg.get('level'),
+        'warmup_window': ({'start': warmup_win[0], 'end': warmup_win[1], 'days': warmup_win[2]}
+                          if warmup_win else None),
+    }, indent=2, ensure_ascii=False), encoding='utf-8')
 
     # 10. Export federation CSV
     fed_csv_path = _export_federation(features, config, course_key)

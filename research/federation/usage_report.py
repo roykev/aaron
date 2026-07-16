@@ -188,6 +188,158 @@ def _attention_rows(df):
         {rows}</table>'''
 
 
+# ── post-Moed-A (retake window) section ───────────────────────────────────────
+
+def _postA_section(df: pd.DataFrame) -> str:
+    """Grade-free post-Moed-A analytics.
+
+    Proxy: any activity in the postA window ⇒ the student is likely preparing for a
+    retake (Moed B), which in turn hints they may not have passed Moed A. Renders only
+    when the pipeline produced postA_ columns (i.e. exam dates were set); otherwise ''.
+    Counts are small per course — an early, directional signal, robust only when pooled.
+    """
+    if not any(c.startswith('postA_') for c in df.columns):
+        return ''
+    d = df.copy()
+    d['_tier'] = d['active_learning_level'] if 'active_learning_level' in d.columns \
+        else pd.Series(index=d.index, dtype=object)
+    aw = d['postA_active_weeks'] if 'postA_active_weeks' in d.columns else pd.Series(0, index=d.index)
+    ev = d['postA_total_active_events'] if 'postA_total_active_events' in d.columns else pd.Series(0, index=d.index)
+    d['_active'] = (aw.fillna(0) > 0) | (ev.fillna(0) > 0)
+    n_active = int(d['_active'].sum())
+    n_silent = int((~d['_active']).sum())
+
+    # 1) matrix: pre-A engagement tier × post-A activity
+    tiers = [t for t in ['High', 'Medium', 'Low'] if (d['_tier'] == t).any()]
+    mrows = ''
+    for t in tiers:
+        sub = d[d['_tier'] == t]
+        c = LEVEL_COLOR.get(t, '#333')
+        mrows += (f'<tr><td style="font-weight:600;color:{c}">{t} ALS</td>'
+                  f'<td style="text-align:center">{int((~sub["_active"]).sum())}</td>'
+                  f'<td style="text-align:center;font-weight:600">{int(sub["_active"].sum())}</td></tr>')
+    matrix = (f'<table class="tbl" style="max-width:460px">'
+              f'<tr><th>Pre-Moed-A engagement</th>'
+              f'<th style="text-align:center">Silent after A<br>'
+              f'<span style="font-weight:400;font-size:.82em">likely passed / done</span></th>'
+              f'<th style="text-align:center">Active after A<br>'
+              f'<span style="font-weight:400;font-size:.82em">likely retaking</span></th></tr>'
+              f'{mrows}</table>')
+
+    # 2) retake-prep watchlist: lower pre-A engagement + active in retake window
+    watch = d[d['_tier'].isin(['Low', 'Medium']) & d['_active']].copy()
+    if 'active_learning_score' in watch.columns:
+        watch = watch.sort_values('active_learning_score')
+    wrows = ''
+    for _, r in watch.iterrows():
+        ev_score = r.get('postA_eval_avg_score', float('nan'))
+        wrows += (f'<tr><td style="font-size:.82em">{r.get("email", r.name)}</td>'
+                  f'<td style="text-align:center">{_level_badge(r.get("_tier"))}</td>'
+                  f'<td style="text-align:center">{_num(r.get("active_learning_score"), 0)}</td>'
+                  f'<td style="text-align:center">{_num(r.get("postA_active_learning_score"), 0)}</td>'
+                  f'<td style="text-align:center">{_num(r.get("postA_meaningful_sessions_count"), 0)}</td>'
+                  f'<td style="text-align:center">{_fmt_time(r.get("postA_total_time_minutes"))}</td>'
+                  f'<td style="text-align:center">{_num(ev_score, 0) if not pd.isna(ev_score) else "—"}</td></tr>')
+    watch_html = (f'<table class="tbl">'
+                  f'<tr><th>Student</th><th style="text-align:center">Pre-A Level</th>'
+                  f'<th style="text-align:center">Pre-A ALS</th><th style="text-align:center">Post-A ALS</th>'
+                  f'<th style="text-align:center">Post-A Meaningful Sessions</th>'
+                  f'<th style="text-align:center">Post-A Time</th>'
+                  f'<th style="text-align:center">Post-A Eval</th></tr>{wrows}</table>') if wrows \
+        else '<p style="color:#666">No lower-engagement students are active in the retake window.</p>'
+
+    # 3) 'late surge' segment: low pre-A → high post-A engagement
+    woke_html = ''
+    if 'postA_active_learning_level' in d.columns:
+        woke = d[(d['_tier'] == 'Low') & (d['postA_active_learning_level'] == 'High')]
+        if len(woke):
+            emails = ', '.join(str(r.get('email', r.name)) for _, r in woke.iterrows())
+            woke_html = (f'<p style="margin-top:12px;padding:10px 14px;background:{LEVEL_BG["High"]};'
+                         f'border:1px solid {LEVEL_COLOR["High"]};border-radius:8px;font-size:.86em">'
+                         f'🌱 <strong>{len(woke)} “late surge” student(s)</strong> — low pre-Moed-A '
+                         f'engagement but high activity in the retake window: {emails}</p>')
+
+    return f'''
+  <h2>Post-Moed A — Retake-Window Activity</h2>
+  <p style="font-size:.85em;color:#666;margin-bottom:10px">
+    Activity <em>after</em> Moed A, used as a grade-free proxy: a student still active in the
+    Moed-A→B window is most likely preparing for a <strong>retake (Moed B)</strong> — which itself
+    hints they may not have passed Moed A. Counts are small per course and meant as an early,
+    directional signal (robust only when pooled across courses). No grades are used.
+  </p>
+  <div class="charts-row" style="align-items:flex-start">
+    <div class="chart-box" style="max-width:480px"><h3>Pre-A engagement × post-A activity</h3>{matrix}</div>
+    <div class="chart-box" style="min-width:260px"><h3>Retake window at a glance</h3>
+      <p style="font-size:.9em;line-height:1.9">Active in retake window: <strong>{n_active}</strong><br>
+      Silent after Moed A: <strong>{n_silent}</strong></p>{woke_html}</div>
+  </div>
+
+  <h2 style="border-left-color:#ff9800">⚠ Retake-Prep Watchlist (grade-free)</h2>
+  <div class="attention-box">
+    <p style="font-size:.85em;color:#bf360c;margin-bottom:10px">
+      Lower pre-Moed-A engagement <em>and</em> active in the retake window — the strongest
+      grade-free early signal that a student may be re-sitting the exam. Worth a check-in.
+    </p>
+    {watch_html}
+  </div>
+'''
+
+
+# ── tier dynamics (pre-A tier → post-A tier, fixed scale) ─────────────────────
+
+_ALS_COMP = [('active_weeks_ratio', 0.35), ('total_active_events', 0.25),
+             ('feature_diversity_count', 0.20), ('meaningful_sessions_ratio', 0.20)]
+
+
+def _tier_transition_section(df: pd.DataFrame) -> str:
+    """Who changed ALS tier after Moed A. Post-A activity is scored against the
+    PRE-A distribution (fixed scale, same 0-100 as pre-A) so tiers are comparable —
+    NOT the percentile-re-ranked postA_active_learning_score (whose mean is ~50 by
+    construction and hides the drop). Grade-free."""
+    if not any(c.startswith('postA_') for c in df.columns) or 'active_learning_level' not in df.columns:
+        return ''
+    d = df.copy()
+    fixed = np.zeros(len(d))
+    for c, w in _ALS_COMP:
+        pre = d[c].fillna(0).values
+        post = d['postA_' + c].fillna(0).values if 'postA_' + c in d.columns else np.zeros(len(d))
+        fixed += w * np.array([(pre <= v).mean() * 100 for v in post])
+    tier = lambda x: 'High' if x > 60 else ('Medium' if x >= 30 else 'Low')
+    d['_pre'] = d['active_learning_level']
+    d['_post'] = [tier(x) for x in fixed]
+    order = ['High', 'Medium', 'Low']; rank = {'High': 2, 'Medium': 1, 'Low': 0}
+
+    header = ''.join(f'<th style="text-align:center;color:{LEVEL_COLOR[t]}">{t}</th>' for t in order)
+    body = ''
+    for pre in order:
+        sub = d[d['_pre'] == pre]
+        cells = ''
+        for post in order:
+            n = int((sub['_post'] == post).sum())
+            bg = ('#fff' if n == 0 else '#eef2f7' if post == pre
+                  else '#d7f5df' if rank[post] > rank[pre] else '#ffdad4')
+            cells += f'<td style="text-align:center;background:{bg}">{n or ""}</td>'
+        body += (f'<tr><td style="font-weight:600;color:{LEVEL_COLOR[pre]}">{pre} →</td>{cells}</tr>')
+
+    dropped = int(d.apply(lambda r: rank[r['_post']] < rank[r['_pre']], axis=1).sum())
+    n_high = int((d['_pre'] == 'High').sum())
+    stayed_high = int(((d['_pre'] == 'High') & (d['_post'] == 'High')).sum())
+    steady = int((d['active_weeks_ratio'].fillna(0) >= 0.5).sum())
+    return f'''
+  <h2>Tier dynamics — who changed after Moed A</h2>
+  <p style="font-size:.85em;color:#666;margin-bottom:8px">
+    Each student's Active Learning Score is re-computed for the post-Moed-A window on the
+    <b>same pre-A scale</b>, then re-classified into Low / Medium / High. Rows = tier before Moed A,
+    columns = tier after. <span style="background:#ffdad4;padding:1px 5px">red</span> = dropped a tier,
+    <span style="background:#d7f5df;padding:1px 5px">green</span> = rose. Grade-free; activity only.</p>
+  <table class="tbl" style="max-width:420px"><tr><th>before ↓ / after →</th>{header}</tr>{body}</table>
+  <p style="font-size:.88em;margin-top:8px"><b>{dropped}/{len(d)}</b> students dropped ≥1 tier after Moed A;
+    only <b>{stayed_high}/{n_high}</b> High-tier students stayed High. Before Moed A,
+    <b>{steady}/{len(d)}</b> were steady learners (active ≥ half the course weeks); the rest were
+    sporadic / last-minute.</p>
+'''
+
+
 # ── main render ───────────────────────────────────────────────────────────────
 
 def generate(df: pd.DataFrame, course_name: str, generated_date: str) -> str:
@@ -475,6 +627,12 @@ def generate(df: pd.DataFrame, course_name: str, generated_date: str) -> str:
     </tr>
     {student_rows}
   </table>
+
+  <!-- Post-Moed A retake-window analytics (grade-free; only if postA_ columns present) -->
+  {_postA_section(df)}
+
+  <!-- Tier dynamics: pre-A → post-A tier transitions (grade-free) -->
+  {_tier_transition_section(df)}
 
   <!-- Attention needed -->
   <h2>⚠ Students Needing Attention (Low Engagement)</h2>
