@@ -125,50 +125,59 @@ meta_out = {"course_type": grading_type, "grading_type": grading_type, "delivery
             "moed_a_date": moed_a or None, "moed_b_date": moed_b or None,
             "milestones": known_meta.get("milestones", [])}
 
-# ── step 2: how is the gradebook keyed? → grades ──────────────────────────────
+# ── step 2: grades ────────────────────────────────────────────────────────────
 st.header("שלב 2 — ציונים")
 GRADE_COLS = {"full_ab": ["moed_a", "moed_b"], "single_a": ["moed_a"],
               "final": ["final"], "pass_fail": ["passed"], "components": ["moed_a", "moed_b"]}
 cols = GRADE_COLS.get(grade_mode, ["moed_a", "moed_b"])
 grade_col = cols[0]                                   # primary outcome column (for adoption)
+roster_pre = pd.read_csv(io.BytesIO(base64.b64decode(td["roster_b64"]))) if td.get("roster_b64") else None
+_idx, key_by = None, "email"
 
-has_names = bool(td.get("name_email_b64"))
-key_by = "email"
-if has_names:
-    key_by = st.radio("איך רשומים הציונים שלך? / How is your gradebook keyed?",
-                      ["email", "name"], horizontal=True,
-                      format_func=lambda x: "לפי אימייל / by email" if x == "email" else "לפי שם / by name")
-
-_idx = None
-if key_by == "name":
-    ne_map = pd.read_csv(io.BytesIO(base64.b64decode(td["name_email_b64"])))
-    _idx = build_index(ne_map, "name", "email")
-    id_col, id_vals = "name", list(ne_map["name"])
-    nu = "סטודנט לא-משתמש"
-    st.markdown(f"מלא/י את העמודות **{', '.join(cols)}** לכל סטודנט (לפי **שם**). נתאים שמות→אימיילים אוטומטית.")
+if roster_pre is not None:
+    # pre-mapped roster (names + emails already filled) → the teacher fills only grades
+    st.success("התבנית כבר כוללת את כל הנבחנים עם שמות ואימיילים — מלא/י רק את הציונים "
+               f"(**{', '.join(cols)}**), שמור/י כ-CSV והעלה/י.")
+    keep = [c for c in ["name", "email"] if c in roster_pre.columns]
+    tmpl = roster_pre[keep].copy()
+    for c in cols:
+        tmpl[c] = ""
+    random.seed(0)
+    demo = tmpl.copy()
+    for c in cols:
+        demo[c] = ["" if (c == "moed_b" and random.random() > 0.15) else random.randint(52, 96)
+                   for _ in range(len(demo))]
+    tmpl_bytes, demo_bytes = tmpl.to_csv(index=False).encode("utf-8"), demo.to_csv(index=False).encode("utf-8")
 else:
-    id_col, id_vals = "email", list(features_df["email"])
-    nu = "demo_nonuser"
-    st.markdown(f"מלא/י את העמודות **{', '.join(cols)}** לכל סטודנט (לפי **אימייל**). קורס עם מטלות — עמודה לכל מטלה.")
-
-random.seed(0)
-tmpl = pd.DataFrame({id_col: id_vals, **{c: "" for c in cols}})
-_demo = [{id_col: v, **{c: ("" if (c == "moed_b" and random.random() > 0.15) else random.randint(52, 96)) for c in cols}}
-         for v in id_vals]
-for i in range(4):                                   # a few non-users so adoption also demos
-    _demo.append({id_col: f"{nu} {i}", **{c: ("" if c == "moed_b" else random.randint(45, 78)) for c in cols}})
-demo_csv = pd.DataFrame(_demo).to_csv(index=False).encode("utf-8")
+    has_names = bool(td.get("name_email_b64"))
+    if has_names:
+        key_by = st.radio("איך רשומים הציונים שלך? / How is your gradebook keyed?",
+                          ["email", "name"], horizontal=True,
+                          format_func=lambda x: "לפי אימייל / by email" if x == "email" else "לפי שם / by name")
+    if key_by == "name":
+        ne_map = pd.read_csv(io.BytesIO(base64.b64decode(td["name_email_b64"])))
+        _idx = build_index(ne_map, "name", "email")
+        id_col, id_vals, nu = "name", list(ne_map["name"]), "סטודנט לא-משתמש"
+        st.markdown(f"מלא/י את העמודות **{', '.join(cols)}** לכל סטודנט (לפי **שם**). נתאים שמות→אימיילים אוטומטית.")
+    else:
+        id_col, id_vals, nu = "email", list(features_df["email"]), "demo_nonuser"
+        st.markdown(f"מלא/י את העמודות **{', '.join(cols)}** לכל סטודנט (לפי **אימייל**).")
+    random.seed(0)
+    tmpl = pd.DataFrame({id_col: id_vals, **{c: "" for c in cols}})
+    _demo = [{id_col: v, **{c: ("" if (c == "moed_b" and random.random() > 0.15) else random.randint(52, 96)) for c in cols}}
+             for v in id_vals]
+    for i in range(4):
+        _demo.append({id_col: f"{nu} {i}", **{c: ("" if c == "moed_b" else random.randint(45, 78)) for c in cols}})
+    tmpl_bytes = tmpl.to_csv(index=False).encode("utf-8")
+    demo_bytes = pd.DataFrame(_demo).to_csv(index=False).encode("utf-8")
 
 d1, d2 = st.columns(2)
 with d1:
-    st.download_button("⬇️ הורד תבנית ריקה / template", tmpl.to_csv(index=False).encode("utf-8"),
-                       "grades_template.csv", "text/csv", use_container_width=True)
+    st.download_button("⬇️ הורד תבנית / template", tmpl_bytes, "grades_template.csv", "text/csv", use_container_width=True)
 with d2:
-    st.download_button("🧪 הורד דוגמה מלאה (dry run)", demo_csv, "demo_grades.csv",
-                       "text/csv", use_container_width=True,
-                       help="ציונים אקראיים לבדיקה — הורד/י והעלה/י אותם למטה.")
-st.caption("💡 הוסף/י שורות גם לנבחנים שלא השתמשו באפליקציה — כך נקבל גם ניתוח אימוץ, אוטומטית. "
-           "לבדיקה מהירה — השתמש/י בקובץ הדוגמה.")
+    st.download_button("🧪 הורד דוגמה מלאה (dry run)", demo_bytes, "demo_grades.csv", "text/csv",
+                       use_container_width=True, help="ציונים אקראיים לבדיקה — הורד/י והעלה/י.")
+st.caption("💡 מלא/י ציונים בלבד; אל תשנה/י את עמודות name/email. לבדיקה מהירה — השתמש/י בקובץ הדוגמה.")
 uploaded = st.file_uploader("העלה/י את הקובץ (או את קובץ הדוגמה)", type=["csv"], key="grades")
 if not uploaded:
     st.stop()
