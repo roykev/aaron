@@ -202,6 +202,21 @@ python federation/program_dashboard.py --config config.yaml --results psy:<dir> 
   (teacher spreadsheet): assignment-score→grade **r=0.52** (not pooled). Early-warning meta
   still awaits a real course with enough fails (psy/math high-passing).
 
+## 2026-09-16 — data refresh + staff exclusion by profile type
+
+- **Identity map from the Mixpanel Engage API** (no UI download needed): `GET https://mixpanel.com/api/2.0/engage?project_id=3456528`
+  with basic auth `MIXPANEL_SECRET:` — paginate with `session_id`/`page`. Saved as
+  `research/user-export-3456528-2026_09_16_engage_api.csv` (1182 profiles, same `$distinct_id/$name/$email/...`
+  columns plus `institute` and `user_type`). The May snapshot missed 50 of 131 users active Jun–Sep; the new one resolves all.
+  Keep old snapshots (identity dump is current-state only).
+- **`data.exclude_user_types: [lecturer]`** — `pipeline.py::_drop_excluded_accounts` also drops every email whose
+  profile `user_type` is listed. Catches TAs/lecturers on student-looking domains (e.g. `kerenka@post.jce.ac.il`
+  in az_yesodot, `marganitco@post…` in az_chem_intro, `harelco@post…` in az_nano, `erubin@bgu.ac.il` in bio).
+- Weekly data in `Analytics/weekly_data/` synced from the dashboard repo (`aaron-analytics/data/weekly/`) through 2026-09-11.
+- Full re-run 2026-09-16: pipeline (10 courses) → clustering → psy `analysis_script_v2` (real grades) → lead-time →
+  timelines → `meta_analysis_v2` over real returns (psy, math, ceramics) in `federated_v2_demo/real_pool_20260916/` →
+  `program_dashboard.html`.
+
 ## What comes next (not yet built)
 
 - Real grades: set `target.type: final_grade` and provide `grades_csv` in config — pipeline ready.

@@ -1,6 +1,6 @@
 data:
   weekly_events_dir: /home/roy/FS/Dropbox/WORK/Ideas/aaron/Analytics/weekly_data
-  user_export_csv: /home/roy/FS/Dropbox/WORK/Ideas/aaron/research/user-export-3456528-2026_05_11_14_23_15.csv
+  user_export_csv: /home/roy/FS/Dropbox/WORK/Ideas/aaron/research/user-export-3456528-2026_09_16_engage_api.csv  # pulled via Engage API 2026-09-16 (1182 profiles); May snapshot kept alongside
   output_dir: /home/roy/FS/Dropbox/WORK/Ideas/aaron/research/output
   federation_dir: /home/roy/FS/Dropbox/WORK/Ideas/aaron/research/federation
   # Non-student accounts (lecturers/TAs/admins) — dropped before features/ALS/percentiles
@@ -15,6 +15,10 @@ data:
   exclude_email_domains:
     - jce.ac.il
     - aaronowl.com          # internal Aaron Owl accounts — never students (all courses)
+  # Profile user_type values (from the user export's user_type column) treated as staff.
+  # Catches lecturers/TAs on student-looking domains (e.g. @post.jce.ac.il).
+  exclude_user_types:
+    - lecturer
 
 # Each entry under 'courses' is a course key you choose (any short identifier).
 # Add one block per course you want to analyse.

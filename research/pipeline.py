@@ -128,10 +128,23 @@ def _build_block(config, course_key, events, eval_df, quiz_df, start, end, label
 def _drop_excluded_accounts(events: pd.DataFrame, config: dict) -> pd.DataFrame:
     """Remove non-student accounts (lecturers/TAs/admins) before any feature/ALS
     computation, so they never enter the cohort or shift percentile ranks.
-    Driven by data.exclude_emails (exact) + data.exclude_email_domains (exact domain)."""
+    Driven by data.exclude_emails (exact) + data.exclude_email_domains (exact domain)
+    + data.exclude_user_types (profile user_type from the user export, e.g. lecturer)."""
     d = config.get('data', {})
     emails = {e.lower().strip() for e in (d.get('exclude_emails') or [])}
     domains = {s.lower().strip() for s in (d.get('exclude_email_domains') or [])}
+    # data.exclude_user_types: profile `user_type` values (e.g. lecturer) taken from the
+    # user export, when that export carries a user_type column (Engage API pull does).
+    user_types = {t.lower().strip() for t in (d.get('exclude_user_types') or [])}
+    if user_types and d.get('user_export_csv'):
+        try:
+            ux = pd.read_csv(d['user_export_csv'])
+            if 'user_type' in ux.columns:
+                email_col = '$email' if '$email' in ux.columns else 'email'
+                typed = ux[ux['user_type'].astype(str).str.lower().isin(user_types)]
+                emails |= set(typed[email_col].dropna().astype(str).str.lower().str.strip())
+        except Exception as exc:  # never let a bad export break the pipeline
+            print(f"Warning: could not read user_type from user export: {exc}")
     if not emails and not domains or 'email' not in events.columns:
         return events
     em = events['email'].astype(str).str.lower()
