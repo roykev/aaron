@@ -1,0 +1,1026 @@
+<title>__TITLE__</title>
+<style>
+__FONT_FACE__
+/* Layout: one reading column; a course overview with a lesson-by-lesson matrix, and a report view per lesson behind #l1..#l10 */
+:root {
+  /* single light theme by design: the three reports share the learning report's palette */
+  color-scheme: light;
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --ink: #0f172a;
+  --muted: #64748b;
+  --line: #e2e8f0;
+  --accent: #0d9488;
+  --accent-soft: #f0fdfa;
+  --warn: #d97706;
+  --warn-soft: #fffbeb;
+  --quiet: #cbd5e1;
+  --seal-fill: #0c2460; --seal-ring: #cadcfc; --seal-ink: #ffffff; --brand: #1e40af;
+  --blue: #1e40af;
+  --blue-soft: #eff6ff;
+  --l5: #0d9488; --l5-ink: #ffffff; --l4: #ccfbf1; --l3: #f1f5f9; --l2: #fef3c7; --l1: #f59e0b; --l1-ink: #451a03;
+  --display: "Heebo", "Assistant", "Arial Hebrew", Arial, sans-serif;
+  --body: "Heebo", "Assistant", "Arial Hebrew", Arial, sans-serif;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--body);
+  font-size: 16px; line-height: 1.6; direction: rtl;
+}
+.wrap { max-width: 1040px; margin: 0 auto; padding-inline: 20px; padding-block: 28px 64px; }
+a { color: var(--accent); }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.2; }
+h1 { font-weight: 900; letter-spacing: -.01em; } h2 { font-weight: 800; }
+h1 { font-size: clamp(2rem, 5vw, 3rem); font-weight: 900; }
+h2 { font-size: 1.6rem; font-weight: 700; }
+h3 { font-size: 1.15rem; font-weight: 700; }
+p { margin: 0; }
+.num { font-variant-numeric: tabular-nums; }
+.eyebrow { font-size: .78rem; letter-spacing: .06em; color: var(--muted); font-weight: 500; }
+.lead { color: var(--muted); max-width: 62ch; }
+
+/* masthead */
+.mast { display: grid; gap: 14px; padding-bottom: 24px; border-bottom: 1px solid var(--line); }
+.facts { display: flex; flex-wrap: wrap; gap: 8px 28px; color: var(--muted); font-size: .92rem; }
+.facts b { color: var(--ink); font-weight: 700; font-size: 1.05rem; }
+
+/* sections */
+section { display: grid; gap: 16px; padding-block: 32px; border-bottom: 1px solid var(--line); }
+section:last-of-type { border-bottom: 0; }
+.head { display: grid; gap: 4px; }
+
+/* insights */
+.insights { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px 28px; counter-reset: ins; padding: 0; margin: 0; list-style: none; }
+.insights li { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: start; }
+.insights li::before { counter-increment: ins; content: counter(ins); font-family: var(--display); font-weight: 900; font-size: 1.6rem; color: var(--accent); line-height: 1; padding-top: 2px; }
+.insights b { display: block; }
+.insights span { color: var(--muted); font-size: .94rem; }
+
+/* matrix */
+.scroll { overflow-x: auto; }
+table.matrix { border-collapse: collapse; width: 100%; min-width: 640px; font-size: .9rem; }
+.matrix th, .matrix td { padding: 6px 4px; text-align: center; }
+.matrix th.theme { text-align: right; font-weight: 400; padding-inline-start: 0; width: 34%; }
+.matrix thead th { font-weight: 500; color: var(--muted); font-size: .8rem; }
+.matrix thead a { color: inherit; text-decoration: none; display: inline-block; min-width: 26px; padding: 2px 4px; border-radius: 4px; }
+.matrix thead a:hover { background: var(--accent-soft); color: var(--ink); }
+.matrix thead .partial a { border-bottom: 1px dashed var(--muted); }
+.matrix .group th { text-align: right; padding-top: 18px; font-family: var(--display); font-size: 1rem; font-weight: 700; }
+.matrix tbody tr + tr td, .matrix tbody tr + tr th { border-top: 1px solid var(--line); }
+.cell { display: inline-block; width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid var(--quiet); }
+.str .cell.on { background: var(--accent); border-color: var(--accent); }
+.gap .cell.on { background: var(--warn); border-color: var(--warn); }
+.cell.off { border-style: dotted; opacity: .55; }
+.matrix td.count { font-weight: 700; text-align: left; padding-inline-end: 0; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 20px; font-size: .85rem; color: var(--muted); align-items: center; }
+.legend .cell { width: 12px; height: 12px; vertical-align: -1px; margin-inline-end: 6px; }
+
+/* bars */
+.bars { display: grid; gap: 8px; }
+.bar { display: grid; grid-template-columns: minmax(0, 15rem) 1fr; gap: 14px; align-items: center; }
+.bar .lbl { font-size: .92rem; }
+.bar .track { display: flex; align-items: center; gap: 8px; }
+.bar .fill { height: 14px; border-radius: 2px; background: var(--quiet); }
+.bar.top .fill { background: var(--accent); }
+.bar .n { font-weight: 700; font-size: .9rem; }
+.bar small { color: var(--muted); font-size: .78rem; }
+
+/* adoption table */
+table.plain { border-collapse: collapse; width: 100%; min-width: 600px; font-size: .92rem; }
+.plain th { text-align: right; font-weight: 500; color: var(--muted); font-size: .8rem; padding: 8px 10px 8px 0; border-bottom: 1px solid var(--line); }
+.plain td { padding: 10px 10px 10px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+.plain td:first-child { font-weight: 500; }
+.plain td:last-child { color: var(--muted); }
+.chip { display: inline-block; white-space: nowrap; font-size: .78rem; font-weight: 500; padding: 2px 10px; border-radius: 999px; border: 1px solid transparent; }
+.chip.yes { background: var(--accent); color: var(--surface); }
+.chip.part { background: var(--accent-soft); color: var(--ink); border-color: var(--accent); }
+.chip.no { background: var(--warn-soft); color: var(--ink); border-color: var(--warn); }
+.chip.unk { background: transparent; color: var(--muted); border-color: var(--quiet); }
+
+/* growth */
+.growth { display: grid; gap: 0; }
+.grow { display: grid; grid-template-columns: minmax(0, 12rem) 1fr auto 1fr; gap: 14px; align-items: start; padding-block: 14px; border-top: 1px solid var(--line); }
+.grow:first-child { border-top: 0; }
+.grow .from { color: var(--muted); font-size: .92rem; }
+.grow .to { font-size: .92rem; }
+.grow .arrow { color: var(--accent); font-weight: 700; }
+.grow .conf { display: block; font-size: .78rem; color: var(--muted); margin-top: 4px; font-weight: 400; }
+
+/* focus recs */
+.focus { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.focus article { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 8px; align-content: start; }
+.focus .time { font-size: .8rem; color: var(--accent); font-weight: 700; }
+
+/* lesson index */
+.lessons { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.lcard { display: grid; gap: 6px; align-content: start; text-decoration: none; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; transition: border-color .15s, transform .15s; }
+.lcard:hover { border-color: var(--accent); transform: translateY(-2px); }
+.lcard .top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.lcard .no { font-family: var(--display); font-weight: 900; font-size: 1.5rem; color: var(--accent); line-height: 1; }
+.lcard .dur { font-size: .8rem; color: var(--muted); }
+.lcard .t { font-weight: 500; font-size: .95rem; line-height: 1.4; }
+.lcard .o { font-size: .82rem; color: var(--muted); }
+.tag { font-size: .72rem; color: var(--warn); font-weight: 500; }
+
+/* lesson view */
+.nav { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: .9rem; padding-bottom: 18px; }
+.nav a { text-decoration: none; }
+.pager { display: flex; gap: 16px; }
+.lhead { display: grid; gap: 12px; padding-bottom: 24px; border-bottom: 1px solid var(--line); }
+.lhead .big { font-family: var(--display); font-weight: 900; font-size: 4rem; color: var(--accent); line-height: .9; }
+.message { font-size: 1.05rem; max-width: 70ch; }
+.note { background: var(--warn-soft); border-inline-start: 3px solid var(--warn); padding: 8px 12px; font-size: .88rem; border-radius: 4px; }
+.star { background: var(--accent-soft); border-radius: 10px; padding: 18px 20px; display: grid; gap: 8px; }
+.star h3 { color: var(--ink); }
+.evidence { font-size: .88rem; color: var(--muted); border-inline-start: 2px solid var(--quiet); padding-inline-start: 10px; }
+.vision { font-family: var(--display); font-size: 1.15rem; max-width: 65ch; }
+.items { display: grid; gap: 18px; }
+.item { display: grid; gap: 6px; }
+.item .k { font-size: .78rem; font-weight: 700; color: var(--muted); letter-spacing: .03em; }
+.item.opp h3 { color: var(--warn); }
+.item.prac h3 { color: var(--accent); }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 32px; }
+.two > * { min-width: 0; }
+.actions { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+.actions li { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: start; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
+.lvl { font-size: .72rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; white-space: nowrap; margin-top: 3px; }
+.lvl.easy { background: var(--accent-soft); color: var(--accent); }
+.lvl.medium { background: var(--warn-soft); color: var(--warn); }
+.actions .eff { display: block; font-size: .82rem; color: var(--muted); }
+.empty { color: var(--muted); font-size: .9rem; }
+
+/* hero */
+.hero { display: grid; gap: 16px; padding-block: 24px 36px; border-bottom: 1px solid var(--line); }
+.hero h1 { font-size: clamp(2.2rem, 6vw, 3.6rem); max-width: none; }
+.hero-sub { font-size: 1.12rem; max-width: 60ch; }
+.hero h1::after { content: ""; display: block; width: 72px; height: 4px; background: var(--accent); margin-top: 18px; border-radius: 2px; }
+
+/* top strengths / gaps */
+.duo { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px 40px; }
+.duo > * { min-width: 0; }
+.colh { font-size: 1rem; padding-bottom: 8px; border-bottom: 2px solid var(--accent); }
+.gap .colh { border-color: var(--warn); }
+.tops { display: grid; gap: 0; }
+.topitem { display: grid; gap: 6px; padding-block: 14px; border-bottom: 1px solid var(--line); }
+.topitem .tl { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+.topitem p { color: var(--muted); font-size: .92rem; }
+.reach { font-size: .8rem; color: var(--muted); }
+.strip { display: grid; grid-template-columns: repeat(var(--nl, 10), 1fr); gap: 3px; max-width: 260px; }
+.strip i { height: 6px; border-radius: 3px; background: var(--quiet); opacity: .5; }
+.str .strip i.on, .recs .strip i.on { background: var(--accent); opacity: 1; }
+.gap .strip i.on { background: var(--warn); opacity: 1; }
+
+/* top recommendations */
+.recs { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.recs article { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 8px; align-content: start; }
+.recs article p { color: var(--muted); font-size: .92rem; }
+
+/* expanders */
+details.more > summary { cursor: pointer; color: var(--accent); font-weight: 500; font-size: .92rem; list-style: none; display: inline-flex; gap: 8px; align-items: center; }
+details.more > summary::-webkit-details-marker, details.row > summary::-webkit-details-marker { display: none; }
+details.more > summary::before { content: "+"; font-weight: 700; width: 1em; text-align: center; }
+details.more[open] > summary::before { content: "−"; }
+.more-body { display: grid; gap: 14px; padding-top: 14px; }
+
+/* status lists */
+.status-sum { display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: .9rem; }
+.list { display: grid; border-top: 1px solid var(--line); }
+details.row { border-bottom: 1px solid var(--line); }
+details.row > summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-block: 12px; }
+details.row > summary::before { content: "+"; color: var(--muted); font-weight: 700; width: 1em; flex: none; }
+details.row[open] > summary::before { content: "−"; }
+details.row > summary:hover .rname { color: var(--accent); }
+.rname { flex: 1; min-width: 0; font-weight: 500; }
+.conf { font-size: .8rem; color: var(--muted); }
+.rdet { margin: 0; padding: 0 1.75em 14px 0; display: grid; gap: 8px; font-size: .92rem; }
+.rdet div { display: grid; grid-template-columns: 8rem 1fr; gap: 12px; }
+.rdet dt { color: var(--muted); font-size: .82rem; padding-top: 2px; }
+.rdet dd { margin: 0; min-width: 0; }
+/* teaching map: 3 categories, 16 tiles, color = how strong, arrow = improving */
+.scale { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; font-size: .8rem; color: var(--muted); }
+.bar5 { display: inline-flex; gap: 2px; }
+.bar5 i { width: 26px; height: 12px; border-radius: 2px; }
+.bar5 .l1, .tile.l1 { background: var(--l1); }
+.bar5 .l2, .tile.l2 { background: var(--l2); }
+.bar5 .l3, .tile.l3 { background: var(--l3); }
+.bar5 .l4, .tile.l4 { background: var(--l4); }
+.bar5 .l5, .tile.l5 { background: var(--l5); }
+.uplegend { margin-inline-start: 12px; }
+.up { color: var(--accent); font-weight: 900; font-size: 1.05em; }
+.vectors { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px 28px; align-items: start; }
+.vectors > * { min-width: 0; }
+.vector { display: grid; gap: 10px; }
+.vh { font-size: 1.05rem; padding-bottom: 6px; border-bottom: 2px solid var(--ink); }
+.tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+details.tile { border-radius: 10px; color: var(--ink); scroll-margin-top: 16px; }
+details.tile[open] { grid-column: 1 / -1; }
+details.tile > summary { cursor: pointer; list-style: none; display: grid; gap: 6px; padding: 12px 14px; min-height: 92px; align-content: space-between; }
+details.tile > summary::-webkit-details-marker { display: none; }
+details.tile > summary:hover { outline: 2px solid var(--ink); outline-offset: -2px; border-radius: 10px; }
+.tile.l5 { color: var(--l5-ink); }
+.tile.l1 { color: var(--l1-ink); }
+.tname { font-weight: 700; font-size: .95rem; line-height: 1.3; display: flex; gap: 6px; align-items: baseline; justify-content: space-between; }
+.tile .up { color: inherit; background: var(--surface); color: var(--accent); border-radius: 999px; width: 22px; height: 22px; display: inline-grid; place-items: center; font-size: .9rem; flex: none; }
+.tlevel { font-size: .76rem; opacity: .85; }
+.track { position: relative; height: 4px; border-radius: 2px; background: color-mix(in srgb, currentColor 22%, transparent); }
+.track i { position: absolute; top: 50%; width: 10px; height: 10px; border-radius: 50%; background: currentColor; transform: translate(50%, -50%); }
+.tbody { display: grid; gap: 10px; padding: 0 14px 14px; font-size: .9rem; }
+.tbody .k { font-size: .76rem; font-weight: 700; margin-inline-end: 6px; opacity: .85; }
+.tl-row { display: grid; gap: 4px; }
+.dstrip { display: grid; grid-template-columns: repeat(var(--nl, 10), 1fr); gap: 3px; max-width: 320px; }
+.dstrip i { height: 8px; border-radius: 2px; background: color-mix(in srgb, currentColor 18%, transparent); }
+.dstrip i.s { background: var(--accent); }
+.dstrip i.w { background: var(--warn); }
+.dstrip i.both { background: linear-gradient(to left, var(--accent) 50%, var(--warn) 50%); }
+.tile.l5 .dstrip i.s, .tile.l1 .dstrip i.w { outline: 1px solid var(--surface); }
+.tbody .rdet { padding: 0; }
+.tbody .rdet div { grid-template-columns: 9rem 1fr; }
+.tbody .rdet dt { color: inherit; opacity: .8; }
+.tbody a { color: inherit; font-weight: 700; }
+.dfocus { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.sub { font-size: .76rem; border: 1px solid currentColor; border-radius: 4px; padding: 1px 8px; }
+/* dimension tags in lesson view */
+.dtags { display: flex; flex-wrap: wrap; gap: 4px; }
+.dtag { font-size: .72rem; text-decoration: none; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 0 8px; }
+.dtag:hover { color: var(--accent); border-color: var(--accent); }
+@media (max-width: 400px) { .tiles { grid-template-columns: 1fr; } }
+@media (max-width: 640px) { .rdet div { grid-template-columns: 1fr; gap: 2px; } .rdet { padding-inline-start: 0; } }
+
+/* summary cubes */
+.cubes-sec { padding-block: 8px 32px; }
+.cubes { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+.cube { display: grid; gap: 4px; align-content: start; text-decoration: none; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; transition: border-color .15s, transform .15s; }
+.cube:hover { border-color: var(--accent); transform: translateY(-2px); }
+.ck { font-size: .76rem; letter-spacing: .04em; color: var(--muted); font-weight: 500; }
+.cbig { font-family: var(--display); font-weight: 900; font-size: 2.4rem; line-height: 1; color: var(--accent); }
+.ct { font-weight: 500; font-size: .92rem; }
+.csub { font-size: .8rem; color: var(--muted); }
+.cgo { font-size: .8rem; color: var(--accent); font-weight: 500; margin-top: 6px; }
+.cbar { display: flex; height: 6px; border-radius: 3px; overflow: hidden; gap: 2px; margin-block: 4px; }
+.cbar .yes { background: var(--accent); } .cbar .part { background: var(--l4); } .cbar .no { background: var(--warn); }
+/* lesson view */
+.lcubes { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+.lcube { display: grid; gap: 4px; align-content: start; text-decoration: none; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
+a.lcube:hover { border-color: var(--accent); }
+.lcube b { font-size: 1.05rem; }
+.lcube b.num { font-family: var(--display); font-size: 2rem; font-weight: 900; line-height: 1; color: var(--accent); }
+.lcube.w b.num { color: var(--warn); }
+.lcube.s { background: var(--accent-soft); border-color: transparent; }
+.lcube span:not(.ck) { font-size: .8rem; color: var(--muted); }
+.lmap { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px 28px; }
+.lmap > * { min-width: 0; display: grid; gap: 10px; align-content: start; }
+.pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.pill { font-size: .82rem; text-decoration: none; padding: 4px 12px; border-radius: 999px; color: var(--muted); border: 1px dashed var(--quiet); }
+.pill.s { background: var(--accent); color: var(--surface); border: 1px solid var(--accent); font-weight: 500; }
+.pill.w { background: var(--warn-soft); color: var(--ink); border: 1px solid var(--warn); font-weight: 500; }
+.pill.both { background: linear-gradient(to left, var(--accent-soft) 50%, var(--warn-soft) 50%); color: var(--ink); border: 1px solid var(--accent); font-weight: 500; }
+.plegend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: .8rem; color: var(--muted); align-items: center; }
+.plegend i { display: inline-block; width: 14px; height: 10px; border-radius: 5px; margin-inline-end: 6px; vertical-align: -1px; border: 1px dashed var(--quiet); }
+.plegend i.s { background: var(--accent); border: 0; } .plegend i.w { background: var(--warn-soft); border: 1px solid var(--warn); } .plegend i.both { background: linear-gradient(to left, var(--accent-soft) 50%, var(--warn-soft) 50%); border: 1px solid var(--accent); }
+.items .list { border-top: 1px solid var(--line); }
+.item.prac .rname { color: var(--ink); }
+.item.opp summary::before { color: var(--warn); }
+.item.prac summary::before { color: var(--accent); }
+.ibody { display: grid; gap: 10px; padding: 0 1.75em 14px 0; font-size: .92rem; }
+.ibody .k { display: block; font-size: .76rem; font-weight: 700; color: var(--muted); }
+/* AaronOwl seal */
+.hero { position: relative; }
+.hero-seal { position: absolute; inset-inline-end: 0; top: 8px; width: 118px; transform: rotate(-9deg); }
+.hero-seal .seal { width: 100%; height: auto; display: block; filter: drop-shadow(0 2px 6px rgba(12, 36, 96, .18)); }
+.hero h1, .hero-sub { padding-inline-end: 132px; }
+.owlhead { display: flex; align-items: center; gap: 10px; }
+.owlhead h2 { min-width: 0; }
+.seal-mini { width: 34px; height: 34px; flex: none; display: block; }
+.brandfoot { display: flex; align-items: center; justify-content: center; gap: 10px; padding-block: 28px 8px; margin-top: 16px; border-top: 1px solid var(--line); font-size: .85rem; color: var(--muted); }
+.brandfoot b { color: var(--ink); }
+@media (max-width: 640px) {
+  .hero-seal { position: static; width: 88px; justify-self: end; margin-bottom: -8px; }
+  .hero h1, .hero-sub { padding-inline-end: 0; }
+}
+/* course hub: nav, overview, taught, learned */
+.hubnav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); }
+.navin { max-width: 1040px; margin: 0 auto; padding-inline: 20px; display: flex; align-items: center; gap: 16px; justify-content: space-between; flex-wrap: wrap; padding-block: 8px; }
+.navbrand { display: inline-flex; align-items: center; gap: 8px; font-size: .9rem; color: var(--ink); }
+.navbrand .seal-mini { width: 26px; height: 26px; }
+.tabs { display: flex; gap: 4px; overflow-x: auto; }
+.tabs a { text-decoration: none; color: var(--muted); font-weight: 500; font-size: .92rem; padding: 6px 12px; border-radius: 999px; white-space: nowrap; }
+.tabs a:hover { color: var(--ink); background: var(--line); }
+.tabs a[aria-selected="true"] { background: var(--seal-fill); color: var(--seal-ink); }
+.rcards { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+.rcard { display: grid; gap: 6px; align-content: start; text-decoration: none; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--brand); border-radius: 16px; padding: 16px 18px; transition: transform .15s, border-color .15s; }
+.rcard:hover { transform: translateY(-2px); border-color: var(--brand); }
+.rcard.how { border-top-color: var(--accent); }
+.rcard.learned { border-top-color: var(--warn); }
+.rk { font-size: .76rem; color: var(--muted); letter-spacing: .04em; }
+.rt { font-family: var(--display); font-weight: 900; font-size: 1.4rem; }
+.rbig { font-family: var(--display); font-weight: 900; font-size: 2rem; line-height: 1; color: var(--brand); }
+.rcard.how .rbig { color: var(--accent); }
+.rcard.learned .rbig { color: var(--warn); }
+.rsub { font-size: .88rem; color: var(--muted); }
+.tri { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; }
+.trib { border-radius: 8px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--brand); }
+.trib.how { border-top-color: var(--accent); } .trib.learned { border-top-color: var(--warn); }
+.trib .k { font-size: .74rem; font-weight: 700; color: var(--muted); display: block; margin-bottom: 4px; }
+.caveat { font-size: .82rem; color: var(--muted); border-inline-start: 2px solid var(--quiet); padding-inline-start: 10px; }
+.ribbon { display: grid; grid-template-columns: repeat(var(--cols), minmax(72px, 1fr)); gap: 4px; min-width: calc(var(--cols) * 76px); }
+.rcol { display: grid; gap: 4px; align-content: start; text-decoration: none; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--uc); border-radius: 8px; padding: 8px; min-height: 132px; font-size: .78rem; min-width: 0; overflow-wrap: break-word; hyphens: auto; }
+a.rcol:hover { border-color: var(--brand); }
+.rcol.nodoc { background: transparent; border-style: dashed; color: var(--muted); }
+.rn { font-family: var(--display); font-weight: 900; font-size: 1.3rem; line-height: 1; }
+.ru { color: var(--muted); font-size: .72rem; }
+.rtt { font-weight: 500; line-height: 1.3; }
+.rmeta { color: var(--muted); font-size: .7rem; }
+.sc { justify-self: start; font-weight: 700; font-size: .8rem; padding: 1px 8px; border-radius: 999px; background: var(--line); color: var(--ink); }
+.sc.low { background: var(--warn-soft); color: var(--warn); border: 1px solid var(--warn); }
+.sc.high { background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent); }
+.rlegend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: .8rem; color: var(--muted); align-items: center; }
+.rlegend i.sc { display: inline-block; width: 18px; height: 10px; padding: 0; margin-inline-end: 6px; vertical-align: -1px; }
+.rhead { display: grid; gap: 12px; padding-block: 24px 28px; border-bottom: 1px solid var(--line); }
+.rhead h1 { font-size: clamp(2rem, 5vw, 3rem); }
+.rhead.taught h1 { color: var(--brand); } .rhead.learned h1 { color: var(--warn); }
+.units { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+.unit { display: grid; gap: 4px; background: var(--surface); border: 1px solid var(--line); border-inline-start: 4px solid var(--uc); border-radius: 8px; padding: 12px 14px; }
+.unit span { font-size: .85rem; color: var(--muted); }
+.tbars { display: grid; gap: 6px; }
+.trow { display: grid; grid-template-columns: 2.2rem 1fr 4rem; gap: 10px; align-items: center; text-decoration: none; color: var(--ink); }
+.trow:hover .tn { color: var(--brand); }
+.tn { font-weight: 700; }
+.tbar { display: flex; gap: 2px; height: 18px; }
+.tbar i { background: var(--brand); opacity: .8; border-radius: 2px; }
+.tbar i:nth-child(even) { opacity: .55; }
+.tbar i.adm { background: var(--quiet); opacity: 1; }
+.tt { font-size: .8rem; color: var(--muted); }
+.itable { border-collapse: collapse; width: 100%; min-width: 560px; font-size: .86rem; }
+.itable th { text-align: right; font-weight: 500; color: var(--muted); font-size: .78rem; padding: 6px 8px 6px 0; border-bottom: 1px solid var(--line); }
+.itable td { padding: 6px 8px 6px 0; border-bottom: 1px solid var(--line); position: relative; }
+.itable td .ibar { display: inline-block; height: 8px; border-radius: 2px; background: var(--brand); opacity: .7; vertical-align: middle; max-width: 70%; }
+.itable td .ibar.act { background: var(--accent); opacity: 1; }
+.itable td .iv { font-size: .78rem; margin-inline-start: 6px; color: var(--muted); }
+.cnt { font-size: .78rem; color: var(--muted); }
+.sugg { color: var(--brand); font-size: .88rem; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.kpi { display: grid; gap: 2px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+.kpi b { font-family: var(--display); font-weight: 900; font-size: 1.9rem; line-height: 1; color: var(--accent); }
+.kpi span { font-size: .8rem; color: var(--muted); }
+.kpi.bad { background: var(--warn-soft); border-color: var(--warn); } .kpi.bad b { color: var(--warn); }
+.src { font-size: .78rem; color: var(--muted); }
+.gbars { display: grid; gap: 10px; max-width: 720px; }
+.gbar { display: grid; grid-template-columns: minmax(0, 13rem) 1fr 3rem; gap: 12px; align-items: center; font-size: .9rem; }
+.gtrack { height: 18px; background: var(--line); border-radius: 4px; overflow: hidden; }
+.gtrack i { display: block; height: 100%; border-radius: 4px; }
+.gtrack i.hi { background: var(--accent); } .gtrack i.lo { background: var(--warn); }
+.colh.warn { border-color: var(--warn); }
+.meta { font-size: .76rem; color: var(--muted); white-space: nowrap; }
+.worked { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+.wk { display: grid; gap: 2px; background: var(--accent-soft); border-radius: 10px; padding: 12px 14px; }
+.wk b { font-family: var(--display); font-weight: 900; font-size: 1.5rem; color: var(--accent); line-height: 1.1; }
+.wk span { font-size: .85rem; }
+.risk { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; max-width: 520px; }
+.risk .rk { display: grid; gap: 2px; text-align: center; border-radius: 10px; padding: 12px; background: var(--surface); border: 1px solid var(--line); }
+.risk .rk b { font-family: var(--display); font-weight: 900; font-size: 1.8rem; line-height: 1; }
+.risk .rk.hi b { color: var(--warn); } .risk .rk.mid b { color: var(--l1); } .risk .rk.ok b { color: var(--accent); }
+.lscore { font-size: .92rem; padding: 10px 14px; border-radius: 8px; background: var(--surface); border: 1px solid var(--line); margin-top: 16px; }
+.lscore.low { background: var(--warn-soft); border-color: var(--warn); } .lscore.high { background: var(--accent-soft); border-color: var(--accent); }
+.lsecs { display: flex; gap: 2px; height: 26px; }
+.lsec { background: var(--brand); opacity: .75; border-radius: 3px; color: var(--seal-ink); font-size: .68rem; padding-inline: 4px; display: flex; align-items: center; overflow: hidden; }
+.lsec:nth-child(even) { opacity: .55; } .lsec.adm { background: var(--quiet); opacity: 1; color: var(--ink); }
+.seclist { margin: 0; padding-inline-start: 1.4em; display: grid; gap: 4px; font-size: .9rem; }
+.seclist li span { display: inline-block; min-width: 4.2em; color: var(--muted); font-size: .8rem; }
+.seclist li.adm { color: var(--muted); }
+.chal { display: grid; gap: 2px; padding-block: 6px; border-bottom: 1px solid var(--line); }
+.exl { margin: 0; padding-inline-start: 1.2em; display: grid; gap: 4px; font-size: .9rem; }
+@media (max-width: 640px) { .gbar { grid-template-columns: 1fr; gap: 4px; } .trow { grid-template-columns: 2rem 1fr 3.2rem; } }
+@media (prefers-reduced-motion: reduce) { .rcard { transition: none; } .rcard:hover { transform: none; } }
+.rpts { margin: 4px 0 0; padding-inline-start: 1.1em; display: grid; gap: 6px; font-size: .9rem; }
+.rpts li::marker { color: var(--muted); }
+.h1sub { font-family: var(--display); font-size: clamp(1.3rem, 3vw, 1.8rem); color: var(--muted); margin-top: -6px; }
+.hero h1 + .h1sub { padding-inline-end: 132px; }
+.concl { max-width: 62ch; padding: 14px 18px; border-radius: 10px; background: var(--warn-soft); border-inline-start: 4px solid var(--warn); display: grid; gap: 4px; }
+.concl .k { font-size: .76rem; font-weight: 700; color: var(--warn); }
+.concl p { font-size: 1.05rem; }
+.cdonut { display: flex; flex-wrap: wrap; gap: 20px 36px; align-items: center; }
+.donut { flex: none; }
+.ulegend { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.ulegend li, .tplist li { display: grid; grid-template-columns: 12px 1fr auto; gap: 10px; align-items: center; }
+.ulegend i, .tplist i { width: 12px; height: 12px; border-radius: 3px; }
+.ulegend span { font-size: .85rem; color: var(--muted); }
+.ucards { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 14px; }
+.ucards > * { min-width: 0; }
+.ucard { background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--uc); border-radius: 12px; padding: 14px 16px; display: grid; gap: 12px; align-content: start; }
+.ucard header { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; align-items: baseline; }
+.ucard header b { font-family: var(--display); font-size: 1.15rem; }
+.ucard header span { font-size: .78rem; color: var(--muted); }
+.ubody { display: grid; grid-template-columns: 112px 1fr; gap: 14px; align-items: start; }
+.tplist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: .86rem; min-width: 0; }
+.tpn { min-width: 0; }
+.missing { color: var(--muted); font-style: italic; }
+.tpm { font-size: .76rem; color: var(--muted); white-space: nowrap; }
+.lrows { display: grid; border-top: 1px solid var(--line); }
+.lrow { display: grid; grid-template-columns: 2rem minmax(0, 15rem) minmax(60px, 1fr) 20rem; gap: 12px; align-items: center; padding-block: 10px; border-bottom: 1px solid var(--line); text-decoration: none; color: var(--ink); }
+.lrow:hover .lt { color: var(--brand); }
+.lt { font-size: .9rem; }
+.lbar { height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; }
+.lbar i { display: block; height: 100%; background: var(--brand); border-radius: 4px; }
+.lnum { font-size: .8rem; color: var(--muted); white-space: nowrap; }
+.lnum b { color: var(--ink); }
+.ilog { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: .86rem; }
+.ilog li span { display: inline-block; min-width: 4.5em; color: var(--muted); font-size: .78rem; }
+.ilog li b { font-weight: 500; margin-inline-end: 6px; }
+@media (max-width: 640px) { .ubody { grid-template-columns: 1fr; } .lrow { grid-template-columns: 2rem 1fr; } .lrow .lbar { display: none; } .lrow .lnum { grid-column: 2; white-space: normal; } .hero h1 + .h1sub { padding-inline-end: 0; } }
+.asis { background: #ffffff; color: #0f172a; color-scheme: light; border-radius: 16px; padding-block: 8px; margin-block: 20px; }
+.asis-link { color: inherit; text-decoration: underline; text-decoration-color: #93c5fd; text-underline-offset: 3px; }
+.rins { font-size: 1.12rem; font-weight: 700; line-height: 1.4; color: var(--ink); }
+.rcard .rt { font-size: 1rem; font-weight: 700; color: var(--muted); }
+.rcard { gap: 10px; }
+.rcard .cgo { margin-top: auto; padding-top: 6px; font-weight: 700; }
+.rcard.taught .cgo { color: var(--brand); } .rcard.learned .cgo { color: var(--warn); }
+.asis { background: transparent; margin-block: 8px; padding-block: 0; }
+.rcard.missing-r { background: transparent; border-style: dashed; border-top-style: solid; border-top-color: var(--quiet); }
+.rcard.missing-r .rins { color: var(--muted); }
+.cmiss { margin-top: auto; padding-top: 6px; font-size: .85rem; font-weight: 700; color: var(--muted); }
+.note { font-size: .88rem; color: var(--muted); background: var(--surface); border: 1px dashed var(--quiet); border-radius: 10px; padding: 10px 14px; max-width: 70ch; }
+@media (prefers-reduced-motion: reduce) { .cube { transition: none; } .cube:hover { transform: none; } }
+@media (max-width: 640px) {
+  .bar { grid-template-columns: 1fr; gap: 4px; }
+  .grow { grid-template-columns: 1fr; gap: 4px; }
+  .grow .arrow { display: none; }
+  .lhead .big { font-size: 3rem; }
+}
+@media (prefers-reduced-motion: reduce) { .lcard { transition: none; } .lcard:hover { transform: none; } }
+</style>
+
+<nav id="hubnav" class="hubnav" aria-label="דוחות הקורס"></nav>
+<template id="sealTpl">__SEAL__</template>
+<template id="sealMiniTpl">__SEAL_MINI__</template>
+<div class="wrap">
+
+<main id="overview" hidden></main>
+<main id="taught" hidden></main>
+<main id="learned" hidden></main>
+
+<main id="home">
+  <header class="hero">
+    <div class="hero-seal">__SEAL__</div>
+    <span class="eyebrow">__HERO_EYEBROW__</span>
+    <h1>__HERO_H1__</h1>
+    <p class="hero-sub">__HERO_SUB__</p>
+    <div class="facts num" id="facts"></div>
+  </header>
+
+  <section>
+    <div class="head"><span class="eyebrow">תובנות עיקריות</span><h2>__INSIGHTS_HEAD__</h2></div>
+    <ol class="insights">
+__INSIGHTS__
+    </ol>
+  </section>
+
+  <section class="cubes-sec" aria-label="סיכום">
+    <div class="cubes" id="cubes"></div>
+  </section>
+
+  <section id="dims">
+    <div class="head"><span class="eyebrow">16 הממדים הפדגוגיים</span><h2>מפת ההוראה</h2>
+      <p class="lead">הצבע מראה עד כמה הממד בלט כחוזקה לאורך הסמסטר. חץ מסמן ממד שבו הומלץ שיפור, ובהמשך הסמסטר הוא נצפה כחוזקה. לחיצה על ממד פותחת את הפירוט לפי שיעורים.</p></div>
+    <div class="scale" aria-hidden="true">
+      <span>מוקד לשיפור</span><span class="bar5"><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i><i class="l5"></i></span><span>חוזקה בולטת</span>
+      <span class="uplegend"><span class="up">↑</span> התקדמות</span>
+    </div>
+    <div class="vectors" id="vectors"></div>
+    <div hidden><div id="topStr"></div><div id="topGap"></div><table id="matrix"></table></div>
+  </section>
+
+  <section id="sec-recs">
+    <div class="head"><span class="eyebrow">המלצות חוזרות</span><div class="owlhead">__SEAL_MINI__<h2>ההמלצות שהינשוף חזר עליהן הכי הרבה</h2></div></div>
+    <div class="recs" id="topRecs"></div>
+    <details class="more">
+      <summary>כל ההמלצות לפי שכיחות</summary>
+      <div class="more-body"><div class="bars num" id="bars"></div></div>
+    </details>
+  </section>
+
+  <section id="sec-adopt">
+    <div class="head"><span class="eyebrow">מעקב אימוץ</span><div class="owlhead">__SEAL_MINI__<h2>אילו המלצות של הינשוף אומצו בפועל?</h2></div>
+      <p class="lead">לחיצה על המלצה מציגה את העדות ואת השיעורים שבהם הומלצה. אימוץ מסומן כשנצפתה פרקטיקה תואמת בשיעור מאוחר יותר.</p></div>
+    <div class="status-sum" id="statusSum"></div>
+    <div class="list" id="adopt"></div>
+  </section>
+
+  <section id="sec-growth">
+    <div class="head"><span class="eyebrow">התפתחות</span><h2>ממדים שבהם נצפה שיפור</h2>
+      <p class="lead">לחיצה על ממד מציגה את המצב בתחילת הסמסטר ובסופו.</p></div>
+    <div class="list" id="growth"></div>
+  </section>
+
+  <section id="sec-next">
+    <div class="head"><span class="eyebrow">להמשך</span><div class="owlhead">__SEAL_MINI__<h2>__NEXT_HEAD__</h2></div></div>
+    <div class="focus">
+__NEXT__
+    </div>
+  </section>
+
+  <section id="index">
+    <div class="head"><span class="eyebrow">הדוחות המלאים</span><h2>השיעורים</h2></div>
+    <div class="lessons" id="lessons"></div>
+  </section>
+</main>
+
+<main id="lesson" hidden></main>
+
+<footer class="brandfoot">__SEAL_MINI__<span>דוח פדגוגי מבית <b>AaronOwl</b> · aaronowl.com</span></footer>
+
+</div>
+
+<script>
+const LESSONS = __DATA__;
+const A = __ANALYSIS__;
+document.documentElement.style.setProperty("--nl", String(LESSONS.length));
+const PARTIAL = A.partial || {};
+const STRENGTHS = A.strengths || [];
+const GAPS = A.gaps || [];
+const RECS = A.recs.map(r => [r.name, r.lessons]);
+const ADOPT = A.adopt.map(a => [a.rec, a.lessons, a.status, a.evidence]);
+const STATUS = { yes: "אומצה", part: "אומצה חלקית", no: "לא נצפתה", unk: "לא ניתן לקבוע" };
+const GROWTH = A.growth.map(g => [g.dim, g.before, g.after, g.confidence]);
+
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const secs = d => { const p = d.split(":").map(Number); return p.length === 3 ? p[0]*3600 + p[1]*60 + p[2] : p[0]*60 + p[1]; };
+const hm = s => { const m = Math.round(s / 60); return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}`; };
+const fmtDur = d => hm(secs(d));
+const shortTitle = t => { const parts = t.split(/[:\-–]/).map(x => x.trim()).filter(Boolean); const course = (typeof A !== "undefined" && A.course && A.course.name) || ""; return parts.find(x => !course || !x.includes(course)) || parts[0] || t; };
+
+const STR_NOTES = A.str_notes || [];
+const GAP_NOTES = A.gap_notes || [];
+const REC_NOTES = A.recs.map(r => r.note || "");
+const reach = n => { const r = n / LESSONS.length; return r >= 1 ? "בכל השיעורים" : r >= 0.85 ? "כמעט בכל השיעורים" : r >= 0.55 ? "ברוב השיעורים" : "בחלק מהשיעורים"; };
+const strip = ls => `<span class="strip" aria-hidden="true">${LESSONS.map(l => `<i class="${ls.includes(l.n) ? "on" : ""}"></i>`).join("")}</span>`;
+
+// 16 pedagogic dimensions (pedagogic_dimensions.json); per-course notes and item mapping come from the analysis
+const BASE = __DIMS__;
+const VECTORS = BASE.vectors;
+const DIMS = BASE.dims.map(d => Object.assign({ note: "", focus: [] }, d, A.dims[d.id] || {}));
+// Mapping of every report item to dimensions. Key: lesson + O (outstanding) / P# (practice) / W# (opportunity)
+const ITEM_DIMS = A.item_dims;
+const DIM_BY_ID = Object.fromEntries(DIMS.map(d => [d.id, d]));
+const DSTATUS = { strong: "חוזקה", progress: "התקדמות", improve: "נדרש שיפור", partial: "אות חלקי" };
+// per dimension: lessons where it appeared as a strength / as an improvement area
+function dimSignals() {
+  const sig = Object.fromEntries(DIMS.map(d => [d.id, { s: new Set(), w: new Set() }]));
+  for (const [k, ids] of Object.entries(ITEM_DIMS)) {
+    const m = k.match(/^(\d+)([OPW])/);
+    const n = Number(m[1]), kind = m[2] === "W" ? "w" : "s";
+    ids.forEach(id => sig[id][kind].add(n));
+  }
+  return sig;
+}
+
+// level, arrow and bar position are computed in Python (signals.dim_state) and stored in analysis.dims
+const LEVEL_HE = { l5: "חוזקה בולטת", l4: "חוזקה", l3: "מאוזן", l2: "דורש תשומת לב", l1: "מוקד לשיפור" };
+function dimState(sig, id) {
+  const d = DIM_BY_ID[id];
+  const cls = d.level || "l3";
+  return { level: { cls, he: d.level_he || LEVEL_HE[cls] }, improving: !!d.improving, pos: d.pos ?? 50 };
+}
+
+function renderDims() {
+  const sig = dimSignals();
+  const strip = id => `<span class="dstrip" aria-hidden="true">${LESSONS.map(l => {
+    const s = sig[id].s.has(l.n), w = sig[id].w.has(l.n);
+    return `<i class="${s && w ? "both" : s ? "s" : w ? "w" : ""}" title="שיעור ${l.n}"></i>`;
+  }).join("")}</span>`;
+  const lessonLinks = set => [...set].sort((a, b) => a - b).map(n => `<a href="#l${n}">${n}</a>`).join(", ") || "אין";
+
+  document.getElementById("vectors").innerHTML = VECTORS.map(v => `
+    <div class="vector"><h3 class="vh">${esc(v.he)}</h3><div class="tiles">
+      ${DIMS.filter(d => d.v === v.id).map(d => {
+        const st = dimState(sig, d.id);
+        return `<details class="tile ${st.level.cls}" id="dim-${d.id}">
+          <summary>
+            <span class="tname">${esc(d.he)}${st.improving ? `<span class="up" title="התקדמות לאורך הסמסטר" aria-label="התקדמות">↑</span>` : ""}</span>
+            <span class="tlevel">${st.level.he}</span>
+            <span class="track" aria-hidden="true"><i style="inset-inline-start:${st.pos}%"></i></span>
+          </summary>
+          <div class="tbody">
+            <p>${esc(d.note)}</p>
+            <div class="tl-row"><span class="k">לאורך השיעורים</span>${strip(d.id)}</div>
+            <dl class="rdet"><div><dt>חוזקה בשיעורים</dt><dd class="num">${lessonLinks(sig[d.id].s)}</dd></div><div><dt>הומלץ שיפור בשיעורים</dt><dd class="num">${lessonLinks(sig[d.id].w)}</dd></div></dl>
+            <div class="dfocus"><span class="k">${st.level.cls === "l4" || st.level.cls === "l5" ? "מה בולט" : "במה להתמקד"}</span>${d.focus.map(f => `<span class="sub on">${esc(f)}</span>`).join("")}</div>
+          </div>
+        </details>`;
+      }).join("")}
+    </div></div>`).join("");
+}
+
+// ---------- course hub: overview + "what I taught" + "what students learned" ----------
+const TAUGHT = __TAUGHT__;     // {lessonNumber: {sections, examples, interactions, challenging, questions}} or null
+const LEARNED = __LEARNED__;
+const LEARNED_HTML = __LEARNED_HTML__; // the learning report exactly as delivered   // parsed course learning report or null
+const HUB = A.hub || null;
+const HAS_HUB = !!(HUB && (TAUGHT || LEARNED));
+const TITLES_ONLY = !!TAUGHT && Object.values(TAUGHT).every(t => t._titles_only);
+const lessonById = n => LESSONS.find(l => l.n === n);
+const lessonLink = n => lessonById(n) ? `<a href="#l${n}">שיעור ${n}</a>` : `שיעור ${n}`;
+const fmtMin = s => `${Math.round(s / 60)} דק'`;
+const NOUN = (A.course && A.course.student_noun) || "סטודנטים";
+
+const INTER_CATS = [
+  { id: "ex", he: "דוגמאות", test: t => /example|דוגמ/.test(t) },
+  { id: "sq", he: `שאלות ${NOUN}`, test: t => /student.?question|שאלת סטודנט/.test(t) },
+  { id: "tq", he: "שאלות מרצה", test: t => /teacher.?question|שאלת מור|שאלת מרצ/.test(t) },
+  { id: "disc", he: "דיונים", test: t => /discussion|דיון/.test(t) },
+  { id: "act", he: "פעילויות", test: t => /ניסוי|משימ|קהוט|kahoot|quiz|קוויז|תרגיל|activity|exercise|pair|זוג/.test(t) }
+];
+function interCounts(tl) {
+  const c = Object.fromEntries(INTER_CATS.map(x => [x.id, 0]));
+  (tl.interactions || []).forEach(i => {
+    const t = (i.type + " " + i.desc).toLowerCase();
+    if (/זוג|pair|קוויז|quiz|קהוט|kahoot|digipad|משימ|תרגיל|ניסוי/.test(t)) { c.act++; return; }
+    const cat = INTER_CATS.find(x => x.id !== "act" && x.test(i.type.toLowerCase()));
+    if (cat) c[cat.id]++;
+  });
+  return c;
+}
+
+function renderNav() {
+  const nav = document.getElementById("hubnav");
+  if (!HAS_HUB) { nav.hidden = true; return; }
+  const tabs = [["overview", "סקירה"], ["taught", "מה לימדתי"], ["how", "איך לימדתי"], ["learned", "מה למדו"]]
+    .filter(([id]) => (id !== "taught" || TAUGHT) && (id !== "learned" || LEARNED));
+  nav.innerHTML = `<div class="navin"><span class="navbrand">${document.getElementById("sealMiniTpl").innerHTML}<b>AaronOwl</b></span>
+    <div class="tabs" role="tablist">${tabs.map(([id, he]) => `<a href="#${id}" data-tab="${id}" role="tab">${he}</a>`).join("")}</div></div>`;
+}
+function setTab(id) {
+  document.querySelectorAll("#hubnav [data-tab]").forEach(a => a.setAttribute("aria-selected", String(a.dataset.tab === id)));
+}
+
+function renderOverview() {
+  if (!HAS_HUB) return;
+  const el = document.getElementById("overview");
+  const k = (LEARNED && LEARNED.kpis) || [];
+  const reports = (HUB.reports || []).map(r => `
+    <${r.missing ? "div" : "a"} class="rcard ${r.id}${r.missing ? " missing-r" : ""}" ${r.missing ? "" : `href="#${r.id}"`}>
+      <span class="rk">${esc(r.kicker)}</span>
+      <span class="rt">${esc(r.title)}</span>
+      ${r.big ? `<span class="rbig num">${esc(r.big)}</span>` : ""}
+      ${r.insight ? `<span class="rins">${esc(r.insight)}</span>` : ""}
+      ${r.text ? `<span class="rsub">${esc(r.text)}</span>` : ""}
+      ${(r.points || []).length ? `<ul class="rpts">${r.points.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}
+      ${r.missing ? `<span class="cmiss">${esc(r.cta || "לא זמין לקורס הזה")}</span>` : `<span class="cgo">${esc(r.cta || "לדוח המלא")} ←</span>`}
+    </${r.missing ? "div" : "a"}>`).join("");
+  const links = (HUB.links || []).map(x => `
+    <details class="row link">
+      <summary><span class="rname">${esc(x.title)}</span></summary>
+      <div class="ibody"><p>${esc(x.text)}</p>
+        <div class="tri">${["taught", "how", "learned"].filter(r => x[r]).map(r => `<div class="trib ${r}"><span class="k">${{ taught: "מה לימדתי", how: "איך לימדתי", learned: "מה למדו" }[r]}</span><p>${esc(x[r])}</p></div>`).join("")}</div>
+        ${x.caveat ? `<p class="caveat">${esc(x.caveat)}</p>` : ""}
+      </div>
+    </details>`).join("");
+  el.innerHTML = `
+    <header class="hero">
+      <div class="hero-seal">${document.getElementById("sealTpl").innerHTML}</div>
+      ${HUB.eyebrow ? `<span class="eyebrow">${esc(HUB.eyebrow)}</span>` : ""}
+      <h1>${esc(HUB.h1)}</h1>
+      ${HUB.subtitle ? `<p class="h1sub">${esc(HUB.subtitle)}</p>` : ""}
+      ${HUB.sub ? `<p class="hero-sub">${esc(HUB.sub)}</p>`
+        : (HUB.conclusion_from_learned && LEARNED && LEARNED.summary ? `<div class="concl"><span class="k">המסקנה מדוח הלמידה</span><p>${esc(LEARNED.summary)}</p></div>` : "")}
+    </header>
+    <section>
+      <div class="head"><span class="eyebrow">שלושה דוחות</span><h2>הכוונה, הדרך והתוצאה</h2></div>
+      <div class="rcards">${reports}</div>
+    </section>
+    <section>
+      <div class="head"><span class="eyebrow">כוונה מול תוצאה</span><div class="owlhead">${document.getElementById("sealMiniTpl").innerHTML}<h2>מה הינשוף רואה כשמחברים את ${LEARNED ? "שלושת הדוחות" : "הדוחות"}</h2></div>
+        <p class="lead">לחיצה על תובנה מציגה מה כל דוח תורם לה.</p></div>
+      <div class="list">${links}</div>
+    </section>
+    <section>
+      <div class="head"><span class="eyebrow">ציר הקורס</span><h2>${LEARNED ? "השיעורים, מה נלמד ומה נקלט" : "השיעורים לאורך הסמסטר"}</h2>
+        <p class="lead">כל עמודה היא שיעור. לחיצה על שיעור מתועד פותחת את הדוח שלו.</p></div>
+      ${ribbon()}
+    </section>`;
+}
+
+function learnedLessonScores() {
+  const m = {};
+  if (!LEARNED) return m;
+  (LEARNED.gap && LEARNED.gap.lessons || []).forEach(x => { const n = Number((x.label.match(/\d+/) || [])[0]); if (n) m[n] = x.value; });
+  (LEARNED.worked_lessons || []).forEach(x => { m[x.lesson] = x.score; });
+  return m;
+}
+function courseAvg() {
+  const k = LEARNED && (LEARNED.kpis || []).find(x => /הערכה/.test(x.label) && !/פער/.test(x.label));
+  return k ? parseFloat(k.value) : null;
+}
+
+function ribbon() {
+  const units = HUB.units || [];
+  const scores = learnedLessonScores(), avg = courseAvg();
+  const maxN = Math.max(...LESSONS.map(l => l.n), ...Object.keys(scores).map(Number), ...units.flatMap(u => u.lessons));
+  const cols = Array.from({ length: maxN }, (_, i) => i + 1);
+  const unitOf = n => units.findIndex(u => u.lessons.includes(n));
+  const cell = n => {
+    const l = lessonById(n), s = scores[n], u = unitOf(n);
+    const sc = s == null ? "" : `<span class="sc ${avg != null && s < avg - 10 ? "low" : avg != null && s > avg + 10 ? "high" : ""}" title="ממוצע הערכה בשיעור">${s}</span>`;
+    const t = TAUGHT && TAUGHT[n];
+    return `<${l ? "a" : "div"} class="rcol${l ? "" : " nodoc"}" ${l ? `href="#l${n}"` : ""} style="--uc:${u < 0 ? "var(--quiet)" : unitHue(u)}">
+      <span class="rn num">${n}</span>
+      <span class="ru">${u >= 0 ? esc(units[u].short || units[u].name) : ""}</span>
+      <span class="rtt">${l ? esc(shortTitle(l.title)) : "לא מתועד"}</span>
+      ${t ? `<span class="rmeta">${t.challenging.length} נושאים מאתגרים</span>` : ""}
+      ${sc}
+    </${l ? "a" : "div"}>`;
+  };
+  return `<div class="scroll"><div class="ribbon" style="--cols:${cols.length}">${cols.map(cell).join("")}</div></div>
+    ${!LEARNED ? "" : `<div class="rlegend"><span><i class="sc low"></i>הערכה נמוכה מממוצע הקורס${avg != null ? ` (${avg})` : ""}</span><span><i class="sc high"></i>הערכה גבוהה מהממוצע</span><span>מספר בשיעור: ממוצע ההערכה בשיעור, מתוך דוח הלמידה</span></div>`}`;
+}
+
+// sub-topics: content sections grouped by unit, merged by their main title (text before " - ")
+function unitTopics() {
+  const units = (HUB && HUB.units) || [];
+  const groups = units.map((u, i) => ({ u, i, topics: [], secs: 0 }))
+    .filter(g => g.u.lessons.some(n => TAUGHT[n]));
+  const orphan = { u: { name: "שיעורים נוספים", lessons: [] }, i: units.length, topics: [], secs: 0 };
+  LESSONS.forEach(l => {
+    const t = TAUGHT[l.n];
+    if (!t) return;
+    const g = groups.find(x => x.u.lessons.includes(l.n)) || orphan;
+    t.sections.filter(s => !s.admin).forEach(s => {
+      const [main, ...rest] = (s.title || "").split(/\s[-–]\s/);
+      const key = main.trim() || `שיעור ${l.n}: אין חלוקה לנושאים בדוח השיעור`;
+      let tp = g.topics.find(x => x.name === key);
+      if (!tp) { tp = { name: key, secs: 0, lessons: new Set(), details: [], missing: !main.trim() }; g.topics.push(tp); }
+      tp.secs += s.secs; tp.lessons.add(l.n);
+      if (rest.length) tp.details.push(rest.join(" - "));
+      g.secs += s.secs;
+    });
+  });
+  if (orphan.topics.length) groups.push(orphan);
+  groups.forEach(g => g.topics.sort((a, b) => b.secs - a.secs));
+  return groups;
+}
+const UNIT_COLORS = ["#94a3b8", "#1e40af", "#0d9488", "#7c3aed", "#d97706", "#0369a1", "#be185d"];
+const unitHue = i => UNIT_COLORS[i % UNIT_COLORS.length];
+// donut drawn from shares; slices start at 12 o'clock and run counter-clockwise (reading direction RTL)
+function donut(parts, size, hole, colorOf, labelOf) {
+  const total = parts.reduce((a, p) => a + p.v, 0) || 1, r = size / 2, ri = r * hole;
+  let a0 = 0;
+  const pt = (ang, rad) => [r - rad * Math.sin(ang), r - rad * Math.cos(ang)];
+  const arcs = parts.map((p, i) => {
+    const a1 = a0 + p.v / total * Math.PI * 2, large = a1 - a0 > Math.PI ? 1 : 0;
+    const [x0, y0] = pt(a0, r), [x1, y1] = pt(a1, r), [x2, y2] = pt(a1, ri), [x3, y3] = pt(a0, ri);
+    const d = parts.length === 1
+      ? `M${r},0 A${r},${r} 0 1,0 ${r - 0.01},0 Z M${r},${r - ri} A${ri},${ri} 0 1,1 ${r - 0.01},${r - ri} Z`
+      : `M${x0},${y0} A${r},${r} 0 ${large},0 ${x1},${y1} L${x2},${y2} A${ri},${ri} 0 ${large},1 ${x3},${y3} Z`;
+    a0 = a1;
+    return `<path d="${d}" fill="${colorOf(p, i)}" fill-rule="evenodd" stroke="var(--bg)" stroke-width="1.5"><title>${esc(labelOf(p))}</title></path>`;
+  }).join("");
+  return `<svg class="donut" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" role="img" aria-hidden="true">${arcs}</svg>`;
+}
+
+function renderTaught() {
+  if (!TAUGHT) return;
+  const el = document.getElementById("taught");
+  const nums = LESSONS.map(l => l.n).filter(n => TAUGHT[n]);
+  const groups = unitTopics();
+  const contentSecs = groups.reduce((a, g) => a + g.secs, 0);
+  const allSecs = nums.reduce((a, n) => a + TAUGHT[n].sections.reduce((x, s) => x + s.secs, 0), 0);
+  const hours = hm;
+  const pct = (a, b) => Math.round(a / b * 100);
+
+  const courseDonut = donut(groups.map(g => ({ v: g.secs, g })), 168, 0.58, p => unitHue(p.g.i), p => `${p.g.u.name}: ${pct(p.v, contentSecs)}%`);
+  const legend = groups.map(g => `<li><i style="background:${unitHue(g.i)}"></i><b>${esc(g.u.name)}</b><span class="num">${pct(g.secs, contentSecs)}% · ${hours(g.secs)} שעות</span></li>`).join("");
+
+  const unitCards = groups.map(g => {
+    const shade = (p, i) => `color-mix(in srgb, ${unitHue(g.i)} ${Math.max(22, 100 - i * 10)}%, #ffffff)`;
+    const top = g.topics.slice(0, 6), more = g.topics.slice(6);
+    const row = (tp, i) => `<li><i style="background:${shade(tp, i)}"></i><span class="tpn${tp.missing ? " missing" : ""}">${esc(tp.name)}</span><span class="tpm num">${Math.round(tp.secs / 60)} דק' · ${[...tp.lessons].map(n => `<a href="#l${n}">${n}</a>`).join(", ")}</span></li>`;
+    return `<article class="ucard" style="--uc:${unitHue(g.i)}">
+      <header><b>${esc(g.u.name)}</b><span class="num">${g.u.lessons.filter(n => TAUGHT[n]).map(n => `שיעור ${n}`).join(" · ")}</span></header>
+      <div class="ubody">${donut(g.topics.map(t => ({ v: t.secs, t })), 112, 0.55, (p, i) => shade(p, i), p => `${p.t.name}: ${Math.round(p.v / 60)} דק'`)}
+        <ol class="tplist">${top.map(row).join("")}</ol></div>
+      ${more.length ? `<details class="more"><summary>עוד ${more.length} תתי-נושאים</summary><div class="more-body"><ol class="tplist">${more.map((t, i) => row(t, i + 6)).join("")}</ol></div></details>` : ""}
+    </article>`;
+  }).join("");
+
+  const counts = nums.map(n => { const c = interCounts(TAUGHT[n]); return { n, q: c.sq, all: (TAUGHT[n].interactions || []).length, act: c.act }; });
+  const maxAll = Math.max(1, ...counts.map(c => c.all));
+  const totQ = counts.reduce((a, c) => a + c.q, 0), totAll = counts.reduce((a, c) => a + c.all, 0);
+  const lessonRows = counts.map(c => `<a class="lrow" href="#l${c.n}">
+      <span class="tn num">${c.n}</span><span class="lt">${esc(shortTitle(lessonById(c.n).title))}</span>
+      <span class="lbar"><i style="width:${c.all / maxAll * 100}%"></i></span>
+      <span class="lnum num"><b>${c.all}</b> אינטראקציות · <b>${c.q}</b> שאלות ${NOUN}${c.act ? ` · <b>${c.act}</b> פעילויות` : ""}</span></a>`).join("");
+
+  el.innerHTML = `
+    <header class="rhead taught"><span class="eyebrow">דוח 01</span><h1>מה לימדתי</h1>
+      <p class="hero-sub">${esc((HUB && HUB.taught_lead) || "החומר שנלמד בפועל, לפי ניתוח הקלטות השיעורים.")}</p>
+      <div class="kpis num"><div class="kpi"><b>${nums.length}</b><span>שיעורים מתועדים</span></div><div class="kpi"><b>${hours(allSecs)}</b><span>שעות הוראה</span></div>${TITLES_ONLY ? `<div class="kpi"><b>${groups.length}</b><span>יחידות לימוד</span></div>` : `<div class="kpi"><b>${pct(contentSecs, allSecs)}%</b><span>מהזמן מוקדש לתוכן</span></div><div class="kpi"><b>${totAll}</b><span>אינטראקציות בכיתה, מהן ${totQ} שאלות ${NOUN}</span></div>`}</div>
+      ${TITLES_ONLY ? `<p class="note">לקורס הזה אין ניתוח כיתה מפורט. החלוקה מבוססת על נושאי השיעורים ומשכם, ולכן אין כאן תתי-נושאים בתוך שיעור או ספירת אינטראקציות.</p>` : ""}</header>
+    <section><div class="head"><span class="eyebrow">חלוקת הזמן</span><h2>על מה הלך זמן הקורס</h2>
+      <p class="lead">${TITLES_ONLY ? "זמן השיעורים המתועדים, לפי יחידה." : "זמן התוכן בכל השיעורים המתועדים, לפי יחידה. זמן מנהלי (הודעות, בעיות טכניות) לא נכלל."}</p></div>
+      <div class="cdonut">${courseDonut}<ul class="ulegend">${legend}</ul></div></section>
+    <section><div class="head"><span class="eyebrow">תתי-נושאים</span><h2>מה נלמד בכל יחידה</h2>
+      <p class="lead">${TITLES_ONLY ? "נושאי השיעורים בכל יחידה, מהארוך לקצר." : "תתי-הנושאים לפי ניתוח ההקלטה, מהארוך לקצר."} מספרי השיעורים מקשרים לפירוט.</p></div>
+      <div class="ucards">${unitCards}</div></section>
+    ${TITLES_ONLY ? "" : `<section><div class="head"><span class="eyebrow">בכיתה</span><h2>אינטראקציות ושאלות בכל שיעור</h2>
+      <p class="lead">לחיצה על שיעור פותחת את הפירוט: מבנה השיעור, נושאים מאתגרים, דוגמאות ויומן האינטראקציות.</p></div>
+      <div class="lrows">${lessonRows}</div></section>`}`;
+}
+
+function renderLearned() {
+  if (!LEARNED) return;
+  const el = document.getElementById("learned");
+  // shown as delivered: same content, same inline design (a light page, also in dark mode)
+  el.innerHTML = `<div class="asis">${LEARNED_HTML || ""}</div>`;
+  el.querySelectorAll(".asis strong").forEach(b => {
+    const m = b.textContent.trim().match(/^שיעור (\d+)$/);
+    if (m && lessonById(Number(m[1]))) {
+      const a = document.createElement("a"); a.href = "#l" + m[1]; a.className = "asis-link";
+      b.parentNode.insertBefore(a, b); a.appendChild(b);
+    }
+  });
+}
+
+// what-I-taught block inside a single lesson page
+function lessonTaughtBlock(n) {
+  const t = TAUGHT && TAUGHT[n];
+  const scores = learnedLessonScores(), s = scores[n], avg = courseAvg();
+  let out = "";
+  if (s != null) out += `<p class="lscore ${avg != null && s < avg - 10 ? "low" : avg != null && s > avg + 10 ? "high" : ""}">מה למדו: ממוצע ההערכה בשיעור הזה ${s}${avg != null ? `, מול ${avg} בקורס כולו` : ""}.</p>`;
+  if (!t || t._titles_only) return out;
+  const tot = t.sections.reduce((a, x) => a + x.secs, 0);
+  return out + `
+    <section>
+      <div class="head"><span class="eyebrow">מה לימדתי בשיעור</span><h2>מבנה השיעור</h2></div>
+      <div class="lsecs">${t.sections.map(x => `<div class="lsec ${x.admin ? "adm" : ""}" style="flex:${x.secs}" title="${esc(x.title)}"><span class="num">${x.start.slice(0, 5)}</span></div>`).join("")}</div>
+      ${t.untitled ? `<p class="seclist"><em class="missing">אין חלוקה לנושאים בדוח השיעור</em></p>` : `<ol class="seclist">${t.sections.map(x => `<li class="${x.admin ? "adm" : ""}"><span class="num">${fmtMin(x.secs)}</span>${x.title ? esc(x.title) : `<em class="missing">ללא כותרת בדוח השיעור</em>`}</li>`).join("")}</ol>`}
+      <details class="more"><summary>נושאים מאתגרים בשיעור (${t.challenging.length})</summary><div class="more-body">${t.challenging.map(c => `<div class="chal"><b>${esc(c.title)}</b><p>${esc(c.why)}</p>${c.suggestion ? `<p class="sugg">${esc(c.suggestion)}</p>` : ""}</div>`).join("")}</div></details>
+      <details class="more"><summary>דוגמאות מהשיעור (${t.examples.length})</summary><div class="more-body"><ul class="exl">${t.examples.map(e => `<li><b>${esc(e.topic)}:</b> ${esc(e.example)}</li>`).join("")}</ul></div></details>
+      <details class="more"><summary>יומן אינטראקציות בכיתה (${t.interactions.length})</summary><div class="more-body"><ul class="ilog">${t.interactions.map(x => `<li><span class="num">${esc(x.time)}</span><b>${esc(x.type.replace(/_/g, " "))}</b> ${esc(x.desc)}</li>`).join("")}</ul></div></details>
+      <details class="more"><summary>שאלות לסטודנטיות לחזרה</summary><div class="more-body"><span class="k">בסיס</span><ol>${t.questions.basic.map(q => `<li>${esc(q)}</li>`).join("")}</ol><span class="k">מתקדם</span><ol>${t.questions.advanced.map(q => `<li>${esc(q)}</li>`).join("")}</ol></div></details>
+    </section>`;
+}
+
+function renderCubes() {
+  const c = {};
+  ADOPT.forEach(a => c[a[2]] = (c[a[2]] || 0) + 1);
+  const open = (c.no || 0) + (c.unk || 0);
+  const cubes = [
+    { href: "#sec-recs", k: "המלצות הינשוף", big: String(Math.min(3, RECS.length)), t: "ההמלצות שחזרו הכי הרבה", sub: RECS.slice(0, 3).map(r => r[0]).join(" · ") },
+    { href: "#sec-adopt", k: "המלצות הינשוף שאומצו", big: String((c.yes || 0) + (c.part || 0)), t: `מתוך ${ADOPT.length} המלצות נוסו, מלא או חלקית`, sub: `${c.yes || 0} אומצו · ${c.part || 0} חלקית · ${open} עדיין פתוחות`, bar: [c.yes || 0, c.part || 0, open] },
+    { href: "#sec-growth", k: "ממדי שיפור", big: String(GROWTH.length), t: "ממדים שבהם נצפתה התקדמות", sub: GROWTH.map(g => g[0]).join(" · ") },
+    { href: "#sec-next", k: "המלצות להמשך", big: String(A.next_minutes), t: `דקות לשיעור, ל-${A.next.length} שינויים קבועים`, sub: A.next.map(x => x.title).join(" · ") }
+  ];
+  document.getElementById("cubes").innerHTML = cubes.map(x => `
+    <a class="cube" href="${x.href}">
+      <span class="ck">${x.k}</span>
+      <span class="cbig num">${x.big}</span>
+      <span class="ct">${esc(x.t)}</span>
+      ${x.bar ? `<span class="cbar" aria-hidden="true"><i class="yes" style="flex:${x.bar[0]}"></i><i class="part" style="flex:${x.bar[1]}"></i><i class="no" style="flex:${x.bar[2]}"></i></span>` : ""}
+      <span class="csub">${esc(x.sub)}</span>
+      <span class="cgo">לפירוט ←</span>
+    </a>`).join("");
+}
+
+function renderHome() {
+  const total = LESSONS.reduce((a, l) => a + secs(l.duration), 0);
+  const avg = Math.round(total / LESSONS.length / 60);
+  document.getElementById("facts").innerHTML =
+    `<span><b>${LESSONS.length}</b> שיעורים</span><span><b>${hm(total)}</b> שעות הוראה מתועדות</span><span><b>${avg}</b> דקות בממוצע לשיעור</span><span><b>16</b> ממדים פדגוגיים</span>`;
+
+  const top = (list, notes) => list.slice(0, 3).map(([name, ls], i) =>
+    `<div class="topitem"><div class="tl"><b>${esc(name)}</b><span class="reach">${reach(ls.length)}</span></div>${strip(ls)}<p>${esc(notes[i])}</p></div>`).join("");
+  document.getElementById("topStr").innerHTML = top(STRENGTHS, STR_NOTES);
+  document.getElementById("topGap").innerHTML = top(GAPS, GAP_NOTES);
+
+  const head = `<thead><tr><th class="theme"></th>${LESSONS.map(l => `<th class="${PARTIAL[l.n] ? "partial" : ""}"><a href="#l${l.n}" title="${esc(l.title)}">${l.n}</a></th>`).join("")}<th></th></tr></thead>`;
+  const rows = (list, cls, label) => `<tbody class="${cls}"><tr class="group"><th colspan="${LESSONS.length + 2}">${label}</th></tr>` +
+    list.map(([name, ls]) => `<tr><th class="theme">${esc(name)}</th>${LESSONS.map(l => `<td><i class="cell ${ls.includes(l.n) ? "on" : "off"}" title="שיעור ${l.n}"></i></td>`).join("")}<td class="count num">${ls.length}/${LESSONS.length}</td></tr>`).join("") + `</tbody>`;
+  document.getElementById("matrix").innerHTML = head + rows(STRENGTHS, "str", "חוזקות") + rows(GAPS, "gap", "מקומות לצמיחה");
+
+  document.getElementById("topRecs").innerHTML = RECS.slice(0, 3).map(([name, ls], i) =>
+    `<article><span class="reach">${reach(ls.length)}</span><h3>${esc(name)}</h3><p>${esc(REC_NOTES[i])}</p>${strip(ls)}</article>`).join("");
+  const max = Math.max(...RECS.map(r => r[1].length));
+  document.getElementById("bars").innerHTML = RECS.map(([name, ls]) =>
+    `<div class="bar ${ls.length >= 7 ? "top" : ""}"><span class="lbl">${esc(name)}</span><span class="track"><span class="fill" style="width:${ls.length / max * 70}%"></span><span class="n">${ls.length}</span><small>שיעורים ${ls.join(", ")}</small></span></div>`).join("");
+
+  const counts = {};
+  ADOPT.forEach(a => counts[a[2]] = (counts[a[2]] || 0) + 1);
+  document.getElementById("statusSum").innerHTML = ["yes", "part", "no", "unk"].filter(s => counts[s])
+    .map(s => `<span><span class="chip ${s}">${STATUS[s]}</span> <b class="num">${counts[s]}</b></span>`).join("");
+  document.getElementById("adopt").innerHTML = ADOPT.map(([r, w, s, e]) =>
+    `<details class="row"><summary><span class="rname">${esc(r)}</span><span class="chip ${s}">${STATUS[s]}</span></summary>
+      <dl class="rdet"><div><dt>עדות</dt><dd>${esc(e)}</dd></div><div><dt>הומלצה בשיעורים</dt><dd class="num">${w.split(", ").map(n => `<a href="#l${n}">${n}</a>`).join(", ")}</dd></div></dl></details>`).join("");
+
+  document.getElementById("growth").innerHTML = GROWTH.map(([d, f, t, c]) =>
+    `<details class="row"><summary><span class="rname">${esc(d)}</span><span class="conf">${esc(c)}</span></summary>
+      <dl class="rdet"><div><dt>לפני</dt><dd>${esc(f)}</dd></div><div><dt>אחרי</dt><dd>${esc(t)}</dd></div></dl></details>`).join("");
+
+  document.getElementById("lessons").innerHTML = LESSONS.map(l =>
+    `<a class="lcard" href="#l${l.n}"><span class="top"><span class="no num">${l.n}</span><span class="dur num">${fmtDur(l.duration)} שעות</span></span><span class="t">${esc(shortTitle(l.title))}</span><span class="o">חוזקה בולטת: ${esc(l.outstanding.title)}</span>${PARTIAL[l.n] ? `<span class="tag">דוח חלקי</span>` : ""}</a>`).join("");
+}
+
+const dimTags = key => (ITEM_DIMS[key] || []).length ? `<span class="dtags">${ITEM_DIMS[key].map(id => `<a class="dtag" href="#dim-${id}">${esc(DIM_BY_ID[id].he)}</a>`).join("")}</span>` : "";
+function itemHTML(it, kind, key) {
+  const body = [];
+  if (it.desc && it.desc !== it.title) body.push(`<p>${esc(it.desc)}</p>`);
+  if (kind === "prac" && it.why) body.push(`<div><span class="k">למה זה חשוב</span><p>${esc(it.why)}</p></div>`);
+  if (kind === "opp" && it.solution) body.push(`<div><span class="k">מה אפשר לעשות</span><p>${esc(it.solution)}</p></div>`);
+  if (kind === "opp" && it.benefit) body.push(`<div><span class="k">התועלת</span><p>${esc(it.benefit)}</p></div>`);
+  if (it.evidence) body.push(`<p class="evidence">${esc(it.evidence)}</p>`);
+  return `<details class="row item ${kind}"><summary><span class="rname">${esc(it.title)}</span></summary>
+    <div class="ibody">${dimTags(key)}${body.join("")}</div></details>`;
+}
+
+function lessonDims(n) {
+  const s = new Set(), w = new Set();
+  for (const [k, ids] of Object.entries(ITEM_DIMS)) {
+    const m = k.match(/^(\d+)([OPW])/);
+    if (Number(m[1]) !== n) continue;
+    ids.forEach(id => (m[2] === "W" ? w : s).add(id));
+  }
+  return { s, w };
+}
+
+function renderLesson(n) {
+  const l = LESSONS.find(x => x.n === n);
+  const pos = LESSONS.findIndex(x => x.n === n), prev = LESSONS[pos - 1], next = LESSONS[pos + 1];
+  const ld = lessonDims(n);
+  const pill = d => {
+    const s = ld.s.has(d.id), w = ld.w.has(d.id);
+    const cls = s && w ? "both" : s ? "s" : w ? "w" : "";
+    const lab = s && w ? "חוזקה וגם מקום לשיפור" : s ? "חוזקה" : w ? "מקום לשיפור" : "לא עלה בשיעור";
+    return `<a class="pill ${cls}" href="#dim-${d.id}" title="${lab}">${esc(d.he)}</a>`;
+  };
+  const el = document.getElementById("lesson");
+  el.innerHTML = `
+    <div class="nav"><a href="${HAS_HUB ? "#overview" : "#index"}">→ חזרה לסיכום הקורס</a>
+      <span class="pager">${prev ? `<a href="#l${prev.n}">→ שיעור ${prev.n}</a>` : ""}${next ? `<a href="#l${next.n}">שיעור ${next.n} ←</a>` : ""}</span></div>
+    <header class="lhead">
+      <span class="eyebrow num">שיעור ${l.n}${l.date ? ` · ${l.date.split("-").reverse().join(".")}` : ""} · ${fmtDur(l.duration)} שעות · ${pos + 1} מתוך ${LESSONS.length} שיעורים מתועדים</span>
+      <div style="display:flex;gap:18px;align-items:flex-end;flex-wrap:wrap"><span class="big num">${l.n}</span><h1 style="font-size:clamp(1.6rem,4vw,2.4rem);flex:1;min-width:0">${esc(l.title)}</h1></div>
+      <p class="message">${esc(l.message)}</p>
+    </header>
+
+    <section>
+      <div class="lcubes">
+        <div class="lcube s"><span class="ck">ביצוע בולט</span><b>${esc(l.outstanding.title)}</b></div>
+        <a class="lcube" href="#lp"><span class="ck">פרקטיקות מוצלחות</span><b class="num">${l.practices.length}</b><span>${esc(l.practices.map(p => p.title).join(" · "))}</span></a>
+        <a class="lcube w" href="#lo"><span class="ck">הזדמנויות לשיפור</span><b class="num">${l.opportunities.length}</b><span>${esc(l.opportunities.map(o => o.title).join(" · "))}</span></a>
+        <a class="lcube" href="#la"><span class="ck">פעולות לשיעור הבא</span><b class="num">${l.actions.length}</b><span>${l.actions.filter(a => a.level === "easy").length} קלות ליישום</span></a>
+      </div>
+    </section>
+    ${lessonTaughtBlock(n)}
+
+    <section>
+      <div class="head"><span class="eyebrow">השיעור על מפת הממדים</span><h2>מה בלט בשיעור הזה</h2></div>
+      <div class="plegend"><span><i class="s"></i>חוזקה</span><span><i class="w"></i>מקום לשיפור</span><span><i class="both"></i>שניהם</span><span><i></i>לא עלה</span></div>
+      <div class="lmap">${VECTORS.map(v => `<div><h3 class="vh">${esc(v.he)}</h3><div class="pills">${DIMS.filter(d => d.v === v.id).map(pill).join("")}</div></div>`).join("")}</div>
+    </section>
+
+    <section>
+      <div class="head"><span class="eyebrow">ביצוע בולט</span><h2>${esc(l.outstanding.title)}</h2></div>
+      <div class="star">${dimTags(l.n + "O")}${l.outstanding.body ? `<p>${esc(l.outstanding.body)}</p>` : ""}${l.outstanding.evidence ? `<p class="evidence">${esc(l.outstanding.evidence)}</p>` : ""}</div>
+      ${l.vision ? `<details class="more"><summary>כיוון צמיחה לטווח ארוך</summary><div class="more-body"><p class="vision">${esc(l.vision)}</p></div></details>` : ""}
+    </section>
+
+    <section>
+      <div class="two">
+        <div class="items" id="lp"><h2>פרקטיקות מוצלחות</h2><div class="list">${l.practices.map((p, i) => itemHTML(p, "prac", l.n + "P" + i)).join("") || `<p class="empty">אין נתונים בדוח.</p>`}</div></div>
+        <div class="items" id="lo"><h2>הזדמנויות לשיפור</h2><div class="list">${l.opportunities.map((o, i) => itemHTML(o, "opp", l.n + "W" + i)).join("") || `<p class="empty">אין נתונים בדוח.</p>`}</div></div>
+      </div>
+    </section>
+
+    <section id="la">
+      <h2>פעולות מומלצות לשיעור הבא</h2>
+      ${l.actions.length ? `<ul class="actions">${l.actions.map(a => `<li><span class="lvl ${a.level}">${a.level === "medium" ? "בינוני" : "קל"}</span><span>${esc(a.text)}${a.effort ? `<span class="eff">${esc(a.effort)}</span>` : ""}</span></li>`).join("")}</ul>` : `<p class="empty">אין נתונים בדוח.</p>`}
+    </section>`;
+  el.querySelectorAll('a[href="#lp"],a[href="#lo"],a[href="#la"]').forEach(a => a.addEventListener("click", e => {
+    e.preventDefault(); document.getElementById(a.getAttribute("href").slice(1)).scrollIntoView({ behavior: "smooth" });
+  }));
+}
+
+function route() {
+  const h = location.hash.slice(1);
+  const views = ["overview", "taught", "learned", "home", "lesson"].map(id => document.getElementById(id));
+  const show = id => views.forEach(v => { v.hidden = v.id !== id; });
+  const m = h.match(/^l(\d+)$/);
+  if (m && LESSONS.some(l => l.n === Number(m[1]))) {
+    renderLesson(Number(m[1])); show("lesson"); setTab(""); window.scrollTo(0, 0); return;
+  }
+  if (h === "taught" && TAUGHT) { show("taught"); setTab("taught"); window.scrollTo(0, 0); return; }
+  if (h === "learned" && LEARNED) { show("learned"); setTab("learned"); window.scrollTo(0, 0); return; }
+  if (HAS_HUB && (h === "" || h === "overview")) { show("overview"); setTab("overview"); window.scrollTo(0, 0); return; }
+  show("home"); setTab("how");
+  const target = h && h !== "how" ? document.getElementById(h) : null;
+  if (target) { if (target.tagName === "DETAILS") target.open = true; target.scrollIntoView(); } else window.scrollTo(0, 0);
+}
+renderNav();
+renderOverview();
+renderTaught();
+renderLearned();
+renderHome();
+renderDims();
+renderCubes();
+window.addEventListener("hashchange", route);
+route();
+</script>

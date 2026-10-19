@@ -1,0 +1,471 @@
+{
+  "title": {
+    "en": "Teacher Pedagogic Report Dimensions",
+    "he": "מימדי הדוח הפדגוגי למרצה"
+  },
+  "output_fields": [
+    "strengths",
+    "weaknesses",
+    "recommendations",
+    "evidence"
+  ],
+  "categories": [
+    {
+      "id": "active_learning",
+      "name": {
+        "en": "Active Learning",
+        "he": "למידה פעילה"
+      },
+      "artifact": "active.txt",
+      "source": "teacher_side/teacher_report_active_learning.py",
+      "dimensions": [
+        {
+          "id": "student_interaction",
+          "name": {
+            "en": "Student Interaction",
+            "he": "אינטראקציה עם סטודנטים"
+          },
+          "sub_dimensions": [
+            {
+              "en": "Discussion Opportunities",
+              "he": "הזדמנויות לדיון"
+            },
+            {
+              "en": "Polls & Interactive Questions",
+              "he": "סקרים ושאלות אינטראקטיביות"
+            },
+            {
+              "en": "Student Questions",
+              "he": "שאלות סטודנטים"
+            },
+            {
+              "en": "Problem-Solving Activities",
+              "he": "פעילויות פתרון בעיות"
+            },
+            {
+              "en": "Interaction Quality",
+              "he": "איכות האינטראקציה"
+            }
+          ]
+        },
+        {
+          "id": "short_tasks",
+          "name": {
+            "en": "Short Tasks",
+            "he": "משימות קצרות"
+          },
+          "sub_dimensions": [
+            {
+              "en": "Think-Pair-Share",
+              "he": "חשוב-התייעץ-שתף"
+            },
+            {
+              "en": "Mini-Exercises",
+              "he": "תרגילונים"
+            },
+            {
+              "en": "Turn-and-Talk",
+              "he": "פנה ודבר עם השכן"
+            },
+            {
+              "en": "Active Demonstrations",
+              "he": "הדגמות פעילות"
+            },
+            {
+              "en": "Task Frequency & Spacing",
+              "he": "תדירות ופיזור המשימות"
+            }
+          ]
+        },
+        {
+          "id": "student_reflection",
+          "name": {
+            "en": "Student Reflection",
+            "he": "רפלקציה של סטודנטים"
+          },
+          "sub_dimensions": [
+            {
+              "en": "Self-Assessment Prompts",
+              "he": "הנחיות להערכה עצמית"
+            },
+            {
+              "en": "Metacognitive Prompts",
+              "he": "הנחיות מטה-קוגניטיביות"
+            },
+            {
+              "en": "Confusion Checks",
+              "he": "בדיקות בלבול"
+            },
+            {
+              "en": "Reflection Activities",
+              "he": "פעילויות רפלקציה"
+            },
+            {
+              "en": "Wait Time for Thinking",
+              "he": "זמן המתנה לחשיבה"
+            }
+          ]
+        },
+        {
+          "id": "collaboration",
+          "name": {
+            "en": "Collaboration",
+            "he": "שיתוף פעולה"
+          },
+          "sub_dimensions": [
+            {
+              "en": "Group Work Structures",
+              "he": "מבני עבודה קבוצתית"
+            },
+            {
+              "en": "Breakout Tasks",
+              "he": "משימות בקבוצות נפרדות"
+            },
+            {
+              "en": "Peer Learning",
+              "he": "למידת עמיתים"
+            },
+            {
+              "en": "Collaborative Accountability",
+              "he": "אחריות משותפת"
+            },
+            {
+              "en": "Social Construction of Knowledge",
+              "he": "הבניה חברתית של ידע"
+            }
+          ]
+        },
+        {
+          "id": "student_choice",
+          "name": {
+            "en": "Student Choice",
+            "he": "בחירה ואוטונומיה של סטודנטים"
+          },
+          "sub_dimensions": [
+            {
+              "en": "Choice in Activities",
+              "he": "בחירה בפעילויות"
+            },
+            {
+              "en": "Autonomy in Process",
+              "he": "אוטונומיה בתהליך"
+            },
+            {
+              "en": "Voice in Content",
+              "he": "השפעה על התוכן"
+            },
+            {
+              "en": "Self-Direction",
+              "he": "הכוונה עצמית"
+            },
+            {
+              "en": "Agency Indicators",
+              "he": "סממני סוכנות ובעלות"
+            }
+          ]
+        },
+        {
+          "id": "learning_scaffolding",
+          "name": {
+            "en": "Learning Scaffolding",
+            "he": "פיגומי למידה"
+          },
+          "sub_dimensions": [
+            {
+              "en": "Chunking Complex Ideas",
+              "he": "פירוק רעיונות מורכבים"
+            },
+            {
+              "en": "Clear Transitions",
+              "he": "מעברים ברורים"
+            },
+            {
+              "en": "Examples → Abstraction → Application",
+              "he": "דוגמאות ← הפשטה ← יישום"
+            },
+            {
+              "en": "Differentiated Support",
+              "he": "תמיכה מותאמת"
+            },
+            {
+              "en": "Temporary Supports",
+              "he": "תמיכות זמניות"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "deep",
+      "name": {
+        "en": "Deep Pedagogical Analysis",
+        "he": "ניתוח פדגוגי מעמיק"
+      },
+      "artifact": "deep.txt",
+      "source": "teacher_side/teacher_report_deep.py",
+      "dimensions": [
+        {
+          "id": "communication",
+          "name": {
+            "en": "Communication",
+            "he": "תקשורת"
+          },
+          "sub_dimensions": [
+            {
+              "en": "Language Clarity",
+              "he": "בהירות השפה"
+            },
+            {
+              "en": "Vocabulary Appropriateness",
+              "he": "התאמת אוצר המילים"
+            },
+            {
+              "en": "Speech Patterns",
+              "he": "דפוסי דיבור"
+            }
+          ]
+        },
+        {
+          "id": "content",
+          "name": {
+            "en": "Content Delivery",
+            "he": "העברת תוכן"
+          },
+          "sub_dimensions": [
+            {
+              "en": "Difficult Topics Handling",
+              "he": "טיפול בנושאים קשים"
+            },
+            {
+              "en": "Conceptual Gaps",
+              "he": "פערים מושגיים"
+            },
+            {
+              "en": "Depth vs Breadth",
+              "he": "עומק מול רוחב"
+            },
+            {
+              "en": "Accuracy",
+              "he": "דיוק"
+            }
+          ]
+        },
+        {
+          "id": "pedagogical",
+          "name": {
+            "en": "Pedagogical Approach",
+            "he": "גישה פדגוגית"
+          },
+          "sub_dimensions": [
+            {
+              "en": "Scaffolding",
+              "he": "פיגומים"
+            },
+            {
+              "en": "Example Quality",
+              "he": "איכות הדוגמאות"
+            },
+            {
+              "en": "Assessment Integration",
+              "he": "שילוב הערכה"
+            },
+            {
+              "en": "Learning Theory Application",
+              "he": "יישום תיאוריות למידה"
+            }
+          ]
+        },
+        {
+          "id": "engagement",
+          "name": {
+            "en": "Engagement",
+            "he": "מעורבות"
+          },
+          "sub_dimensions": [
+            {
+              "en": "Interaction Quality",
+              "he": "איכות האינטראקציה"
+            },
+            {
+              "en": "Energy and Enthusiasm",
+              "he": "אנרגיה והתלהבות"
+            },
+            {
+              "en": "Attention Management",
+              "he": "ניהול קשב"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "storytelling",
+      "name": {
+        "en": "Storytelling",
+        "he": "סיפוריות"
+      },
+      "artifact": "story.txt",
+      "source": "teacher_side/teacher_report_storytelling.py",
+      "dimensions": [
+        {
+          "id": "curiosity",
+          "name": {
+            "en": "Curiosity",
+            "he": "סקרנות"
+          },
+          "sub_dimensions": [
+            {
+              "en": "Questions Posed",
+              "he": "שאלות שנשאלו"
+            },
+            {
+              "en": "Mystery & Surprises",
+              "he": "מסתורין והפתעות"
+            },
+            {
+              "en": "Stakes",
+              "he": "מה מונח על הכף"
+            },
+            {
+              "en": "Cliffhangers",
+              "he": "מתח לפני חשיפה"
+            }
+          ]
+        },
+        {
+          "id": "Coherence",
+          "name": {
+            "en": "Coherence",
+            "he": "קוהרנטיות ורצף"
+          },
+          "sub_dimensions": [
+            {
+              "en": "Signposting",
+              "he": "שילוט ומעברים"
+            },
+            {
+              "en": "Callbacks & References",
+              "he": "הפניות לאחור"
+            },
+            {
+              "en": "Central Thread",
+              "he": "חוט מקשר מרכזי"
+            },
+            {
+              "en": "Digressions",
+              "he": "סטיות מהנושא"
+            },
+            {
+              "en": "Progressive Revelation",
+              "he": "חשיפה הדרגתית"
+            }
+          ]
+        },
+        {
+          "id": "emotional",
+          "name": {
+            "en": "Emotional Connection",
+            "he": "מימד רגשי"
+          },
+          "sub_dimensions": [
+            {
+              "en": "Enthusiasm Markers",
+              "he": "סממני התלהבות"
+            },
+            {
+              "en": "Empathy & Acknowledgment",
+              "he": "אמפתיה והכרה בקושי"
+            },
+            {
+              "en": "Wonder & Amazement",
+              "he": "פליאה והשתאות"
+            },
+            {
+              "en": "Relevance to Students",
+              "he": "רלוונטיות לסטודנטים"
+            }
+          ]
+        },
+        {
+          "id": "narrative",
+          "name": {
+            "en": "Narrative Structure",
+            "he": "מבנה נרטיבי"
+          },
+          "sub_dimensions": [
+            {
+              "en": "Opening Hook",
+              "he": "פתיח מושך"
+            },
+            {
+              "en": "Rising Action",
+              "he": "בניית מתח"
+            },
+            {
+              "en": "Climax/Aha Moment",
+              "he": "שיא / רגע ה'אהה'"
+            },
+            {
+              "en": "Resolution",
+              "he": "התרה"
+            },
+            {
+              "en": "Connection to Students",
+              "he": "חיבור לסטודנטים"
+            }
+          ]
+        },
+        {
+          "id": "Concrete2Abstract",
+          "name": {
+            "en": "Concrete to Abstract",
+            "he": "מהמוחשי למופשט"
+          },
+          "sub_dimensions": [
+            {
+              "en": "Analogies & Metaphors",
+              "he": "אנלוגיות ומטאפורות"
+            },
+            {
+              "en": "Sensory Language",
+              "he": "שפה חושית"
+            },
+            {
+              "en": "Abstraction Sequence",
+              "he": "רצף ההפשטה"
+            },
+            {
+              "en": "Gaps",
+              "he": "פערים"
+            }
+          ]
+        },
+        {
+          "id": "characters",
+          "name": {
+            "en": "Characters",
+            "he": "דמויות"
+          },
+          "sub_dimensions": [
+            {
+              "en": "Real People Mentioned",
+              "he": "אנשים אמיתיים שהוזכרו"
+            },
+            {
+              "en": "Character Development",
+              "he": "פיתוח דמויות"
+            },
+            {
+              "en": "Relatable Scenarios",
+              "he": "תרחישים מוכרים"
+            },
+            {
+              "en": "Missing Character Opportunities",
+              "he": "הזדמנויות שהוחמצו לשילוב דמויות"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

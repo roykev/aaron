@@ -1,0 +1,376 @@
+{
+ "_doc": "Taxonomy of recurring teaching recommendations (layer 1). rec_patterns are matched against what the owl recommended (opportunity titles+descriptions and recommended actions). adopt_patterns are matched against what was observed as a strength (practices and outstanding performance) in a LATER lesson, and interaction_patterns against the class-interaction log of a later lesson. next_* is default copy used when the theme becomes a 'next step' and no LLM narrative is available. Extend this file to cover new courses; keep names short, positive and concrete.",
+ "themes": [
+  {
+   "id": "pairs",
+   "name": "עבודה בזוגות ומשימות קצרות",
+   "dims": [
+    "ST",
+    "CO"
+   ],
+   "rec_patterns": [
+    "זוג",
+    "think-pair",
+    "turn and talk",
+    "פנה ודבר",
+    "מיני-תרגיל",
+    "mini-exercise",
+    "משימ(ות|ה) (קצר|אקטיב)",
+    "תרגילונ",
+    "תחנ(ת|ות) תרגול",
+    "שיתוף פעולה בין",
+    "למידה (שיתופית|פעילה|אקטיבית)",
+    "אינטראקציה סטודנט-סטודנט",
+    "פעילויות (אינטראקטיביות|למידה)"
+   ],
+   "adopt_patterns": [
+    "עבודה שיתופית",
+    "בזוגות",
+    "תרגיל זוגי",
+    "קוויז",
+    "Digipad",
+    "למידה אקטיבית ומעורבות",
+    "כלים אינטראקטיביים",
+    "הצגות סטודנטים"
+   ],
+   "interaction_patterns": [
+    "(עובד|עבוד|תעשו|דוגמאות|תרגיל|דיון)\\S*( \\S+){0,4} בזוגות",
+    "בזוגות (על|לזהות)",
+    "Digipad",
+    "קוויז"
+   ],
+   "next_time": "6 דקות",
+   "next_minutes": 6,
+   "next_title": "רגע אחד של עבודה בזוגות",
+   "next_text": "דקה לבד, 2 דקות בזוג, ו-3 זוגות משתפים. פותח ערוץ כניסה לסטודנטים השקטים.",
+   "interaction_exclude": [
+    "האם",
+    "שאלה",
+    "שואל"
+   ]
+  },
+  {
+   "id": "exit",
+   "name": "כרטיס יציאה ורפלקציה כתובה",
+   "dims": [
+    "SR"
+   ],
+   "rec_patterns": [
+    "exit",
+    "כרטיס יציאה",
+    "minute paper",
+    "רפלקצ",
+    "דקת (חשיבה|רפלקציה)",
+    "מה למדתי",
+    "דרגו",
+    "דירוג עצמי",
+    "בסולם 1-5",
+    "מה עדיין לא ברור",
+    "הערכה עצמית",
+    "בדיק(ת|ות) הבנה"
+   ],
+   "adopt_patterns": [
+    "רפלקציה",
+    "מטא-קוגניציה"
+   ],
+   "interaction_patterns": [],
+   "next_time": "3 דקות",
+   "next_minutes": 3,
+   "next_title": "משפט אחד בסוף השיעור",
+   "next_text": "מה למדתי היום, ומה עדיין לא ברור. נותן נתון על ההבנה לפני השיעור הבא."
+  },
+  {
+   "id": "roadmap",
+   "name": "מפת דרכים ומעברים מתוכננים",
+   "dims": [
+    "COH"
+   ],
+   "rec_patterns": [
+    "מפת דרכים",
+    "roadmap",
+    "תחנות",
+    "מסע היום",
+    "משפט(י)? גשר",
+    "מעברים",
+    "שקופית פתיחה",
+    "מבנה (ו|ה)?בהירות",
+    "מבנה ומעברים",
+    "מבנה ונגישות",
+    "ארגון תוכן",
+    "זרימה ורציפות",
+    "מבנה ויזואלי"
+   ],
+   "adopt_patterns": [
+    "מפת דרכים"
+   ],
+   "interaction_patterns": [],
+   "next_time": "2 דקות",
+   "next_minutes": 2,
+   "next_title": "מפת דרכים של 3 נקודות",
+   "next_text": "כתובה על הלוח בתחילת השיעור, עם סימון בכל מעבר."
+  },
+  {
+   "id": "summaries",
+   "name": "סיכומי ביניים וסגירת השיעור",
+   "dims": [
+    "COH",
+    "NAR"
+   ],
+   "rec_patterns": [
+    "סיכומ",
+    "רגעי סיכום",
+    "תחנ(ת|ות) סיכום",
+    "סגירה",
+    "סינתזה"
+   ],
+   "adopt_patterns": [
+    "חזרות וסיכומים",
+    "סיכומים מחזקים"
+   ],
+   "interaction_patterns": [],
+   "next_time": "3 דקות",
+   "next_minutes": 3,
+   "next_title": "סיכום של דקה אחרי כל נושא",
+   "next_text": "סטודנט מסכם במשפט, והמרצה משלימה."
+  },
+  {
+   "id": "visual",
+   "name": "טבלה או תרשים להמחשה",
+   "dims": [
+    "LS"
+   ],
+   "rec_patterns": [
+    "טבל(ה|ת)",
+    "תרשים",
+    "דיאגרמ",
+    "ויזואל",
+    "מפת חשיבה",
+    "עיגון ויזואלי",
+    "ייצוגים ויזואליים",
+    "תמיכ(ה|ות) ויזואלי"
+   ],
+   "adopt_patterns": [
+    "טבלת",
+    "תרשים",
+    "דיאגרמ"
+   ],
+   "interaction_patterns": [],
+   "next_time": "1 דקה",
+   "next_minutes": 1,
+   "next_title": "שקף עוגן אחד",
+   "next_text": "טבלת השוואה או תרשים שנשארים על המסך לאורך ההסבר."
+  },
+  {
+   "id": "hook",
+   "name": "פתיחה בשאלה מסקרנת ובניית מתח",
+   "dims": [
+    "CUR",
+    "NAR"
+   ],
+   "rec_patterns": [
+    "שאלה (מרכזית|מסקרנת|מרתקת)",
+    "מסקרנת",
+    "פרדוקס",
+    "קשת דרמטית",
+    "בניית מתח",
+    "יצירת סקרנות",
+    "סקרנות ומתח",
+    "מתח אינטלקטואלי",
+    "מבנה נרטיבי",
+    "סיפור ונרטיב"
+   ],
+   "adopt_patterns": [
+    "שאלות מעוררות",
+    "מתח אינטלקטואלי",
+    "יצירת מתח",
+    "סקרנות"
+   ],
+   "interaction_patterns": [],
+   "next_time": "2 דקות",
+   "next_minutes": 2,
+   "next_title": "פתיחה בשאלה אחת",
+   "next_text": "שאלה מסקרנת בתחילת השיעור, ותשובה עליה בסופו."
+  },
+  {
+   "id": "wait",
+   "name": "זמן המתנה אחרי שאלה",
+   "dims": [
+    "SR"
+   ],
+   "rec_patterns": [
+    "זמן המתנה",
+    "המתיני",
+    "ספרי (בשקט|בראש)",
+    "זמן עיבוד",
+    "הארכת זמן"
+   ],
+   "adopt_patterns": [],
+   "interaction_patterns": [],
+   "next_time": "0 דקות",
+   "next_minutes": 0,
+   "next_title": "5 שניות של שקט",
+   "next_text": "אחרי שאלה, לספור עד 5 לפני שמזמינים תשובה."
+  },
+  {
+   "id": "filler",
+   "name": "הפחתת מילות מילוי",
+   "dims": [
+    "COM"
+   ],
+   "rec_patterns": [
+    "מילות מילוי",
+    "מילת מילוי",
+    "הקליטי",
+    "התנצלו",
+    "בהירות תקשורתית",
+    "ביטחון עצמי בהוראה"
+   ],
+   "adopt_patterns": [],
+   "interaction_patterns": [],
+   "next_time": "0 דקות",
+   "next_minutes": 0,
+   "next_title": "הפסקה במקום מילת מילוי",
+   "next_text": "לבחור מילת מילוי אחת ולהחליף אותה בהפסקה קצרה."
+  },
+  {
+   "id": "pacing",
+   "name": "תכנון זמן והיקף חומר",
+   "dims": [
+    "CON",
+    "COH"
+   ],
+   "rec_patterns": [
+    "זמן ריאליסטי",
+    "תכנון זמן",
+    "ניהול זמן",
+    "קצב",
+    "לחלק את",
+    "עומס",
+    "תסריט זמנים",
+    "האט",
+    "דיגרסיות",
+    "הפסקות חברתיות"
+   ],
+   "adopt_patterns": [],
+   "interaction_patterns": [],
+   "next_time": "0 דקות",
+   "next_minutes": 0,
+   "next_title": "תכנון זמנים מראש",
+   "next_text": "זמן לכל נושא, ו-5 דקות שמורות לסיכום."
+  },
+  {
+   "id": "admin",
+   "name": "ריכוז נושאים מנהליים בתחילה או בסוף",
+   "dims": [
+    "COH"
+   ],
+   "rec_patterns": [
+    "הודעות",
+    "ארגוני",
+    "מנהלי",
+    "אדמיניסטרטיב",
+    "טכני"
+   ],
+   "adopt_patterns": [],
+   "interaction_patterns": [],
+   "next_time": "0 דקות",
+   "next_minutes": 0,
+   "next_title": "הודעות בסוף",
+   "next_text": "נושאים מנהליים מרוכזים בדקות האחרונות של השיעור."
+  },
+  {
+   "id": "model",
+   "name": "דוגמה מלאה לפני מטלה",
+   "dims": [
+    "PED",
+    "LS"
+   ],
+   "rec_patterns": [
+    "דוגמה מלאה",
+    "דוגמאות מלאות",
+    "עבודה מצוינת",
+    "לפני ואחרי",
+    "מחוון",
+    "דף עבודה",
+    "scaffolding",
+    "דוגמה אחת של"
+   ],
+   "adopt_patterns": [
+    "מחוון",
+    "מבנה פדגוגי",
+    "עושר בדוגמאות"
+   ],
+   "interaction_patterns": [],
+   "next_time": "5 דקות",
+   "next_minutes": 5,
+   "next_title": "דוגמה מלאה לפני מטלה",
+   "next_text": "קטע מעבודה טובה מול קטע פחות טוב, ודיון קצר על ההבדל."
+  },
+  {
+   "id": "tone",
+   "name": "טון מעודד ודוגמאות של הצלחה",
+   "dims": [
+    "EMO"
+   ],
+   "rec_patterns": [
+    "אזהר",
+    "איזון טונאלי",
+    "תקווה",
+    "השראה",
+    "איזון בין ביקורתיות",
+    "איזון בין תוכן רגשי"
+   ],
+   "adopt_patterns": [],
+   "interaction_patterns": [],
+   "next_time": "0 דקות",
+   "next_minutes": 0,
+   "next_title": "משפט עידוד לפני מטלה",
+   "next_text": "להחליף משפט אזהרה אחד במשפט שמבטא אמון ביכולת של הסטודנטים."
+  },
+  {
+   "id": "cases",
+   "name": "ניתוח מקרים בקבוצות קטנות",
+   "dims": [
+    "CO"
+   ],
+   "rec_patterns": [
+    "קבוצות קטנות",
+    "ניתוח מקרים",
+    "תיאור מקרה"
+   ],
+   "adopt_patterns": [
+    "תיאור מקרה",
+    "ניתוח מקרה"
+   ],
+   "interaction_patterns": [],
+   "next_time": "8 דקות",
+   "next_minutes": 8,
+   "next_title": "מקרה אחד בקבוצות",
+   "next_text": "תיאור מקרה קצר, 5 דקות בקבוצות ושיתוף של קבוצה אחת."
+  },
+  {
+   "id": "practice",
+   "name": "תרגול מעשי מורחב",
+   "dims": [
+    "ST"
+   ],
+   "rec_patterns": [
+    "תרגול מעשי",
+    "תרגול נשימות",
+    "חוויה מלאה",
+    "hands-on"
+   ],
+   "adopt_patterns": [
+    "טכניקות מעשיות",
+    "למידה מעשית",
+    "למידה חווייתית",
+    "למידה חוויתית"
+   ],
+   "interaction_patterns": [],
+   "next_time": "5 דקות",
+   "next_minutes": 5,
+   "next_title": "תרגול אחד מלא",
+   "next_text": "טכניקה אחת שמתרגלים עד הסוף בכיתה, ושאלה קצרה אחריה."
+  }
+ ]
+}

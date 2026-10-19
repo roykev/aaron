@@ -1,0 +1,25 @@
+[project]
+name = "aaron-course-reports"
+version = "0.1.0"
+description = "AaronOwl course-level lecturer reports (what I taught / how I taught / what students learned) from Aaron lesson reports"
+requires-python = ">=3.9"
+dependencies = []
+
+[project.optional-dependencies]
+llm = ["anthropic>=0.40"]
+embeddings = ["sentence-transformers>=2.7"]
+dev = ["pytest>=7"]
+browser = ["playwright>=1.40"]
+
+[project.scripts]
+course-reports = "course_reports.cli:main"
+
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+course_reports = ["assets/*"]
