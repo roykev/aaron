@@ -46,3 +46,8 @@ SiteAnalytics/tts_env/
 # federation analysis outputs (data lives in Dropbox, never in git)
 research/federation/results*/
 research/federation/*_demo/
+
+# Audio benchmarks (large audio data + model outputs)
+audio/asr_benchmark/data/
+audio/diarization_benchmark/data/
+audio/diarization_benchmark/hyp/

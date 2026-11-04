@@ -111,6 +111,7 @@ def merge_diarization_transcript(df_transcript, diarizer):
 
         # Extract speaker labels for the segment
         segment_labels = labels[start_frame:end_frame]
+        segment_labels = segment_labels[segment_labels >= 0]  # drop non-speech frames
 
         # Get the most frequent speaker label in this segment
         if len(segment_labels) > 0:

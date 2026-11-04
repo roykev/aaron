@@ -1,0 +1,9 @@
+model,set,n,WER,lang_correct,detected,xRT
+stock-large-v3-turbo,fleurs-he,150,31.7,97.3,"{'he': np.int64(146), 'ar': np.int64(3), 'en': np.int64(1)}",12.3
+stock-large-v3-turbo,fleurs-en,150,5.8,100.0,{'en': np.int64(150)},14.1
+stock-large-v3-turbo,ivrit-eval-d1,17,8.7,100.0,{'he': np.int64(17)},28.5
+stock-large-v3-turbo,ivrit-eval-whatsapp,54,14.8,98.1,"{'he': np.int64(53), 'es': np.int64(1)}",27.1
+ivrit-large-v3-turbo,fleurs-he,150,20.8,100.0,{'he': np.int64(150)},12.2
+ivrit-large-v3-turbo,fleurs-en,150,49.8,0.0,{'he': np.int64(150)},13.2
+ivrit-large-v3-turbo,ivrit-eval-d1,17,5.1,100.0,{'he': np.int64(17)},31.2
+ivrit-large-v3-turbo,ivrit-eval-whatsapp,54,7.0,100.0,{'he': np.int64(54)},27.9
