@@ -51,3 +51,11 @@ research/federation/*_demo/
 audio/asr_benchmark/data/
 audio/diarization_benchmark/data/
 audio/diarization_benchmark/hyp/
+
+# Local envs, backups, generated outputs
+tts_env/
+*.backup
+*_backup.html
+SiteAnalytics/data/weekly/
+teacher_side/outputs/
+teacher_side/learning_dashboard/output/

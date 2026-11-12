@@ -7,7 +7,7 @@ risk + predictive) locally. Grades never leave; the teacher returns only results
 
 Package contents:
     student_features_<course>_federation.csv  — two-block (preA + postA_) feature vectors, no grades
-    grades_template.csv                       — email, moed_a, moed_b  (teacher fills in)
+    grades_template.csv                       — name + email PRE-FILLED, teacher types only grades
     analysis_script_v2.py                     — runs Q1–Q3 + risk + predictive locally
     FEDERATED_QUESTIONS_SPEC.md               — what each question is + return contract
     HOW_TO.html                               — Hebrew, RTL, step-by-step
@@ -48,13 +48,42 @@ GRADE_COLS = {
 }
 
 
-def grades_template(features_csv: Path, mode: str = 'full_ab') -> str:
+def name_map(config: dict) -> dict:
+    """email -> display name, from the Mixpanel user export. Empty dict if unavailable."""
+    p = config.get('data', {}).get('user_export_csv')
+    if not p or not Path(p).exists():
+        return {}
+    u = pd.read_csv(p)
+    ecol = '$email' if '$email' in u.columns else 'email'
+    ncol = '$name' if '$name' in u.columns else 'name'
+    if ecol not in u.columns or ncol not in u.columns:
+        return {}
+    out = {}
+    for e, n in zip(u[ecol], u[ncol]):
+        if isinstance(e, str) and isinstance(n, str) and n.strip():
+            out.setdefault(e.strip().lower(), n.strip())
+    return out
+
+
+def grades_template(features_csv: Path, mode: str = 'full_ab', names: dict = None) -> str:
+    """Pre-mapped roster: name + email already filled, the teacher types only grades.
+    `name` is ignored by analysis_script_v2 (it joins on email, and detect_grade_mode
+    keys off the grade columns), so it is safe to carry through."""
     df = pd.read_csv(features_csv, usecols=[0])
     ecol = df.columns[0]
-    out = {'email': df[ecol]}
+    emails = df[ecol].astype(str).str.strip().str.lower()
+    out = {}
+    if names:
+        out['name'] = [names.get(e, '') for e in emails]
+    out['email'] = emails
     for col, _ in GRADE_COLS[mode]:
         out[col] = ''
-    return pd.DataFrame(out).to_csv(index=False)
+    df_out = pd.DataFrame(out)
+    if 'name' in df_out.columns:                 # alphabetical by name → easy to fill from a list
+        df_out['_unnamed'] = df_out['name'] == ''  # rows without a name go last
+        df_out = (df_out.sort_values(['_unnamed', 'name', 'email'], kind='stable')
+                  .drop(columns='_unnamed'))
+    return df_out.to_csv(index=False)
 
 
 def how_to_html(course_name: str, features_name: str,
@@ -87,11 +116,15 @@ def how_to_html(course_name: str, features_name: str,
 (פרטי הקורס). למטה — איך. <span class="muted">Just 2 files to fill: grades + course metadata.</span></p>
 
 <h2>שלב 1 — מילוי הציונים</h2>
-<p>פתח/י את <code>grades_template.csv</code> ומלא/י את עמודות הציונים לכל סטודנט. עמודות ברירת המחדל:</p>
+<p>פתח/י את <code>grades_template.csv</code>. <b>השמות והאימיילים כבר ממולאים</b> — נשאר רק להוסיף
+ציון מול כל שם. עמודות הציונים:</p>
 <table><tr><th>עמודה</th><th>פירוש</th></tr>
  {col_rows}</table>
 <div class="box"><b>חשוב:</b> רק מספרים. ציון נכשל → רשום/י את המספר עצמו (למשל <code>52</code>, לא "52 נכשל").
-"לא נבחן/לא השתתף" → השאר/י ריק. אל תשנה/י את עמודת <code>email</code>.
+"לא נבחן/לא השתתף" → השאר/י ריק. אל תשנה/י את עמודות <code>name</code> ו-<code>email</code> —
+הן משמשות לחיבור הנתונים. <span class="muted">Names and emails are pre-filled; only add grades.</span>
+<br><b>סטודנט חסר?</b> מי שלא השתמש באפליקציה אינו ברשימה. מומלץ להוסיף שורה לכל אחד כזה
+(אימייל + ציון, שם לא חובה) — כך הניתוח משווה בין משתמשים ללא-משתמשים. ראה/י "ניתוח אימוץ" למטה.
 <br><b>קורס עם מטלות:</b> יש מטלות/בחינות נוספות? הוסף/י <u>עמודה לכל אחת</u> — שם העמודה זהה לשם המטלה
 ב-<code>course_metadata.yaml</code>. <span class="muted">Coursework: add one column per graded item;
 the column header must match the task name in the metadata file.</span></div>
@@ -254,7 +287,8 @@ def main():
     shutil.copy(HERE / 'analysis_script_v2.py', pkg / 'analysis_script_v2.py')
     shutil.copy(HERE / 'match_roster.py', pkg / 'match_roster.py')
     shutil.copy(HERE / 'FEDERATED_QUESTIONS_SPEC.md', pkg / 'FEDERATED_QUESTIONS_SPEC.md')
-    (pkg / 'grades_template.csv').write_text(grades_template(feats, mode), encoding='utf-8')
+    names = name_map(cfg)
+    (pkg / 'grades_template.csv').write_text(grades_template(feats, mode, names), encoding='utf-8')
     (pkg / 'HOW_TO.html').write_text(
         how_to_html(name, feats.name, mode, a.pass_mark, a.final_rule), encoding='utf-8')
     # v3: metadata questionnaire (the teacher fills + returns) + our known course_meta
@@ -275,7 +309,11 @@ def main():
     print(f"Package: {pkg}")
     print(f"Zip:     {zpath}")
     print(f"Grade mode: {mode}" + (f" (final_rule={a.final_rule})" if mode == 'final' else ''))
-    print(f"Template columns: email, {', '.join(c for c, _ in GRADE_COLS[mode])}")
+    n_named = sum(1 for e in pd.read_csv(feats, usecols=[0]).iloc[:, 0]
+                  if names.get(str(e).strip().lower()))
+    print(f"Template columns: {'name, ' if names else ''}email, "
+          f"{', '.join(c for c, _ in GRADE_COLS[mode])}"
+          + (f"  ·  names pre-filled: {n_named}/{n_students}" if names else ''))
     print(f"Contents: {[f.name for f in sorted(pkg.iterdir())]}")
     print(f"Students in feature file: {n_students}  ·  teacher returns: results.json")
 
